@@ -78,7 +78,7 @@ type MenuType = 'type' | 'book' | 'highlight' | 'color' | null;
 
 interface DropRect { top: number; left: number; width: number; bottom: number; }
 
-export default function NoteEditor({ note, books, tags, allNotes: _allNotes, templates: _templates, onSave, onClose, onDelete, onAddTag, onExportPDF: _onExportPDF, onCreateFlashcard: _onCreateFlashcard, defaultBookId, pendingTemplate, onTemplateClear }: Props) {
+export default function NoteEditor({ note, books, tags, allNotes: _allNotes, templates: _templates, onSave, onClose, onDelete, onAddTag, onExportPDF, onCreateFlashcard: _onCreateFlashcard, defaultBookId, pendingTemplate, onTemplateClear }: Props) {
   const [title, setTitle]           = useState(note?.title || '');
   const [type, setType]             = useState<NoteType>(note?.type || 'note');
   const [bookId, setBookId]         = useState<string | undefined>(note?.bookId ?? defaultBookId);
@@ -545,12 +545,28 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             >
               <Pin size={17} fill={isPinned ? 'var(--accent)' : 'none'} />
             </button>
+            {onExportPDF && note && (
+              <button
+                onClick={() => { try { navigator.vibrate?.(8); } catch {} onExportPDF(note); }}
+                title="Экспорт в PDF"
+                style={{
+                  width: 34, height: 34, borderRadius: 9,
+                  background: 'none', border: 'none',
+                  color: 'var(--text-muted)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'color 0.15s',
+                  fontSize: 16,
+                }}
+              >
+                📄
+              </button>
+            )}
             <button
               onClick={handleSave}
               style={{
                 padding: '8px 14px', borderRadius: 11,
                 background: 'var(--accent)', border: 'none',
-                color: '#0e0c09', fontWeight: 700, fontSize: 13,
+                color: '#fff', fontWeight: 700, fontSize: 13,
                 fontFamily: 'Inter,sans-serif', cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 12px rgba(212,145,74,0.35)',

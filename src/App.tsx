@@ -18,6 +18,8 @@ import AuthScreen from './components/AuthScreen';
 import FlashcardsView from './components/FlashcardsView';
 import DailyNoteView from './components/DailyNoteView';
 import TemplatesModal from './components/TemplatesModal';
+import GraphView from './components/GraphView';
+import GamificationView from './components/GamificationView';
 import { TabId } from './types';
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
@@ -86,7 +88,7 @@ function AppInner() {
   const [appReady, setAppReady] = useState(false);
   const [syncing, setSyncing]   = useState(false);
   const syncedRef = useRef(false);
-  const tabOrder: TabId[] = ['notes', 'library', 'daily', 'cards', 'settings'];
+  const tabOrder: TabId[] = ['notes', 'library', 'daily', 'cards', 'settings', 'graph', 'achievements'];
   const [tabDir, setTabDir]   = useState<'left' | 'right'>('left');
   const [tabKey, setTabKey]   = useState(0);
 
@@ -266,6 +268,19 @@ function AppInner() {
 
   const handleTheme = (theme: Theme) => { update(s => ({ ...s, theme })); };
 
+  // ── Auto night mode ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (state.theme !== 'auto' as Theme) return;
+    const applyAuto = () => {
+      const h = new Date().getHours();
+      const isDark = h < 7 || h >= 21;
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    };
+    applyAuto();
+    const interval = setInterval(applyAuto, 60_000);
+    return () => clearInterval(interval);
+  }, [state.theme]);
+
   const handleClearData = () => {
     if (window.confirm('Удалить все данные? Это действие необратимо.')) {
       const userId = auth.user?.id || 'guest';
@@ -315,32 +330,132 @@ function AppInner() {
       const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const book = state.books.find(b => b.id === note.bookId);
-      const plain = note.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
+      // Strip HTML tags and decode entities for plain text
+      const plain = note.content
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<\/h[1-6]>/gi, '\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+      const PAGE_W = 210;
+      const MARGIN = 20;
+      const TEXT_W = PAGE_W - MARGIN * 2;
+      const PAGE_H = 297;
+      let y = MARGIN;
+
+      const checkPage = (needed = 10) => {
+        if (y + needed > PAGE_H - MARGIN) {
+          doc.addPage();
+          y = MARGIN;
+        }
+      };
+
+      // ── Accent bar ──
+      doc.setFillColor(180, 130, 60);
+      doc.rect(MARGIN, y, 3, 22, 'F');
+
+      // ── Title ──
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.text(note.title || 'Без названия', 20, 30);
+      doc.setFontSize(20);
+      doc.setTextColor(30, 22, 12);
+      const titleLines = doc.splitTextToSize(note.title || 'Без названия', TEXT_W - 6);
+      doc.text(titleLines, MARGIN + 8, y + 6);
+      y += titleLines.length * 8 + 10;
 
+      // ── Meta ──
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.setTextColor(120, 100, 80);
-      let y = 42;
-      if (book) { doc.text(`Книга: ${book.title} — ${book.author}`, 20, y); y += 8; }
-      doc.text(`Дата: ${new Date(note.createdAt).toLocaleDateString('ru-RU')}`, 20, y); y += 12;
+      doc.setFontSize(9);
+      doc.setTextColor(140, 110, 80);
+      const metaParts: string[] = [];
+      if (book) metaParts.push(`${book.title}  ·  ${book.author}`);
+      metaParts.push(new Date(note.createdAt).toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      }));
+      if (note.tags?.length) metaParts.push(note.tags.map(t => `#${t}`).join(' '));
+      doc.text(metaParts.join('    '), MARGIN, y);
+      y += 6;
 
+      // ── Divider ──
+      doc.setDrawColor(200, 170, 120);
+      doc.setLineWidth(0.3);
+      doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+      y += 8;
+
+      // ── Quote block ──
       if (note.quote) {
-        doc.setTextColor(180, 130, 60);
-        doc.setFontSize(12);
-        const qLines = doc.splitTextToSize(`"${note.quote}"`, 170);
-        doc.text(qLines, 20, y);
-        y += qLines.length * 7 + 8;
+        checkPage(20);
+        doc.setFillColor(250, 242, 228);
+        doc.setDrawColor(212, 145, 74);
+        doc.setLineWidth(0.5);
+        const qLines = doc.splitTextToSize(`"${note.quote}"`, TEXT_W - 14);
+        const qH = qLines.length * 6 + 10;
+        doc.rect(MARGIN, y, TEXT_W, qH, 'F');
+        doc.line(MARGIN, y, MARGIN, y + qH);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(11);
+        doc.setTextColor(160, 110, 50);
+        doc.text(qLines, MARGIN + 8, y + 7);
+        y += qH + 10;
       }
 
-      doc.setTextColor(40, 30, 20);
+      // ── Body text ──
+      checkPage(20);
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      const lines = doc.splitTextToSize(plain, 170);
-      doc.text(lines, 20, y);
-      doc.save(`${note.title || 'note'}.pdf`);
+      doc.setTextColor(30, 22, 12);
+
+      const paragraphs = plain.split('\n').filter(p => p.trim());
+      for (const para of paragraphs) {
+        const pLines = doc.splitTextToSize(para.trim(), TEXT_W);
+        checkPage(pLines.length * 6 + 4);
+        doc.text(pLines, MARGIN, y);
+        y += pLines.length * 6 + 4;
+      }
+
+      // ── Footer ──
+      const totalPages = (doc as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(180, 160, 130);
+        doc.text('Psyche — Дневник Разума', MARGIN, PAGE_H - 8);
+        doc.text(`${p} / ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 8, { align: 'right' });
+      }
+
+      const filename = (note.title || 'заметка')
+        .replace(/[^а-яёa-z0-9\s_-]/gi, '')
+        .trim()
+        .replace(/\s+/g, '_')
+        .slice(0, 50) || 'note';
+      doc.save(`${filename}.pdf`);
+
+      // Toast
+      const toast = document.createElement('div');
+      toast.textContent = '✓ PDF сохранён';
+      Object.assign(toast.style, {
+        position: 'fixed', bottom: '100px', left: '50%',
+        transform: 'translateX(-50%)',
+        background: 'var(--bg-raised)', color: 'var(--text-primary)',
+        padding: '10px 20px', borderRadius: '12px',
+        border: '1px solid var(--border-mid)',
+        fontFamily: 'Inter, sans-serif', fontSize: '13px',
+        zIndex: '99999',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        animation: 'fadeIn 0.2s ease',
+      });
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+
     } catch (e) {
       console.error('PDF export error:', e);
     }
@@ -506,6 +621,22 @@ function AppInner() {
           />
         )}
 
+        {activeTab === 'graph' && (
+          <GraphView
+            notes={state.notes}
+            books={state.books}
+            onOpenNote={note => setEditingNote(note)}
+          />
+        )}
+
+        {activeTab === 'achievements' && (
+          <GamificationView
+            notes={state.notes}
+            books={state.books}
+            dailyNotes={state.dailyNotes}
+          />
+        )}
+
         {activeTab === 'settings' && (
           <SettingsView
             user={auth.user!}
@@ -516,6 +647,8 @@ function AppInner() {
             onRestoreNote={handleRestoreNote}
             onPermanentDelete={handlePermanentDelete}
             onEmptyTrash={handleEmptyTrash}
+            onUpdateAvatar={(av) => { void av; }}
+            onNavigate={(tab) => handleTabChange(tab as TabId)}
           />
         )}
 

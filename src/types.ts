@@ -1,4 +1,4 @@
-export type Theme = 'dark' | 'light' | 'sepia';
+export type Theme = 'dark' | 'light' | 'sepia' | 'auto';
 
 export type BookStatus = 'reading' | 'finished' | 'want' | 'paused' | 'abandoned';
 
@@ -105,7 +105,7 @@ export interface AppState {
   lineHeight: 'tight' | 'normal' | 'relaxed';
 }
 
-export type TabId = 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings';
+export type TabId = 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings' | 'graph' | 'achievements';
 
 export interface User {
   id: string;

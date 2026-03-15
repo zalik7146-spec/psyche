@@ -194,7 +194,7 @@ export default function BottomNav({ active, onChange }: Props) {
               boxShadow: '0 -4px 40px rgba(0,0,0,0.55)',
               zIndex: 100,
               overflow: 'hidden',
-              animation: 'slideUp 0.3s cubic-bezier(0.34,1.2,0.64,1)',
+              animation: 'menuSlideUp 0.28s cubic-bezier(0.34,1.2,0.64,1)',
             }}
           >
             {/* Header */}
