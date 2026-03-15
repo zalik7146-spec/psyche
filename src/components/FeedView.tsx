@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, MessageCircle, Bookmark, Share2, Search, Users, Compass, Send, X, Plus, BookOpen, Sparkles, Quote, Lightbulb, FileText } from 'lucide-react';
 import type { SocialPost, SocialComment, SocialProfile, User, Book, PostType } from '../types';
-import { getFeed, getFollowingFeed, toggleLike, toggleSave, getComments, addComment, toggleCommentLike, searchProfiles, createPost, toggleFollow, getUserPosts, isFollowing } from '../socialStore';
+import { getFeed, getFollowingFeed, toggleLike, toggleSave, getComments, addComment, toggleCommentLike, searchProfiles, createPost, toggleFollow, getUserPosts, isFollowing, getMyProfile, upsertProfile } from '../socialStore';
+import { supabase } from '../supabase';
 
 const vibe = (ms = 8) => navigator.vibrate?.(ms);
 
@@ -214,9 +215,29 @@ function CommentsSheet({ post, userId, onClose }: {
   const handleSend = async () => {
     if (!text.trim() || sending) return;
     setSending(true); vibe(8);
-    const comment = await addComment(post.id, userId, text.trim());
-    if (comment) setComments(prev => [...prev, comment]);
-    setText(''); setSending(false);
+    try {
+      // Проверяем профиль перед комментарием
+      const existingProfile = await getMyProfile(userId);
+      if (!existingProfile) {
+        const { data: userData } = await supabase.auth.getUser();
+        const email = userData?.user?.email || '';
+        const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
+        await upsertProfile({
+          id: userId,
+          username: baseUsername + Math.floor(Math.random() * 9999),
+          displayName: baseUsername,
+          isPublic: true,
+        });
+      }
+      const comment = await addComment(post.id, userId, text.trim());
+      if (comment) {
+        setComments(prev => [...prev, comment]);
+        setText('');
+      }
+    } catch (e) {
+      console.error('handleSend error:', e);
+    }
+    setSending(false);
   };
 
   return (
@@ -338,16 +359,42 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
   const handlePublish = async () => {
     if (!content.trim()) return;
     setPublishing(true); vibe(10);
-    const post = await createPost({
-      userId, type, title, content,
-      bookTitle: selectedBook?.title,
-      bookAuthor: selectedBook?.author,
-      bookEmoji: selectedBook?.coverEmoji,
-      tags: selectedTags,
-      createdAt: new Date().toISOString(),
-    });
-    if (post) onCreated(post);
-    setPublishing(false); onClose();
+    try {
+      // Проверяем и создаём профиль если его нет
+      const existingProfile = await getMyProfile(userId);
+      if (!existingProfile) {
+        const { data: userData } = await supabase.auth.getUser();
+        const email = userData?.user?.email || '';
+        const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
+        await upsertProfile({
+          id: userId,
+          username: baseUsername + Math.floor(Math.random() * 9999),
+          displayName: baseUsername,
+          isPublic: true,
+        });
+      }
+      const post = await createPost({
+        userId, type,
+        title: title || content.replace(/<[^>]+>/g, '').slice(0, 60),
+        content,
+        bookTitle: selectedBook?.title,
+        bookAuthor: selectedBook?.author,
+        bookEmoji: selectedBook?.coverEmoji,
+        tags: selectedTags,
+        createdAt: new Date().toISOString(),
+      });
+      if (post) {
+        onCreated(post);
+        onClose();
+      } else {
+        console.error('createPost returned null');
+        alert('Ошибка публикации. Проверьте подключение.');
+      }
+    } catch (e) {
+      console.error('handlePublish error:', e);
+      alert('Ошибка: ' + (e instanceof Error ? e.message : String(e)));
+    }
+    setPublishing(false);
   };
 
   return (

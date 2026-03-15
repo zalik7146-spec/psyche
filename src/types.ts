@@ -136,6 +136,7 @@ export interface SocialProfile {
   displayName: string;
   avatar?: string;
   bio?: string;
+  interests?: string[];
   isPublic: boolean;
   followersCount: number;
   followingCount: number;
@@ -156,8 +157,10 @@ export interface SocialPost {
   bookAuthor?: string;
   bookEmoji?: string;
   tags: string[];
+  isPublic?: boolean;
   likesCount: number;
   commentsCount: number;
+  viewsCount?: number;
   isLiked?: boolean;
   isSaved?: boolean;
   createdAt: string;
