@@ -296,11 +296,12 @@ export default function AuthScreen({ onAuth }: Props) {
     setError('');
     setInfo('');
     try {
-      const { error: resendError } = await supabase.auth.resend({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: resendError } = await (supabase.auth as any).resend({
         type: 'signup',
         email: email.toLowerCase().trim(),
         options: { emailRedirectTo: window.location.origin + window.location.pathname },
-      });
+      }) as { error: { message: string } | null };
       if (resendError) {
         setError(resendError.message);
       } else {

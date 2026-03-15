@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Plus, Search, FileText, X, ChevronRight } from 'lucide-react';
 import { Book, BookStatus, Note } from '../types';
 
+const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+
 interface Props {
   books: Book[];
   notes: Note[];
@@ -51,6 +53,7 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
         padding: 'calc(env(safe-area-inset-top,0px) + 12px) 14px 10px',
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg-base)', flexShrink: 0,
+        animation: 'fadeIn 0.3s ease-out both',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
           <div>
@@ -62,13 +65,16 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
             </p>
           </div>
           <button
-            onClick={onAddBook}
+            onClick={() => { vibe(8); onAddBook(); }}
             style={{
               width: 38, height: 38, borderRadius: '12px',
               background: 'var(--accent)', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
+              cursor: 'pointer', transition: 'transform 0.12s',
             }}
+            onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.88)'; }}
+            onPointerUp={e   => { e.currentTarget.style.transform = 'scale(1)'; }}
+            onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
             <Plus size={20} color="#0e0c09" strokeWidth={2.5} />
           </button>
@@ -100,7 +106,7 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
         {/* Status filter */}
         <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '2px' }}>
           {(['all', ...Object.keys(STATUS_META)] as (BookStatus | 'all')[]).map(s => (
-            <button key={s} onClick={() => setFilter(s)}
+            <button key={s} onClick={() => { vibe(5); setFilter(s); }}
               style={{
                 padding: '4px 11px', borderRadius: '99px', whiteSpace: 'nowrap',
                 background: filter === s ? 'var(--bg-active)' : 'var(--bg-raised)',
@@ -149,7 +155,7 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
                 </span>
               </div>
 
-              {grouped[status].map(book => {
+              {grouped[status].map((book, bi) => {
                 const nc = noteCount(book.id);
                 const pct = (book.totalPages && book.currentPage)
                   ? Math.round((book.currentPage / book.totalPages) * 100) : 0;
@@ -158,12 +164,14 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
                   <div
                     key={book.id}
                     className="card-hover"
-                    onClick={() => onEditBook(book)}
+                    onClick={() => { vibe(8); onEditBook(book); }}
                     style={{
                       display: 'flex', gap: '12px', alignItems: 'center',
                       padding: '13px 14px', borderRadius: '16px',
                       background: 'var(--bg-card)', border: 'var(--card-border)',
                       marginBottom: '9px',
+                      animation: 'card-enter 0.35s cubic-bezier(0.22,1,0.36,1) both',
+                      animationDelay: `${bi * 0.05}s`,
                     }}
                   >
                     {/* Cover */}

@@ -39,6 +39,8 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
   wordCount?: number;
+  linkedNoteIds?: string[];   // Связи между записями
+  templateId?: string;        // Если создана из шаблона
 }
 
 export interface Tag {
@@ -47,16 +49,63 @@ export interface Tag {
   color: string;
 }
 
+export interface DeletedNote extends Note {
+  deletedAt: string;
+}
+
+// ── Flashcard ──────────────────────────────────────────────────────────────
+export interface Flashcard {
+  id: string;
+  noteId: string;        // Исходная заметка
+  front: string;         // Вопрос / понятие
+  back: string;          // Ответ / определение
+  tags: string[];
+  createdAt: string;
+  nextReview: string;    // ISO date для следующего повторения
+  interval: number;      // Дней до следующего повторения
+  easeFactor: number;    // SM-2 ease factor
+  repetitions: number;   // Сколько раз повторяли
+  lastRating?: 1 | 2 | 3 | 4; // Оценка последнего ответа
+}
+
+// ── Daily Note ────────────────────────────────────────────────────────────
+export interface DailyNote {
+  id: string;
+  date: string;          // YYYY-MM-DD
+  content: string;       // HTML-контент
+  mood?: 1 | 2 | 3 | 4 | 5;
+  energy?: 1 | 2 | 3 | 4 | 5;
+  linkedNoteIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Template ───────────────────────────────────────────────────────────────
+export interface Template {
+  id: string;
+  name: string;
+  icon: string;
+  type: NoteType;
+  titlePlaceholder: string;
+  contentHtml: string;
+  tags: string[];
+  isBuiltin: boolean;
+}
+
 export interface AppState {
   books: Book[];
   notes: Note[];
   tags: Tag[];
+  deletedNotes: DeletedNote[];
+  flashcards: Flashcard[];
+  dailyNotes: DailyNote[];
+  templates: Template[];
   theme: Theme;
   fontSize: 'sm' | 'md' | 'lg';
   lineHeight: 'tight' | 'normal' | 'relaxed';
 }
 
-export type TabId = 'notes' | 'library' | 'new' | 'stats' | 'settings';
+export type TabId = 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings';
 
 export interface User {
   id: string;

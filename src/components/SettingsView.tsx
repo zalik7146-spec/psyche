@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { Sun, Moon, BookMarked, LogOut, Trash2, ChevronRight, Cloud, RefreshCw, CheckCircle } from 'lucide-react';
-import { Theme, User, AppState } from '../types';
+import {
+  Sun, Moon, BookMarked, LogOut, Trash2, Cloud, RefreshCw,
+  CheckCircle, AlertCircle, RotateCcw, X, ChevronRight,
+  BookOpen, FileText, Star, MessageSquareQuote, Lightbulb,
+} from 'lucide-react';
+import { Theme, User, AppState, DeletedNote } from '../types';
 import { supabase } from '../supabase';
 import { syncLocalToCloud } from '../cloudStore';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface Props {
   user: User;
@@ -10,6 +16,9 @@ interface Props {
   onTheme: (t: Theme) => void;
   onLogout: () => void;
   onClearData: () => void;
+  onRestoreNote: (noteId: string) => void;
+  onPermanentDelete: (noteId: string) => void;
+  onEmptyTrash: () => void;
 }
 
 const THEMES: { id: Theme; label: string; icon: React.ReactNode; bg: string; text: string }[] = [
@@ -18,8 +27,16 @@ const THEMES: { id: Theme; label: string; icon: React.ReactNode; bg: string; tex
   { id: 'sepia', label: 'Сепия',   icon: <BookMarked size={16} />, bg: '#1a1508', text: '#dcc8a0' },
 ];
 
-export default function SettingsView({ user, state, onTheme, onLogout, onClearData }: Props) {
+const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+
+export default function SettingsView({
+  user, state, onTheme, onLogout, onClearData,
+  onRestoreNote, onPermanentDelete, onEmptyTrash,
+}: Props) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
+  const [showTrash, setShowTrash] = useState(false);
+
+  const deletedNotes: DeletedNote[] = state.deletedNotes || [];
 
   const stats = {
     books:     state.books.length,
@@ -33,6 +50,7 @@ export default function SettingsView({ user, state, onTheme, onLogout, onClearDa
   };
 
   const handleManualSync = async () => {
+    vibe(10);
     setSyncStatus('syncing');
     try {
       await syncLocalToCloud(state, user.id);
@@ -48,298 +66,434 @@ export default function SettingsView({ user, state, onTheme, onLogout, onClearDa
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
       redirectTo: window.location.origin,
     });
-    if (error) {
-      alert('Ошибка: ' + error.message);
-    } else {
-      alert('Письмо со сменой пароля отправлено на ' + user.email);
-    }
+    if (error) alert('Ошибка: ' + error.message);
+    else alert('Письмо со сменой пароля отправлено на ' + user.email);
   };
 
+  // ── Trash modal ──────────────────────────────────────────────────────
+  if (showTrash) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'slideLeft 0.26s cubic-bezier(0.22,1,0.36,1) both' }}>
+        {/* Header */}
+        <div style={{
+          padding: 'calc(env(safe-area-inset-top,0px) + 12px) 16px 12px',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-base)', flexShrink: 0,
+          display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <button
+            onClick={() => { vibe(6); setShowTrash(false); }}
+            style={{
+              width: 36, height: 36, borderRadius: 12,
+              background: 'var(--bg-raised)', border: '1px solid var(--border)',
+              color: 'var(--text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <X size={18} />
+          </button>
+          <div style={{ flex: 1 }}>
+            <h2 className="font-serif" style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+              🗑 Корзина
+            </h2>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+              {deletedNotes.length} удалённых записей
+            </p>
+          </div>
+          {deletedNotes.length > 0 && (
+            <button
+              onClick={() => { vibe(15); if (window.confirm('Очистить корзину? Записи будут удалены навсегда.')) onEmptyTrash(); }}
+              style={{
+                padding: '6px 12px', borderRadius: 10,
+                background: 'rgba(180,50,50,0.15)', border: '1px solid rgba(180,50,50,0.3)',
+                color: '#d45858', cursor: 'pointer', fontSize: 12,
+                fontFamily: 'Inter, sans-serif', fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}
+            >
+              <Trash2 size={13} />
+              Очистить
+            </button>
+          )}
+        </div>
+
+        <div className="scroll-area" style={{ padding: '12px 14px 80px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {deletedNotes.length === 0 ? (
+            <div style={{
+              textAlign: 'center', padding: '60px 20px',
+              animation: 'fadeUp 0.4s ease-out both',
+            }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🗑</div>
+              <p style={{ color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontSize: 15 }}>
+                Корзина пуста
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: 12, fontFamily: 'Inter, sans-serif', marginTop: 6 }}>
+                Удалённые записи появятся здесь
+              </p>
+            </div>
+          ) : (
+            deletedNotes.map((note, i) => (
+              <div
+                key={note.id}
+                style={{
+                  background: 'var(--bg-card)', border: 'var(--card-border)',
+                  borderRadius: 14, padding: '12px 14px',
+                  animation: `card-enter 0.32s cubic-bezier(0.22,1,0.36,1) both`,
+                  animationDelay: `${i * 0.04}s`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      margin: 0, fontSize: 14, fontWeight: 600,
+                      color: 'var(--text-primary)', fontFamily: 'Lora, serif',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {note.title || 'Без заголовка'}
+                    </p>
+                    <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+                      Удалено {format(new Date(note.deletedAt), 'd MMM yyyy', { locale: ru })}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  <button
+                    onClick={() => { vibe(10); onRestoreNote(note.id); }}
+                    style={{
+                      flex: 1, padding: '8px', borderRadius: 10,
+                      background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
+                      color: 'var(--accent)', cursor: 'pointer', fontSize: 12,
+                      fontFamily: 'Inter, sans-serif', fontWeight: 600,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <RotateCcw size={13} />
+                    Восстановить
+                  </button>
+                  <button
+                    onClick={() => { vibe(15); if (window.confirm('Удалить навсегда?')) onPermanentDelete(note.id); }}
+                    style={{
+                      padding: '8px 14px', borderRadius: 10,
+                      background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
+                      color: '#d45858', cursor: 'pointer', fontSize: 12,
+                      fontFamily: 'Inter, sans-serif', fontWeight: 600,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <X size={13} />
+                    Навсегда
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main settings ────────────────────────────────────────────────────
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div className="scroll-area" style={{ padding: '0 0 80px' }}>
 
-        {/* Header */}
+        {/* Profile hero */}
         <div style={{
-          padding: 'calc(env(safe-area-inset-top,0px) + 18px) 16px 18px',
+          padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px 20px',
+          background: 'linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-base) 100%)',
           borderBottom: '1px solid var(--border)',
+          animation: 'fadeUp 0.35s ease-out both',
         }}>
-          <h1 className="font-serif" style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px' }}>
-            Профиль
-          </h1>
-
-          {/* User card */}
-          <div style={{
-            padding: '16px', borderRadius: '18px',
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', gap: '14px',
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
-              width: 54, height: 54, borderRadius: '16px',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
+              width: 56, height: 56, borderRadius: 18,
+              background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '22px', fontWeight: 700, color: '#0e0c09',
-              fontFamily: 'Lora, serif', flexShrink: 0,
+              fontSize: 24, flexShrink: 0,
+              boxShadow: '0 4px 16px var(--accent-glow)',
             }}>
-              {user.name.charAt(0).toUpperCase()}
+              🧠
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
                 {user.name}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>
+              </p>
+              <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif' }}>
                 {user.email}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>
-                С нами с {new Date(user.createdAt).toLocaleDateString('ru', { month: 'long', year: 'numeric' })}
-              </div>
-            </div>
-            {/* Cloud badge */}
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
-            }}>
-              <Cloud size={16} style={{ color: '#6ab47a' }} />
-              <span style={{ fontSize: '9px', color: '#6ab47a', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
-                ОБЛАКО
-              </span>
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+                С {format(new Date(user.createdAt), 'd MMMM yyyy', { locale: ru })}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
-        <div style={{ padding: '0 16px' }}>
-          <div className="section-header">Статистика</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        {/* Stats grid */}
+        <div style={{ padding: '16px 16px 0', animation: 'fadeUp 0.4s ease-out 0.05s both' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Ваша статистика
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
             {[
-              { label: 'Записей',   value: stats.notes,     emoji: '📝' },
-              { label: 'Книг',      value: stats.books,     emoji: '📚' },
-              { label: 'Прочитано', value: stats.finished,  emoji: '✅' },
-              { label: 'Читаю',     value: stats.reading,   emoji: '📖' },
-              { label: 'Избранное', value: stats.favorites, emoji: '⭐' },
-              { label: 'Слов',      value: stats.words,     emoji: '✍️' },
-              { label: 'Цитат',     value: stats.quotes,    emoji: '❝' },
-              { label: 'Инсайтов',  value: stats.insights,  emoji: '💡' },
-            ].map(s => (
-              <div key={s.label} style={{
-                padding: '14px', borderRadius: '16px',
-                background: 'var(--bg-card)', border: '1px solid var(--border)',
-                display: 'flex', flexDirection: 'column', gap: '4px',
+              { icon: <FileText size={14} />, val: stats.notes,     label: 'Записей' },
+              { icon: <BookOpen size={14} />, val: stats.books,     label: 'Книг' },
+              { icon: <Star size={14} />,     val: stats.favorites, label: 'Избранных' },
+              { icon: <MessageSquareQuote size={14} />, val: stats.quotes, label: 'Цитат' },
+              { icon: <Lightbulb size={14} />, val: stats.insights, label: 'Инсайтов' },
+              { icon: <BookOpen size={14} />, val: stats.reading,   label: 'Читаю' },
+              { icon: <CheckCircle size={14} />, val: stats.finished, label: 'Прочитано' },
+              { icon: <FileText size={14} />, val: stats.words,     label: 'Слов' },
+            ].map((s, i) => (
+              <div key={i} style={{
+                background: 'var(--bg-card)', border: 'var(--card-border)',
+                borderRadius: 12, padding: '10px 8px', textAlign: 'center',
+                animation: `card-enter 0.32s cubic-bezier(0.22,1,0.36,1) both`,
+                animationDelay: `${0.05 + i * 0.03}s`,
               }}>
-                <span style={{ fontSize: '18px' }}>{s.emoji}</span>
-                <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'Lora, serif' }}>
-                  {s.value}
-                </span>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                <div style={{ color: 'var(--accent)', marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+                  {s.val.toLocaleString()}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
                   {s.label}
-                </span>
+                </p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Theme */}
-        <div style={{ padding: '0 16px' }}>
-          <div className="section-header">Тема оформления</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.1s both' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Тема оформления
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {THEMES.map(t => (
               <button
                 key={t.id}
-                onClick={() => onTheme(t.id)}
+                onClick={() => { vibe(8); onTheme(t.id); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '14px 16px', borderRadius: '16px',
-                  background: state.theme === t.id ? 'var(--bg-active)' : 'var(--bg-card)',
-                  border: `1px solid ${state.theme === t.id ? 'var(--accent-dim)' : 'var(--border)'}`,
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'all 0.15s',
+                  padding: '12px 8px', borderRadius: 14, cursor: 'pointer',
+                  background: t.bg, border: `2px solid ${state.theme === t.id ? 'var(--accent)' : 'transparent'}`,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                  boxShadow: state.theme === t.id ? '0 0 0 3px var(--accent-glow)' : 'none',
+                  transition: 'all 0.2s',
                 }}
               >
-                <div style={{
-                  width: 44, height: 44, borderRadius: '12px',
-                  background: t.bg, border: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <span style={{ color: t.text }}>{t.icon}</span>
-                </div>
-                <span style={{
-                  flex: 1, fontSize: '14px', fontWeight: 500,
-                  color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif',
-                }}>
+                <span style={{ color: t.text }}>{t.icon}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: t.text, fontFamily: 'Inter, sans-serif' }}>
                   {t.label}
                 </span>
                 {state.theme === t.id && (
-                  <div style={{
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', color: '#0e0c09', fontWeight: 700,
-                  }}>
-                    ✓
-                  </div>
+                  <span style={{ fontSize: 10, color: 'var(--accent)' }}>✓ Активна</span>
                 )}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Cloud Storage — ACTIVE */}
-        <div style={{ padding: '0 16px' }}>
-          <div className="section-header">Облачное хранилище</div>
+        {/* Cloud sync */}
+        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.15s both' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Облачное хранилище
+          </p>
           <div style={{
-            borderRadius: '18px',
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            overflow: 'hidden',
+            background: 'var(--bg-card)', border: 'var(--card-border)',
+            borderRadius: 16, overflow: 'hidden',
           }}>
-            {/* Cloud header */}
-            <div style={{
-              padding: '14px 16px',
-              background: 'linear-gradient(135deg, rgba(100,180,120,0.08), rgba(100,180,120,0.04))',
-              borderBottom: '1px solid var(--border)',
-              display: 'flex', alignItems: 'center', gap: '10px',
-            }}>
+            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
-                width: 36, height: 36, borderRadius: '10px',
-                background: 'rgba(100,180,120,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 40, height: 40, borderRadius: 12,
+                background: 'rgba(100,180,120,0.15)', border: '1px solid rgba(100,180,120,0.3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
-                <Cloud size={18} style={{ color: '#6ab47a' }} />
+                <Cloud size={18} color="var(--green)" />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
                   Supabase Cloud
-                </div>
-                <div style={{ fontSize: '11px', color: '#6ab47a', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
-                  ● Подключено · Активно
-                </div>
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--green)', fontFamily: 'Inter, sans-serif' }}>
+                  ● Подключено и активно
+                </p>
               </div>
-              <div style={{
-                fontSize: '10px', fontFamily: 'Inter, sans-serif',
-                padding: '3px 10px', borderRadius: '99px',
-                background: 'rgba(100,180,120,0.2)', color: '#6ab47a', fontWeight: 700,
-              }}>
-                АКТИВНО
-              </div>
+              <button
+                onClick={handleManualSync}
+                disabled={syncStatus === 'syncing'}
+                style={{
+                  padding: '7px 12px', borderRadius: 10,
+                  background: syncStatus === 'done' ? 'rgba(100,180,120,0.15)' :
+                    syncStatus === 'error' ? 'rgba(180,80,80,0.15)' : 'var(--bg-raised)',
+                  border: `1px solid ${syncStatus === 'done' ? 'rgba(100,180,120,0.4)' :
+                    syncStatus === 'error' ? 'rgba(180,80,80,0.4)' : 'var(--border)'}`,
+                  color: syncStatus === 'done' ? 'var(--green)' :
+                    syncStatus === 'error' ? 'var(--red)' : 'var(--text-secondary)',
+                  cursor: 'pointer', fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {syncStatus === 'syncing' ? <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> :
+                  syncStatus === 'done'    ? <CheckCircle size={13} /> :
+                  syncStatus === 'error'   ? <AlertCircle size={13} /> :
+                  <RefreshCw size={13} />}
+                {syncStatus === 'syncing' ? 'Синхр...' :
+                  syncStatus === 'done'    ? 'Готово' :
+                  syncStatus === 'error'   ? 'Ошибка' : 'Синхр.'}
+              </button>
             </div>
-
-            {/* Cloud info */}
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', lineHeight: 1.6 }}>
-                Все записи и книги синхронизируются в реальном времени. Данные доступны на любом устройстве. Автосохранение при каждом изменении.
-              </div>
-              <div style={{
-                marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px',
-              }}>
-                {['🔒 Шифрование', '☁️ Бэкапы', '🔄 Авто-синхронизация', '📱 Все устройства'].map(tag => (
-                  <span key={tag} style={{
-                    fontSize: '11px', padding: '3px 8px', borderRadius: '99px',
-                    background: 'var(--bg-active)', color: 'var(--text-secondary)',
-                    fontFamily: 'Inter, sans-serif',
-                  }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Sync button */}
-            <button
-              onClick={handleManualSync}
-              disabled={syncStatus === 'syncing'}
-              style={{
-                width: '100%', padding: '14px 16px',
-                display: 'flex', alignItems: 'center', gap: '10px',
-                background: 'none', border: 'none', cursor: syncStatus === 'syncing' ? 'not-allowed' : 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-active)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              {syncStatus === 'done' ? (
-                <CheckCircle size={16} style={{ color: '#6ab47a' }} />
-              ) : (
-                <RefreshCw size={16} style={{
-                  color: syncStatus === 'syncing' ? 'var(--text-muted)' : 'var(--accent)',
-                  animation: syncStatus === 'syncing' ? 'spin 1s linear infinite' : 'none',
-                }} />
-              )}
-              <span style={{
-                fontSize: '13px', fontWeight: 500, fontFamily: 'Inter, sans-serif',
-                color: syncStatus === 'done' ? '#6ab47a'
-                     : syncStatus === 'error' ? 'var(--red)'
-                     : 'var(--text-primary)',
-              }}>
-                {syncStatus === 'idle'    && 'Синхронизировать вручную'}
-                {syncStatus === 'syncing' && 'Синхронизация...'}
-                {syncStatus === 'done'    && 'Синхронизировано!'}
-                {syncStatus === 'error'   && 'Ошибка синхронизации'}
-              </span>
-              <ChevronRight size={16} style={{ color: 'var(--text-muted)', marginLeft: 'auto' }} />
-            </button>
           </div>
         </div>
 
         {/* Account actions */}
-        <div style={{ padding: '0 16px' }}>
-          <div className="section-header">Аккаунт</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <ActionBtn
-              icon="🔑"
-              label="Сменить пароль"
-              color="var(--text-secondary)"
-              onClick={handleChangePassword}
-            />
-            <ActionBtn
-              icon={<LogOut size={17} />}
-              label="Выйти из аккаунта"
-              color="var(--text-secondary)"
-              onClick={onLogout}
-            />
-            <ActionBtn
-              icon={<Trash2 size={17} />}
-              label="Удалить все данные"
-              color="var(--red)"
-              danger
-              onClick={onClearData}
-            />
+        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.2s both' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Аккаунт
+          </p>
+          <div style={{
+            background: 'var(--bg-card)', border: 'var(--card-border)',
+            borderRadius: 16, overflow: 'hidden',
+          }}>
+            {[
+              {
+                icon: <Cloud size={16} />, label: 'Сменить пароль',
+                sub: 'Письмо придёт на ' + user.email.slice(0, 18) + '…',
+                action: handleChangePassword, color: 'var(--accent)',
+              },
+            ].map((item, i) => (
+              <button
+                key={i}
+                onClick={() => { vibe(8); item.action(); }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '14px 16px', background: 'none', border: 'none',
+                  borderBottom: '1px solid var(--border)', cursor: 'pointer',
+                  textAlign: 'left', transition: 'background 0.15s',
+                }}
+              >
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: item.color + '18', border: `1px solid ${item.color}33`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  color: item.color,
+                }}>
+                  {item.icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                    {item.label}
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+                    {item.sub}
+                  </p>
+                </div>
+                <ChevronRight size={16} color="var(--text-muted)" />
+              </button>
+            ))}
+
+            {/* Trash */}
+            <button
+              onClick={() => { vibe(8); setShowTrash(true); }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 16px', background: 'none', border: 'none',
+                borderBottom: '1px solid var(--border)', cursor: 'pointer',
+                textAlign: 'left', transition: 'background 0.15s',
+              }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(180,100,50,0.12)', border: '1px solid rgba(180,100,50,0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                color: '#d4914a',
+              }}>
+                <Trash2 size={16} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                  Корзина
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+                  {deletedNotes.length > 0 ? `${deletedNotes.length} удалённых записей` : 'Пусто'}
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {deletedNotes.length > 0 && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
+                    background: 'var(--accent-glow)', borderRadius: 99,
+                    padding: '1px 7px',
+                  }}>{deletedNotes.length}</span>
+                )}
+                <ChevronRight size={16} color="var(--text-muted)" />
+              </div>
+            </button>
+
+            {/* Logout */}
+            <button
+              onClick={() => { vibe(12); onLogout(); }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 16px', background: 'none', border: 'none',
+                cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s',
+              }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                color: '#d45858',
+              }}>
+                <LogOut size={16} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: 14, color: '#d45858', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                  Выйти
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+                  {user.email}
+                </p>
+              </div>
+            </button>
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', margin: 0 }}>
-            Psyche — Дневник Разума · v2.0
+        {/* Danger zone */}
+        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.25s both' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--red)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>
+            Опасная зона
           </p>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', margin: '4px 0 0' }}>
-            ☁️ Powered by Supabase · Создан для тех, кто думает глубоко
+          <button
+            onClick={() => { vibe(15); onClearData(); }}
+            style={{
+              width: '100%', padding: '13px 16px', borderRadius: 14,
+              background: 'rgba(180,50,50,0.08)', border: '1px solid rgba(180,50,50,0.2)',
+              color: 'var(--red)', cursor: 'pointer', fontSize: 14,
+              fontFamily: 'Inter, sans-serif', fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'all 0.15s',
+            }}
+          >
+            <Trash2 size={15} />
+            Сбросить все данные
+          </button>
+          <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
+            Это действие нельзя отменить
+          </p>
+        </div>
+
+        {/* Version */}
+        <div style={{ padding: '24px 0 12px', textAlign: 'center', animation: 'fadeIn 0.6s ease-out 0.3s both' }}>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontStyle: 'italic' }}>
+            Psyche · Дневник Разума
+          </p>
+          <p style={{ margin: '3px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', opacity: 0.5 }}>
+            v2.5 · Supabase Cloud
           </p>
         </div>
       </div>
     </div>
-  );
-}
-
-function ActionBtn({ icon, label, color, danger, onClick }: {
-  icon: React.ReactNode; label: string; color: string;
-  danger?: boolean; onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="card-hover"
-      style={{
-        display: 'flex', alignItems: 'center', gap: '12px',
-        padding: '14px 16px', borderRadius: '16px', width: '100%',
-        background: danger ? 'rgba(196,72,72,0.06)' : 'var(--bg-card)',
-        border: `1px solid ${danger ? 'rgba(196,72,72,0.2)' : 'var(--border)'}`,
-        cursor: 'pointer', textAlign: 'left',
-      }}
-    >
-      <span style={{ color, fontSize: typeof icon === 'string' ? '18px' : undefined }}>{icon}</span>
-      <span style={{ fontSize: '14px', color, fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
-        {label}
-      </span>
-      <ChevronRight size={16} style={{ color: 'var(--text-muted)', marginLeft: 'auto' }} />
-    </button>
   );
 }
