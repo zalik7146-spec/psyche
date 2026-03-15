@@ -56,16 +56,30 @@ create table if not exists public.tags (
   created_at text not null default (now()::text)
 );
 
+-- 4. DAILY NOTES
+create table if not exists public.daily_notes (
+  id              text primary key,
+  user_id         uuid not null references auth.users(id) on delete cascade,
+  date            text not null,
+  content         text not null default '',
+  mood            integer,
+  linked_note_ids text[],
+  created_at      text not null default (now()::text),
+  updated_at      text not null default (now()::text)
+);
+
 -- ── Row Level Security ──────────────────────────────
 
-alter table public.books enable row level security;
-alter table public.notes enable row level security;
-alter table public.tags  enable row level security;
+alter table public.books       enable row level security;
+alter table public.notes       enable row level security;
+alter table public.tags        enable row level security;
+alter table public.daily_notes enable row level security;
 
 -- Удаляем старые политики если есть
-drop policy if exists "books_user" on public.books;
-drop policy if exists "notes_user" on public.notes;
-drop policy if exists "tags_user"  on public.tags;
+drop policy if exists "books_user"       on public.books;
+drop policy if exists "notes_user"       on public.notes;
+drop policy if exists "tags_user"        on public.tags;
+drop policy if exists "daily_notes_user" on public.daily_notes;
 
 -- Создаём новые политики
 create policy "books_user" on public.books
@@ -77,13 +91,19 @@ create policy "notes_user" on public.notes
 create policy "tags_user" on public.tags
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+create policy "daily_notes_user" on public.daily_notes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 -- ── Индексы для производительности ─────────────────
 
-create index if not exists books_user_idx on public.books(user_id);
-create index if not exists notes_user_idx on public.notes(user_id);
-create index if not exists notes_book_idx on public.notes(book_id);
-create index if not exists tags_user_idx  on public.tags(user_id);
+create index if not exists books_user_idx      on public.books(user_id);
+create index if not exists notes_user_idx      on public.notes(user_id);
+create index if not exists notes_book_idx      on public.notes(book_id);
+create index if not exists tags_user_idx       on public.tags(user_id);
+create index if not exists daily_notes_usr_idx on public.daily_notes(user_id);
+create index if not exists daily_notes_date_idx on public.daily_notes(date);
 
 -- ════════════════════════════════════════════════════
 -- ГОТОВО! Таблицы созданы, RLS настроен.
+-- Добавлена таблица daily_notes для журнала дня.
 -- ════════════════════════════════════════════════════

@@ -105,13 +105,78 @@ export interface AppState {
   lineHeight: 'tight' | 'normal' | 'relaxed';
 }
 
-export type TabId = 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings' | 'graph' | 'achievements';
+export type TabId = 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings' | 'graph' | 'achievements' | 'anki' | 'share' | 'feed' | 'profile';
+
+// ── Public Share ───────────────────────────────────────────────────────────
+export interface SharedConspect {
+  id: string;
+  bookId: string;
+  noteIds: string[];
+  title: string;
+  description?: string;
+  isPublic: boolean;
+  shareCode: string;   // короткий код для ссылки
+  createdAt: string;
+  updatedAt: string;
+  views: number;
+}
 
 export interface User {
   id: string;
   email: string;
   name: string;
   avatar?: string;
+  createdAt: string;
+}
+
+// ── Social ─────────────────────────────────────────────────────────────────
+export interface SocialProfile {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar?: string;
+  bio?: string;
+  isPublic: boolean;
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+  createdAt: string;
+}
+
+export type PostType = 'note' | 'quote' | 'insight' | 'summary' | 'flashcard' | 'book_review';
+
+export interface SocialPost {
+  id: string;
+  userId: string;
+  profile?: SocialProfile;
+  type: PostType;
+  title: string;
+  content: string;
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookEmoji?: string;
+  tags: string[];
+  likesCount: number;
+  commentsCount: number;
+  isLiked?: boolean;
+  isSaved?: boolean;
+  createdAt: string;
+}
+
+export interface SocialComment {
+  id: string;
+  postId: string;
+  userId: string;
+  profile?: SocialProfile;
+  content: string;
+  likesCount: number;
+  isLiked?: boolean;
+  createdAt: string;
+}
+
+export interface SocialFollow {
+  followerId: string;
+  followingId: string;
   createdAt: string;
 }
 

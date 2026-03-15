@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { BookOpen, FileText, Plus, Calendar, Settings, X, Sparkles, PenLine, Brain } from 'lucide-react';
+import { BookOpen, FileText, Plus, Users, UserCircle, X, Sparkles, PenLine, Brain, Bell, Mic } from 'lucide-react';
 import { TabId } from '../types';
 
 interface Props {
   active: TabId;
   onChange: (tab: TabId) => void;
+  unreadNotifs?: number;
+  onNotifications?: () => void;
+  onVoiceNote?: () => void;
 }
 
 const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
 
-export default function BottomNav({ active, onChange }: Props) {
+export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifications, onVoiceNote }: Props) {
   const [showNewMenu, setShowNewMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -30,11 +33,11 @@ export default function BottomNav({ active, onChange }: Props) {
   }, [showNewMenu]);
 
   const tabs = [
-    { id: 'notes'    as TabId, icon: <FileText size={22} />, label: 'Записи'    },
-    { id: 'library'  as TabId, icon: <BookOpen size={22} />, label: 'Книги'     },
+    { id: 'notes'   as TabId, icon: <FileText size={22} />,     label: 'Записи'     },
+    { id: 'library' as TabId, icon: <BookOpen size={22} />,     label: 'Книги'      },
     null, // FAB slot
-    { id: 'daily'    as TabId, icon: <Calendar size={22} />, label: 'Журнал'    },
-    { id: 'settings' as TabId, icon: <Settings size={22} />, label: 'Настройки' },
+    { id: 'feed'    as TabId, icon: <Users size={22} />,        label: 'Люди'       },
+    { id: 'profile' as TabId, icon: <UserCircle size={22} />,   label: 'Профиль'    },
   ];
 
   const NAV_H = 60;
@@ -146,7 +149,21 @@ export default function BottomNav({ active, onChange }: Props) {
                 e.currentTarget.style.transition = 'transform 0.18s';
               }}
             >
-              {tab.icon}
+              <div style={{ position: 'relative' }}>
+                {tab.icon}
+                {tab.id === 'profile' && unreadNotifs > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -4, right: -4,
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: '#e74c3c', border: '2px solid var(--nav-bg)',
+                    fontSize: 8, fontWeight: 700, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'Inter, sans-serif',
+                  }}>
+                    {unreadNotifs > 9 ? '9+' : unreadNotifs}
+                  </span>
+                )}
+              </div>
               <span style={{
                 fontSize: 10, fontWeight: isActive ? 700 : 400,
                 fontFamily: 'Inter, sans-serif', lineHeight: 1,
@@ -250,6 +267,46 @@ export default function BottomNav({ active, onChange }: Props) {
                 desc="Создать карточку для повторения"
                 delay={0.15}
                 onClick={() => { vibe(10); setShowNewMenu(false); onChange('cards'); }}
+              />
+
+              {/* Publish */}
+              <MenuOption
+                icon={<Users size={20} color="#6a8a9a" />}
+                iconBg="linear-gradient(135deg, #6a8a9a30, #4a6a7a20)"
+                title="Поделиться в сообществе"
+                desc="Опубликовать мысль или инсайт"
+                delay={0.20}
+                onClick={() => { vibe(10); setShowNewMenu(false); onChange('feed'); }}
+              />
+
+              {/* Daily */}
+              <MenuOption
+                icon={<BookOpen size={20} color="#9a8a6a" />}
+                iconBg="linear-gradient(135deg, #9a8a6a30, #7a6a4a20)"
+                title="Запись в журнал"
+                desc="Дневниковая запись сегодняшнего дня"
+                delay={0.25}
+                onClick={() => { vibe(10); setShowNewMenu(false); onChange('daily'); }}
+              />
+
+              {/* Voice note */}
+              <MenuOption
+                icon={<Mic size={20} color="#9a6a8a" />}
+                iconBg="linear-gradient(135deg, #9a6a8a30, #7a4a6a20)"
+                title="Голосовая заметка"
+                desc="Надиктуй мысль — текст создастся сам"
+                delay={0.30}
+                onClick={() => { vibe(10); setShowNewMenu(false); onVoiceNote?.(); }}
+              />
+
+              {/* Notifications */}
+              <MenuOption
+                icon={<Bell size={20} color="#6a9a8a" />}
+                iconBg="linear-gradient(135deg, #6a9a8a30, #4a7a6a20)"
+                title={`Уведомления${unreadNotifs > 0 ? ` (${unreadNotifs})` : ''}`}
+                desc="Лайки, комментарии, Daily Review"
+                delay={0.35}
+                onClick={() => { vibe(10); setShowNewMenu(false); onNotifications?.(); }}
               />
             </div>
           </div>

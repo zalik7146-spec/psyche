@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Sun, Moon, BookMarked, LogOut, Trash2, Cloud, RefreshCw,
   CheckCircle, AlertCircle, RotateCcw, X, ChevronRight,
   BookOpen, FileText, Star, MessageSquareQuote, Lightbulb,
-  Camera, Smile, GitBranch, Trophy,
+  Camera, Smile,
 } from 'lucide-react';
 import { Theme, User, AppState, DeletedNote } from '../types';
 import { supabase } from '../supabase';
@@ -22,6 +22,7 @@ interface Props {
   onEmptyTrash: () => void;
   onUpdateAvatar?: (avatar: string) => void;
   onNavigate?: (tab: string) => void;
+  onBack?: () => void;
 }
 
 const THEMES: { id: Theme | 'auto'; label: string; icon: React.ReactNode; bg: string; text: string }[] = [
@@ -41,15 +42,34 @@ const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
 
 export default function SettingsView({
   user, state, onTheme, onLogout, onClearData,
-  onRestoreNote, onPermanentDelete, onEmptyTrash, onUpdateAvatar, onNavigate,
+  onRestoreNote, onPermanentDelete, onEmptyTrash, onUpdateAvatar, onNavigate, onBack,
 }: Props) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
   const [showTrash, setShowTrash]   = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [avatar, setAvatar] = useState<string>(() => {
-    return localStorage.getItem(`psyche_avatar_${user.id}`) || '🧠';
+    // сначала localStorage, затем Supabase metadata
+    const local = localStorage.getItem(`psyche_avatar_${user.id}`);
+    if (local) return local;
+    // попытаемся взять из user metadata (синхронно недоступно, но обновим через useEffect)
+    return '🧠';
   });
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Загружаем аватар из Supabase metadata если localStorage пуст
+  useEffect(() => {
+    const local = localStorage.getItem(`psyche_avatar_${user.id}`);
+    if (!local) {
+      supabase.auth.getUser().then(({ data }) => {
+        const meta = data?.user?.user_metadata?.avatar;
+        if (meta) {
+          setAvatar(meta);
+          localStorage.setItem(`psyche_avatar_${user.id}`, meta);
+          onUpdateAvatar?.(meta);
+        }
+      });
+    }
+  }, [user.id]);
 
   const deletedNotes: DeletedNote[] = state.deletedNotes || [];
 
@@ -85,10 +105,20 @@ export default function SettingsView({
     else alert('Письмо со сменой пароля отправлено на ' + user.email);
   };
 
+  const saveAvatar = async (value: string) => {
+    // 1. сохраняем локально
+    localStorage.setItem(`psyche_avatar_${user.id}`, value);
+    // 2. сохраняем в Supabase user metadata
+    try {
+      await supabase.auth.updateUser({ data: { avatar: value } });
+    } catch {}
+    // 3. обновляем родительский компонент
+    onUpdateAvatar?.(value);
+  };
+
   const handleSelectEmoji = (emoji: string) => {
     setAvatar(emoji);
-    localStorage.setItem(`psyche_avatar_${user.id}`, emoji);
-    onUpdateAvatar?.(emoji);
+    saveAvatar(emoji);
     setShowAvatarPicker(false);
     vibe(8);
   };
@@ -100,9 +130,9 @@ export default function SettingsView({
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
       setAvatar(dataUrl);
-      localStorage.setItem(`psyche_avatar_${user.id}`, dataUrl);
-      onUpdateAvatar?.(dataUrl);
+      saveAvatar(dataUrl);
       setShowAvatarPicker(false);
+      vibe(8);
     };
     reader.readAsDataURL(file);
   };
@@ -327,9 +357,35 @@ export default function SettingsView({
 
       <div className="scroll-area" style={{ padding: '0 0 80px' }}>
 
+        {/* ── Back button header ────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: 'calc(env(safe-area-inset-top,0px) + 12px) 16px 12px',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-base)', flexShrink: 0,
+        }}>
+          <button
+            onClick={() => { vibe(6); onBack?.(); }}
+            style={{
+              width: 36, height: 36, borderRadius: 12,
+              background: 'var(--bg-raised)', border: '1px solid var(--border)',
+              color: 'var(--text-muted)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+          </button>
+          <span style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+            Настройки
+          </span>
+        </div>
+
         {/* ── Profile hero ──────────────────────────────────────────── */}
         <div style={{
-          padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px 20px',
+          padding: '20px 20px 20px',
           background: 'linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-base) 100%)',
           borderBottom: '1px solid var(--border)',
           animation: 'fadeUp 0.35s ease-out both',
@@ -434,43 +490,36 @@ export default function SettingsView({
           </div>
         </div>
 
-        {/* ── Quick nav: Graph & Achievements ───────────────────────── */}
-        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.08s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Разделы
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { icon: <GitBranch size={18} color="var(--accent)" />, label: 'Граф связей', desc: 'Визуализация книг и записей', tab: 'graph' },
-              { icon: <Trophy size={18} color="#d4a84e" />,          label: 'Достижения',  desc: 'Бейджи, уровень, прогресс',  tab: 'achievements' },
-            ].map(item => (
-              <button
-                key={item.tab}
-                onClick={() => { vibe(8); onNavigate?.(item.tab); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '13px 16px',
-                  background: 'var(--bg-card)', border: 'var(--card-border)',
-                  borderRadius: 16, cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'background 0.15s',
-                }}
-                onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
-                onPointerUp={e => (e.currentTarget.style.background = 'var(--bg-card)')}
-                onPointerLeave={e => (e.currentTarget.style.background = 'var(--bg-card)')}
-              >
-                <div style={{
-                  width: 38, height: 38, borderRadius: 12,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>{item.icon}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{item.desc}</div>
-                </div>
-                <ChevronRight size={16} color="var(--text-muted)" />
-              </button>
-            ))}
-          </div>
+        {/* ── Quick link to Profile/Tools ───────────────────────────── */}
+        <div style={{ padding: '16px 16px 0', animation: 'fadeUp 0.4s ease-out 0.08s both' }}>
+          <button
+            onClick={() => { vibe(8); onNavigate?.('profile'); }}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 16px', borderRadius: 16, cursor: 'pointer',
+              background: 'rgba(212,145,74,0.08)', border: '1px solid rgba(212,145,74,0.25)',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+            onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+            onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+            onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+          >
+            <div style={{
+              width: 42, height: 42, borderRadius: 13,
+              background: 'var(--bg-raised)', border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              fontSize: 20,
+            }}>🛠</div>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                Инструменты и разделы
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
+                Anki, Достижения, Граф, Конспекты — в Профиле
+              </div>
+            </div>
+            <ChevronRight size={16} color='var(--text-muted)'/>
+          </button>
         </div>
 
         {/* ── Theme ─────────────────────────────────────────────────── */}

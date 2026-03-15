@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Note, Book, Tag, NoteType, Template } from '../types';
 import { createNote } from '../store';
+import LinkedNotesPanel from './LinkedNotesPanel';
 
 interface Props {
   note?: Note;
@@ -87,11 +88,12 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
   const [quote, setQuote]           = useState(note?.quote || '');
   const [quoteColor, setQuoteColor] = useState(note?.quoteColor || '#d4914a');
   const [noteTags, setNoteTags]     = useState<string[]>(note?.tags || []);
-  const [isPinned, setIsPinned]     = useState(note?.isPinned || false);
-  const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);
-  const [newTagName, setNewTagName] = useState('');
-  const [saved, setSaved]           = useState(false);
-  const [showMeta, setShowMeta]     = useState(false);
+  const [isPinned, setIsPinned]         = useState(note?.isPinned || false);
+  const [isFavorite, setIsFavorite]     = useState(note?.isFavorite || false);
+  const [newTagName, setNewTagName]     = useState('');
+  const [saved, setSaved]               = useState(false);
+  const [showMeta, setShowMeta]         = useState(false);
+  const [linkedNoteIds, setLinkedNoteIds] = useState<string[]>(note?.linkedNoteIds || []);
 
   const [openMenu, setOpenMenu] = useState<MenuType>(null);
   const [dropRect, setDropRect] = useState<DropRect | null>(null);
@@ -136,6 +138,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
       chapter: chapter.trim() || undefined,
       quote: quote.trim() || undefined,
       quoteColor, tags: noteTags, isPinned, isFavorite,
+      linkedNoteIds,
       wordCount: countWords(content),
       updatedAt: new Date().toISOString(),
     };
@@ -947,6 +950,17 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             {chapter && <span>📑 {chapter}</span>}
           </div>
         </div>
+
+        {/* ── Linked notes ─────────────────────────────────────── */}
+        {_allNotes && _allNotes.length > 0 && note?.id && (
+          <LinkedNotesPanel
+            currentNoteId={note.id}
+            linkedNoteIds={linkedNoteIds}
+            allNotes={_allNotes}
+            onLink={(id) => setLinkedNoteIds(prev => [...prev, id])}
+            onUnlink={(id) => setLinkedNoteIds(prev => prev.filter(n => n !== id))}
+          />
+        )}
       </div>
     </>
   );

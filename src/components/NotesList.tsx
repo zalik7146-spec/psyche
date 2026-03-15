@@ -33,30 +33,53 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
   books: Book[]; tags: Tag[];
 }) {
   const [swipeX, setSwipeX] = useState(0);
-  const [swiping, setSwiping] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const startX = useRef(0);
   const isDragging = useRef(false);
+  const isOpen = useRef(false);
 
-  const THRESHOLD = 90;
+  const THRESHOLD = 72;
+  const OPEN_X = -110;
 
   const onTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     isDragging.current = true;
   };
+
   const onTouchMove = (e: React.TouchEvent) => {
     if (!isDragging.current) return;
     const dx = e.touches[0].clientX - startX.current;
-    if (dx < -5) setSwiping(true);
-    if (dx < 0) setSwipeX(Math.max(dx, -140));
+
+    if (isOpen.current) {
+      // уже открыто — свайп вправо закрывает
+      const newX = Math.min(OPEN_X + dx, 0);
+      setSwipeX(Math.max(newX, OPEN_X));
+    } else {
+      // закрыто — свайп влево открывает
+      if (dx < 0) setSwipeX(Math.max(dx, OPEN_X));
+      else setSwipeX(0);
+    }
   };
+
   const onTouchEnd = () => {
     isDragging.current = false;
-    if (swipeX < -THRESHOLD) {
-      setSwipeX(-120);
+    if (isOpen.current) {
+      // если свайпнули вправо достаточно — закрыть
+      if (swipeX > OPEN_X + 40) {
+        setSwipeX(0);
+        isOpen.current = false;
+      } else {
+        setSwipeX(OPEN_X);
+      }
     } else {
-      setSwipeX(0);
-      setSwiping(false);
+      // если свайпнули влево достаточно — открыть
+      if (swipeX < -THRESHOLD) {
+        setSwipeX(OPEN_X);
+        isOpen.current = true;
+        vibe(6);
+      } else {
+        setSwipeX(0);
+      }
     }
   };
 
@@ -66,6 +89,17 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
     setTimeout(() => onDelete(), 320);
   };
 
+  const handleCardClick = () => {
+    if (isOpen.current) {
+      // закрыть свайп при тапе на карточку
+      setSwipeX(0);
+      isOpen.current = false;
+      return;
+    }
+    vibe(8);
+    onOpen();
+  };
+
   if (deleted) return (
     <div style={{
       height: 0, overflow: 'hidden',
@@ -73,20 +107,26 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
     }} />
   );
 
+  const showDelete = swipeX <= -THRESHOLD;
+
   return (
     <div style={{ position: 'relative', marginBottom: 9, overflow: 'hidden', borderRadius: 16 }}>
       {/* Delete bg */}
-      <div style={{
-        position: 'absolute', right: 0, top: 0, bottom: 0,
-        width: 120, background: 'rgba(180,50,50,0.85)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        borderRadius: 16, gap: 6,
-        opacity: swiping ? 1 : 0,
-        transition: 'opacity 0.15s',
-      }}>
+      <button
+        onClick={handleDelete}
+        style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0,
+          width: 110, background: 'rgba(180,50,50,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 16, gap: 6, border: 'none', cursor: 'pointer',
+          opacity: showDelete ? 1 : 0,
+          transform: showDelete ? 'scale(1)' : 'scale(0.9)',
+          transition: 'opacity 0.18s, transform 0.18s',
+        }}
+      >
         <Trash2 size={20} color="#fff" />
         <span style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>Удалить</span>
-      </div>
+      </button>
 
       {/* Card */}
       <div
@@ -95,18 +135,18 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
         onTouchEnd={onTouchEnd}
         style={{
           transform: `translateX(${swipeX}px)`,
-          transition: isDragging.current ? 'none' : 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
+          transition: isDragging.current ? 'none' : 'transform 0.3s cubic-bezier(0.22,1,0.36,1)',
           position: 'relative', zIndex: 1,
         }}
       >
-        <NoteCard note={note} onOpen={onOpen} onDelete={handleDelete} idx={idx} showDelete={swipeX < -THRESHOLD} />
+        <NoteCard note={note} onOpen={handleCardClick} idx={idx} showDelete={showDelete} />
       </div>
     </div>
   );
 }
 
-function NoteCard({ note, onOpen, onDelete, idx, showDelete }: {
-  note: Note; onOpen: () => void; onDelete: () => void;
+function NoteCard({ note, onOpen, idx, showDelete }: {
+  note: Note; onOpen: () => void;
   idx: number; showDelete: boolean;
 }) {
   const meta     = TYPE_META[note.type];
@@ -128,21 +168,7 @@ function NoteCard({ note, onOpen, onDelete, idx, showDelete }: {
         position: 'relative',
       }}
     >
-      {/* Delete button (visible when swiped) */}
-      {showDelete && (
-        <button
-          onClick={e => { e.stopPropagation(); onDelete(); }}
-          style={{
-            position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-            background: 'rgba(180,50,50,0.9)', border: 'none', borderRadius: 10,
-            color: '#fff', cursor: 'pointer', padding: '6px 12px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
-            zIndex: 2,
-          }}
-        >
-          <Trash2 size={14} /> Удалить
-        </button>
-      )}
+
 
       {/* Top row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '9px', marginBottom: '7px' }}>

@@ -12,6 +12,7 @@ interface Props {
   onSave: (card: Flashcard) => void;
   onDelete: (id: string) => void;
   onRate: (card: Flashcard) => void;
+  onOpenAnki?: () => void;
 }
 
 type Mode = 'list' | 'create' | 'review';

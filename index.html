@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="dark">
+<html lang="ru" data-theme="dark" style="background:#15120e;color:#f0e2c8;height:100%;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -45,14 +45,78 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <style>
-      /* Prevent flash of unstyled content */
-      html { background: #1e1810; }
-      body { margin: 0; background: #1e1810; }
-      #root { min-height: 100dvh; }
+      /* Prevent flash of unstyled content — critical path styles */
+      *, *::before, *::after { box-sizing: border-box; }
+      html {
+        background: #15120e;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #0a0806;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Inter, sans-serif;
+      }
+      #root {
+        background: #15120e;
+        width: 100%;
+        max-width: 430px;
+        height: 100dvh;
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Splash loader */
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 16px;
+        background: #15120e;
+        z-index: 99999;
+        transition: opacity 0.4s;
+      }
+      #splash.hide { opacity: 0; pointer-events: none; }
+      #splash-icon {
+        width: 72px; height: 72px; border-radius: 22px;
+        background: linear-gradient(135deg, #262219, #363025);
+        border: 1px solid #38332c;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 36px;
+      }
+      #splash-spin {
+        width: 24px; height: 24px; border-radius: 50%;
+        border: 2px solid #38332c; border-top-color: #d4914a;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
     </style>
   </head>
   <body>
+    <!-- Splash screen — видим мгновенно, до загрузки JS -->
+    <div id="splash">
+      <div id="splash-icon">🪶</div>
+      <div id="splash-spin"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Скрываем splash когда React готов
+      window.__hideSplash = function() {
+        var s = document.getElementById('splash');
+        if (s) { s.classList.add('hide'); setTimeout(function(){ s.remove(); }, 500); }
+      };
+    </script>
   </body>
 </html>

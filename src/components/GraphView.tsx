@@ -6,6 +6,7 @@ interface Props {
   notes: Note[];
   books: Book[];
   onOpenNote: (note: Note) => void;
+  onBack: () => void;
 }
 
 interface GNode {
@@ -86,7 +87,7 @@ function buildGraph(notes: Note[], books: Book[]): { nodes: GNode[]; links: GLin
   return { nodes, links };
 }
 
-export default function GraphView({ notes, books, onOpenNote }: Props) {
+export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef   = useRef<HTMLDivElement>(null);
   const animRef   = useRef<number>(0);
@@ -320,13 +321,28 @@ export default function GraphView({ notes, books, onOpenNote }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '16px 16px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <h2 style={{ fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          Граф связей
-        </h2>
-        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)', margin: '3px 0 0' }}>
-          {nodes.length} узлов · {links.length} связей
-        </p>
+      <div style={{ padding: '16px 16px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+        onClick={onBack}
+        style={{
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 10, width: 34, height: 34, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0,
+        }}
+      >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div>
+          <h2 style={{ fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            Граф связей
+          </h2>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
+            {nodes.length} узлов · {links.length} связей
+          </p>
+        </div>
       </div>
 
       {/* Legend */}

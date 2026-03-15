@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Mail, Lock, User, Eye, EyeOff, ArrowRight, ChevronLeft,
-  BookOpen, Feather, Search, Bookmark, Sparkles, Cloud, RefreshCw,
+  BookOpen, Feather, Cloud, RefreshCw,
 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { User as UserType } from '../types';
@@ -52,14 +52,45 @@ const CARDS = [
   },
 ];
 
-const FEATURES = [
-  { icon: <BookOpen size={18} />, title: 'Библиотека книг', desc: 'Организуй книги, следи за прогрессом' },
-  { icon: <Feather size={18} />, title: 'Умные заметки', desc: 'Цитаты, инсайты, идеи с форматированием' },
-  { icon: <Search size={18} />, title: 'Мгновенный поиск', desc: 'Находи любую мысль за секунду' },
-  { icon: <Bookmark size={18} />, title: 'Теги и группировка', desc: 'Связывай идеи между книгами' },
-  { icon: <Cloud size={18} />, title: 'Облачное хранилище', desc: 'Данные синхронизированы в Supabase' },
-  { icon: <Sparkles size={18} />, title: '3 темы оформления', desc: 'Тёмная, светлая, сепия' },
+const ONBOARDING = [
+  {
+    emoji: '📚',
+    title: 'Библиотека знаний',
+    desc: 'Собирай книги, следи за прогрессом чтения, добавляй рейтинги',
+    color: '#c4813c',
+    tag: 'Организация',
+  },
+  {
+    emoji: '✍️',
+    title: 'Умные заметки',
+    desc: 'Цитаты, инсайты, идеи — с форматированием, тегами и привязкой к книге',
+    color: '#6a9e8a',
+    tag: 'Записи',
+  },
+  {
+    emoji: '🃏',
+    title: 'Карточки Anki',
+    desc: 'Превращай любую мысль в карточку для интервального повторения',
+    color: '#8a7a4a',
+    tag: 'Повторение',
+  },
+  {
+    emoji: '🔗',
+    title: 'Связи между идеями',
+    desc: 'Визуальный граф связей между записями — видь как идеи перекликаются',
+    color: '#7a6a9a',
+    tag: 'Граф',
+  },
+  {
+    emoji: '☁️',
+    title: 'Облачное хранилище',
+    desc: 'Все данные в Supabase — доступны с любого устройства в любое время',
+    color: '#5a8a9a',
+    tag: 'Синхронизация',
+  },
 ];
+
+
 
 function AnimatedCard({ card, isActive }: { card: typeof CARDS[0]; isActive: boolean }) {
   return (
@@ -144,11 +175,13 @@ export default function AuthScreen({ onAuth }: Props) {
   const [error, setError]       = useState('');
   const [info, setInfo]         = useState('');
   const [loading, setLoading]   = useState(false);
-  const [cardIdx, setCardIdx]   = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [cardIdx, setCardIdx]         = useState(0);
+  const [progress, setProgress]       = useState(0);
+  const [onbIdx, setOnbIdx]           = useState(0);
   const [cloudStatus, setCloudStatus] = useState<'idle' | 'ok' | 'error'>('idle');
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onbTimer     = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Check Supabase connection
   useEffect(() => {
@@ -156,6 +189,15 @@ export default function AuthScreen({ onAuth }: Props) {
       setCloudStatus(err ? 'error' : 'ok');
     });
   }, []);
+
+  // Onboarding carousel
+  useEffect(() => {
+    if (mode !== 'welcome') return;
+    onbTimer.current = setInterval(() => {
+      setOnbIdx(i => (i + 1) % ONBOARDING.length);
+    }, 3200);
+    return () => { if (onbTimer.current) clearInterval(onbTimer.current); };
+  }, [mode]);
 
   // Card carousel
   useEffect(() => {
@@ -501,17 +543,17 @@ export default function AuthScreen({ onAuth }: Props) {
 
         {/* Logo */}
         <div style={{
-          padding: 'calc(env(safe-area-inset-top,0px) + 36px) 24px 0',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+          padding: 'calc(env(safe-area-inset-top,0px) + 24px) 24px 0',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
         }}>
           <div className="fade-in" style={{
-            width: 74, height: 74, borderRadius: '24px',
+            width: 64, height: 64, borderRadius: '20px',
             background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-active))',
             border: '1px solid var(--border-mid)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           }}>
-            <Feather size={34} style={{ color: 'var(--accent)' }} strokeWidth={1.5} />
+            <Feather size={30} style={{ color: 'var(--accent)' }} strokeWidth={1.5} />
           </div>
 
           <div className="fade-in delay-1" style={{ textAlign: 'center' }}>
@@ -525,9 +567,9 @@ export default function AuthScreen({ onAuth }: Props) {
             <p style={{
               margin: '5px 0 0', fontSize: '13px',
               color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.04em',
             }}>
-              Дневник Разума
+              Пространство для глубокого чтения
             </p>
             {/* Cloud status badge */}
             <div style={{
@@ -549,11 +591,11 @@ export default function AuthScreen({ onAuth }: Props) {
 
         {/* Carousel */}
         <div className="fade-in delay-2" style={{
-          margin: '22px 18px 0',
+          margin: '20px 18px 0',
           borderRadius: '20px',
           background: 'var(--bg-card)',
           border: '1px solid var(--border-mid)',
-          height: 205,
+          height: 190,
           position: 'relative',
           overflow: 'hidden',
           boxShadow: 'var(--shadow)',
@@ -602,49 +644,91 @@ export default function AuthScreen({ onAuth }: Props) {
           </div>
         </div>
 
-        {/* Features */}
-        <div className="fade-in delay-3" style={{
-          margin: '18px 18px 0',
-          display: 'flex', flexDirection: 'column', gap: '7px',
-        }}>
-          {FEATURES.map((f, i) => (
-            <div key={i} className="card-hover" style={{
-              display: 'flex', alignItems: 'center', gap: '12px',
-              padding: '10px 13px', borderRadius: '14px',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-            }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: '10px',
-                background: 'var(--bg-active)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--accent)', flexShrink: 0,
+        {/* Onboarding slides */}
+        <div className="fade-in delay-3" style={{ margin: '16px 18px 0' }}>
+          {/* Slide card — fixed height, absolute children */}
+          <div style={{
+            borderRadius: '20px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-mid)',
+            overflow: 'hidden',
+            position: 'relative',
+            height: 170,
+            boxShadow: 'var(--shadow)',
+          }}>
+            {ONBOARDING.map((o, i) => (
+              <div key={i} style={{
+                position: 'absolute', inset: 0,
+                opacity: i === onbIdx ? 1 : 0,
+                transform: i === onbIdx ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.97)',
+                transition: 'opacity 0.55s ease, transform 0.55s cubic-bezier(0.22,1,0.36,1)',
+                pointerEvents: i === onbIdx ? 'auto' : 'none',
+                padding: '22px 20px 20px',
+                display: 'flex', alignItems: 'flex-start', gap: 16,
               }}>
-                {f.icon}
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                  {f.title}
+                {/* accent bar */}
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                  background: `linear-gradient(90deg, ${o.color}, transparent)`,
+                }} />
+                {/* icon */}
+                <div style={{
+                  width: 58, height: 58, borderRadius: '18px', flexShrink: 0,
+                  background: `${o.color}20`,
+                  border: `1.5px solid ${o.color}40`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 28,
+                  boxShadow: `0 4px 16px ${o.color}20`,
+                }}>{o.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    display: 'inline-block',
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+                    color: o.color, fontFamily: 'Inter, sans-serif',
+                    textTransform: 'uppercase', marginBottom: 6,
+                    padding: '2px 8px', borderRadius: 99,
+                    background: `${o.color}15`,
+                  }}>{o.tag}</div>
+                  <div style={{
+                    fontSize: 16, fontWeight: 700,
+                    color: 'var(--text-primary)', fontFamily: 'Lora, serif',
+                    marginBottom: 7, lineHeight: 1.3,
+                  }}>{o.title}</div>
+                  <div style={{
+                    fontSize: 13, color: 'var(--text-secondary)',
+                    fontFamily: 'Inter, sans-serif', lineHeight: 1.6,
+                  }}>{o.desc}</div>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px', fontFamily: 'Inter, sans-serif' }}>
-                  {f.desc}
-                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          {/* Dots */}
+          <div style={{
+            display: 'flex', justifyContent: 'center', gap: 6, marginTop: 8,
+          }}>
+            {ONBOARDING.map((o, i) => (
+              <button key={i} onClick={() => { setOnbIdx(i); if (onbTimer.current) clearInterval(onbTimer.current); }} style={{
+                width: i === onbIdx ? 20 : 5, height: 5, borderRadius: 99,
+                background: i === onbIdx ? o.color : 'var(--border-mid)',
+                border: 'none', cursor: 'pointer', padding: 0,
+                transition: 'all 0.35s cubic-bezier(0.22,1,0.36,1)',
+              }} />
+            ))}
+          </div>
+
         </div>
 
         {/* CTA */}
         <div className="fade-in delay-5" style={{
-          margin: '20px 18px',
-          marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
-          display: 'flex', flexDirection: 'column', gap: '10px',
+          margin: '16px 18px',
+          marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
+          display: 'flex', flexDirection: 'column', gap: '9px',
         }}>
           <button
             onClick={() => setMode('register')}
             style={{
-              width: '100%', padding: '16px',
-              borderRadius: '18px', border: 'none',
+              width: '100%', padding: '14px',
+              borderRadius: '16px', border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
               color: '#0e0c09', fontWeight: 700, fontSize: '15px',
               fontFamily: 'Inter, sans-serif',
@@ -664,8 +748,8 @@ export default function AuthScreen({ onAuth }: Props) {
           <button
             onClick={() => setMode('login')}
             style={{
-              width: '100%', padding: '15px',
-              borderRadius: '18px',
+              width: '100%', padding: '13px',
+              borderRadius: '16px',
               border: '1px solid var(--border-mid)',
               background: 'var(--bg-raised)',
               color: 'var(--text-primary)', fontWeight: 500, fontSize: '15px',

@@ -133,22 +133,35 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
     setIsSaved(false);
   }, [currentDate, getDailyNote]);
 
-  // Auto-save
+  // Manual save
+  const handleSave = () => {
+    try { navigator.vibrate?.(10); } catch {}
+    const updated: DailyNote = {
+      ...getDailyNote(currentDate),
+      content: textToHtml(textValue),
+      updatedAt: new Date().toISOString(),
+    };
+    onSave(updated);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  // Auto-save every 5 seconds if text changed
   useEffect(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    if (!textValue && !currentNote.mood) return;
+    if (!textValue) return;
     saveTimerRef.current = setTimeout(() => {
       const updated: DailyNote = {
-        ...currentNote,
+        ...getDailyNote(currentDate),
         content: textToHtml(textValue),
         updatedAt: new Date().toISOString(),
       };
       onSave(updated);
       setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2000);
-    }, 1000);
+      setTimeout(() => setIsSaved(false), 1500);
+    }, 5000);
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [textValue]); // eslint-disable-line
+  }, [textValue, currentDate]); // eslint-disable-line
 
   const handleMood = (mood: 1 | 2 | 3 | 4 | 5) => {
     try { navigator.vibrate?.(8); } catch {}
@@ -391,16 +404,35 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               {wordCount} {wordCount === 1 ? 'слово' : wordCount < 5 ? 'слова' : 'слов'}
               &nbsp;·&nbsp;{charCount} симв.
             </span>
-            {isSaved && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                fontSize: 11, color: '#6a9e8a',
-                fontFamily: 'Inter,sans-serif',
-                animation: 'fadeIn 0.2s ease',
-              }}>
-                <CheckCircle2 size={12} /> Сохранено
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isSaved && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  fontSize: 11, color: '#6a9e8a',
+                  fontFamily: 'Inter,sans-serif',
+                  animation: 'fadeIn 0.2s ease',
+                }}>
+                  <CheckCircle2 size={12} /> Сохранено
+                </div>
+              )}
+              <button
+                onClick={handleSave}
+                style={{
+                  padding: '5px 12px', borderRadius: 8,
+                  background: textValue.trim()
+                    ? 'linear-gradient(135deg, var(--accent), var(--accent-soft))'
+                    : 'var(--bg-raised)',
+                  border: textValue.trim() ? 'none' : '1px solid var(--border)',
+                  color: textValue.trim() ? '#0e0c09' : 'var(--text-muted)',
+                  fontSize: 12, fontWeight: 600,
+                  fontFamily: 'Inter, sans-serif',
+                  cursor: textValue.trim() ? 'pointer' : 'default',
+                  transition: 'all 0.2s',
+                }}
+              >
+                Сохранить
+              </button>
+            </div>
           </div>
         </div>
 

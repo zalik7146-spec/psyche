@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Book, Note, Tag, AppState } from './types';
+import { Book, Note, Tag, AppState, DailyNote } from './types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -121,6 +121,42 @@ export async function cloudSaveTag(tag: Tag, userId: string) {
   } catch (e) { console.warn('cloudSaveTag failed:', e); }
 }
 
+// ── daily notes ───────────────────────────────────────────────────────────────
+
+function dailyNoteToDb(d: DailyNote, userId: string) {
+  return {
+    id: d.id, user_id: userId, date: d.date,
+    content: d.content, mood: d.mood,
+    created_at: d.createdAt, updated_at: d.updatedAt,
+  };
+}
+
+function dbToDailyNote(r: Record<string, unknown>): DailyNote {
+  return {
+    id: r.id as string, date: r.date as string,
+    content: r.content as string, mood: r.mood as DailyNote['mood'],
+    linkedNoteIds: (r.linked_note_ids as string[]) || [],
+    createdAt: r.created_at as string, updatedAt: r.updated_at as string,
+  };
+}
+
+export async function cloudSaveDailyNote(dn: DailyNote, userId: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('daily_notes') as any).upsert(dailyNoteToDb(dn, userId), { onConflict: 'id' });
+  } catch (e) { console.warn('cloudSaveDailyNote failed:', e); }
+}
+
+export async function loadCloudDailyNotes(userId: string): Promise<DailyNote[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.from('daily_notes') as any)
+      .select('*').eq('user_id', userId).order('date', { ascending: false });
+    if (error) return [];
+    return (data || []).map(dbToDailyNote);
+  } catch { return []; }
+}
+
 // ── bulk sync ─────────────────────────────────────────────────────────────────
 
 export async function syncLocalToCloud(state: AppState, userId: string) {
@@ -129,6 +165,7 @@ export async function syncLocalToCloud(state: AppState, userId: string) {
       ...state.books.map(b => cloudSaveBook(b, userId)),
       ...state.notes.map(n => cloudSaveNote(n, userId)),
       ...state.tags.map(t => cloudSaveTag(t, userId)),
+      ...state.dailyNotes.map(d => cloudSaveDailyNote(d, userId)),
     ]);
   } catch (e) { console.warn('syncLocalToCloud failed:', e); }
 }
