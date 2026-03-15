@@ -1,89 +1,58 @@
--- ════════════════════════════════════════════════════
--- PSYCHE APP — Supabase Setup SQL
--- Выполни этот файл в Supabase SQL Editor
--- Project: rputpotpsxivoulxbxoi
--- ════════════════════════════════════════════════════
+<!doctype html>
+<html lang="ru" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
--- 1. BOOKS
-create table if not exists public.books (
-  id           text primary key,
-  user_id      uuid not null references auth.users(id) on delete cascade,
-  title        text not null default '',
-  author       text not null default '',
-  genre        text,
-  description  text,
-  status       text not null default 'want',
-  color        text not null default '#b07d4a',
-  cover_emoji  text not null default '📚',
-  rating       integer,
-  total_pages  integer,
-  current_page integer,
-  tags         text[],
-  started_at   text,
-  finished_at  text,
-  created_at   text not null default (now()::text)
-);
+    <!-- PWA Core -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Psyche" />
+    <meta name="application-name" content="Psyche" />
+    <meta name="theme-color" content="#1e1810" />
+    <meta name="msapplication-TileColor" content="#1e1810" />
+    <meta name="msapplication-tap-highlight" content="no" />
 
--- 2. NOTES
-create table if not exists public.notes (
-  id              text primary key,
-  user_id         uuid not null references auth.users(id) on delete cascade,
-  book_id         text,
-  type            text not null default 'note',
-  title           text not null default '',
-  content         text not null default '',
-  quote           text,
-  quote_color     text,
-  tags            text[],
-  color           text,
-  is_pinned       boolean not null default false,
-  is_favorite     boolean not null default false,
-  page            integer,
-  chapter         text,
-  word_count      integer,
-  linked_note_ids text[],
-  template_id     text,
-  created_at      text not null default (now()::text),
-  updated_at      text not null default (now()::text)
-);
+    <!-- SEO -->
+    <meta name="description" content="Psyche — пространство для штудирования книг, мыслей и инсайтов. Умный дневник психолога." />
+    <meta name="keywords" content="заметки, книги, психология, дневник, штудирование, инсайты" />
+    <meta name="author" content="Psyche App" />
 
--- 3. TAGS
-create table if not exists public.tags (
-  id         text primary key,
-  user_id    uuid not null references auth.users(id) on delete cascade,
-  name       text not null,
-  color      text not null default '#b07d4a',
-  created_at text not null default (now()::text)
-);
+    <!-- Open Graph -->
+    <meta property="og:title" content="Psyche — Дневник Разума" />
+    <meta property="og:description" content="Пространство для штудирования книг и записи мыслей" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon.svg" />
 
--- ── Row Level Security ──────────────────────────────
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg" />
+    <link rel="manifest" href="/manifest.json" />
 
-alter table public.books enable row level security;
-alter table public.notes enable row level security;
-alter table public.tags  enable row level security;
+    <!-- Splash screens for iPhone -->
+    <meta name="apple-touch-fullscreen" content="yes" />
 
--- Удаляем старые политики если есть
-drop policy if exists "books_user" on public.books;
-drop policy if exists "notes_user" on public.notes;
-drop policy if exists "tags_user"  on public.tags;
+    <title>Psyche — Дневник Разума</title>
 
--- Создаём новые политики
-create policy "books_user" on public.books
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+    <!-- Allow Supabase connections -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com data: blob:;" />
 
-create policy "notes_user" on public.notes
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-create policy "tags_user" on public.tags
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
--- ── Индексы для производительности ─────────────────
-
-create index if not exists books_user_idx on public.books(user_id);
-create index if not exists notes_user_idx on public.notes(user_id);
-create index if not exists notes_book_idx on public.notes(book_id);
-create index if not exists tags_user_idx  on public.tags(user_id);
-
--- ════════════════════════════════════════════════════
--- ГОТОВО! Таблицы созданы, RLS настроен.
--- ════════════════════════════════════════════════════
+    <style>
+      /* Prevent flash of unstyled content */
+      html { background: #1e1810; }
+      body { margin: 0; background: #1e1810; }
+      #root { min-height: 100dvh; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
