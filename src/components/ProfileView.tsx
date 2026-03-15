@@ -103,7 +103,7 @@ export default function ProfileView({
   useEffect(() => {
     Promise.all([
       getMyProfile(user.id),
-      getUserPosts(user.id),
+      getUserPosts(user.id, user.id),
     ]).then(([p, ps]) => {
       if (p) {
         setProfile(p);

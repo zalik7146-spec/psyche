@@ -381,7 +381,6 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
         bookAuthor: selectedBook?.author,
         bookEmoji: selectedBook?.coverEmoji,
         tags: selectedTags,
-        createdAt: new Date().toISOString(),
       });
       if (post) {
         onCreated(post);
@@ -565,7 +564,7 @@ function ProfileSheet({ profile, currentUserId, onClose }: {
 
   useEffect(() => {
     isFollowing(currentUserId, profile.id).then(setFollowing);
-    getUserPosts(profile.id).then(setPosts);
+    getUserPosts(profile.id, currentUserId).then(setPosts);
   }, [profile.id]); // eslint-disable-line
 
   const handleFollow = () => {
