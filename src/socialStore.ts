@@ -132,7 +132,7 @@ export async function upsertProfile(
   } catch { return null; }
 }
 
-export async function searchProfiles(query: string): Promise<SocialProfile[]> {
+export async function searchProfiles(query: string, _excludeUserId?: string): Promise<SocialProfile[]> {
   try {
     const { data } = await supabase
       .from('social_profiles')
@@ -359,11 +359,7 @@ export async function createPost(post: {
   }
 }
 
-export async function deletePost(postId: string): Promise<void> {
-  try {
-    await supabase.from('social_posts').delete().eq('id', postId);
-  } catch { /* ignore */ }
-}
+// deletePost is defined below with full signature
 
 // ── Likes ────────────────────────────────────────────────────────────────────
 export async function toggleLike(
@@ -627,4 +623,29 @@ export async function toggleFollow(
       return true;
     }
   } catch { return isFollowing; }
+}
+
+export async function deletePost(postId: string, userId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('social_posts')
+      .delete()
+      .eq('id', postId)
+      .eq('user_id', userId);
+    if (error) { console.error('deletePost error:', error); return false; }
+    return true;
+  } catch (e) { console.error('deletePost error:', e); return false; }
+}
+
+export async function updatePost(postId: string, data: { content?: string; title?: string }): Promise<SocialPost | null> {
+  try {
+    const { data: updated, error } = await supabase
+      .from('social_posts')
+      .update({ content: data.content, title: data.title })
+      .eq('id', postId)
+      .select()
+      .single();
+    if (error || !updated) { console.error('updatePost error:', error); return null; }
+    return mapPost(updated as Record<string, unknown>, undefined, false, false);
+  } catch (e) { console.error('updatePost error:', e); return null; }
 }

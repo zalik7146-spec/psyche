@@ -146,7 +146,7 @@ export default function ProfileView({
   const handleDeletePost = async (postId: string) => {
     if (!confirm('Удалить публикацию?')) return;
     vibe(10);
-    await deletePost(postId);
+    await deletePost(postId, user.id);
     setPosts(prev => prev.filter(p => p.id !== postId));
   };
 
