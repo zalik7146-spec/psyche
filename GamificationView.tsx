@@ -1,603 +1,426 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  ChevronLeft, ChevronRight, BookOpen, Link2,
-  CheckCircle2, Lightbulb, Flame, BarChart2, Quote,
-} from 'lucide-react';
-import { DailyNote, Note } from '../types';
-import { createDailyNote } from '../store';
+import { useMemo } from 'react';
+import { Note, Book, DailyNote } from '../types';
 
 interface Props {
-  dailyNotes: DailyNote[];
   notes: Note[];
-  onSave: (dn: DailyNote) => void;
-  onOpenNote: (note: Note) => void;
+  books: Book[];
+  dailyNotes: DailyNote[];
+  onBack: () => void;
 }
 
-const MOODS = [
-  { value: 1, emoji: '😔', label: 'Тяжело',     color: '#8a5a5a' },
-  { value: 2, emoji: '😕', label: 'Сложно',     color: '#8a7a5a' },
-  { value: 3, emoji: '😐', label: 'Нейтрально', color: '#7a8a7a' },
-  { value: 4, emoji: '🙂', label: 'Хорошо',     color: '#6a8a7a' },
-  { value: 5, emoji: '😊', label: 'Отлично',    color: '#5a8a6a' },
+interface Badge {
+  id: string;
+  emoji: string;
+  title: string;
+  desc: string;
+  earned: boolean;
+  progress?: number;
+  total?: number;
+  color: string;
+}
+
+interface Level {
+  level: number;
+  title: string;
+  emoji: string;
+  minXP: number;
+  maxXP: number;
+  color: string;
+}
+
+const LEVELS: Level[] = [
+  { level: 1,  title: 'Новичок',       emoji: '🌱', minXP: 0,    maxXP: 50,   color: '#72b472' },
+  { level: 2,  title: 'Читатель',      emoji: '📖', minXP: 50,   maxXP: 150,  color: '#7ab4a4' },
+  { level: 3,  title: 'Исследователь', emoji: '🔍', minXP: 150,  maxXP: 300,  color: '#7a8ab4' },
+  { level: 4,  title: 'Аналитик',      emoji: '🧪', minXP: 300,  maxXP: 500,  color: '#a47ab4' },
+  { level: 5,  title: 'Мыслитель',     emoji: '💭', minXP: 500,  maxXP: 800,  color: '#b47a7a' },
+  { level: 6,  title: 'Мудрец',        emoji: '🦉', minXP: 800,  maxXP: 1200, color: '#d4a84e' },
+  { level: 7,  title: 'Философ',       emoji: '⚗️', minXP: 1200, maxXP: 1800, color: '#d4914a' },
+  { level: 8,  title: 'Психолог',      emoji: '🧠', minXP: 1800, maxXP: 2500, color: '#c8806a' },
+  { level: 9,  title: 'Наставник',     emoji: '🎓', minXP: 2500, maxXP: 3500, color: '#b46a7a' },
+  { level: 10, title: 'Архивариус',    emoji: '📚', minXP: 3500, maxXP: 9999, color: '#d4914a' },
 ];
 
-// Вдохновляющие вопросы-подсказки для психолога
-const PROMPTS = [
-  'Какая мысль сегодня не даёт покоя?',
-  'Что ты заметил в себе сегодня, чего раньше не замечал?',
-  'Какой инсайт принесла сегодняшняя работа?',
-  'Что ты хочешь запомнить из сегодняшнего дня?',
-  'Какую книгу или идею хочется поразмышлять сегодня?',
-  'Что тебя удивило или озадачило сегодня?',
-  'Какой вопрос ты бы хотел задать себе завтра?',
-  'Что ты чувствуешь прямо сейчас — и почему?',
-  'Какая встреча или разговор запомнились больше всего?',
-  'Что из прочитанного сегодня резонирует с тобой?',
-];
-
-// Случайная психологическая цитата
-const QUOTES = [
-  { text: 'Тот, кто знает «зачем», может вынести любое «как».', author: 'Фридрих Ницше' },
-  { text: 'Между стимулом и реакцией есть пространство. В этом пространстве — наша свобода.', author: 'Виктор Франкл' },
-  { text: 'Мы не видим мир таким, какой он есть. Мы видим его таким, какие мы есть.', author: 'Анаис Нин' },
-  { text: 'Всё, что нас раздражает в других, может помочь нам понять себя.', author: 'Карл Юнг' },
-  { text: 'Осознанность — это замечать мысли без того, чтобы ими становиться.', author: 'Дэниел Сигел' },
-  { text: 'Эмоции — это данные, а не директивы.', author: 'Сьюзан Дэвид' },
-  { text: 'Любопытство убивает тревогу. Будьте любопытны, а не тревожны.', author: 'Тодд Кашдан' },
-  { text: 'Принятие — это не согласие. Это видение реальности такой, какая она есть.', author: 'Тара Брах' },
-];
-
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+function getLevel(xp: number): Level {
+  let result = LEVELS[0];
+  for (const l of LEVELS) { if (xp >= l.minXP) result = l; }
+  return result;
 }
 
-function formatDisplayDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00');
-  const today = formatDate(new Date());
-  const yesterday = formatDate(new Date(Date.now() - 86400000));
-  if (dateStr === today) return 'Сегодня';
-  if (dateStr === yesterday) return 'Вчера';
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-}
-
-function getDayOfWeek(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('ru-RU', { weekday: 'long' });
-}
-
-function htmlToText(html: string): string {
-  if (!html) return '';
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
-function textToHtml(text: string): string {
-  return text
-    .split('\n')
-    .map(line => `<p>${line || '<br>'}</p>`)
-    .join('');
-}
-
-// Стрик — количество дней подряд с записями
-function calcStreak(dailyNotes: DailyNote[]): number {
-  const today = formatDate(new Date());
+function calcStreak(notes: Note[], dailyNotes: DailyNote[]): number {
+  const days = new Set<string>();
+  [...notes, ...dailyNotes].forEach(n => {
+    days.add(n.createdAt.slice(0, 10));
+  });
   let streak = 0;
-  let d = new Date();
-  while (true) {
-    const dateStr = formatDate(d);
-    const note = dailyNotes.find(n => n.date === dateStr);
-    const hasContent = note && (htmlToText(note.content).length > 0 || note.mood);
-    if (!hasContent && dateStr !== today) break;
-    if (hasContent) streak++;
-    d.setDate(d.getDate() - 1);
-    if (streak > 365) break;
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (days.has(key)) streak++;
+    else if (i > 0) break;
   }
   return streak;
 }
 
-export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }: Props) {
-  const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
-  const [isSaved, setIsSaved] = useState(false);
-  const [showLinked, setShowLinked] = useState(false);
-  const [textValue, setTextValue] = useState('');
-  const [activePrompt, setActivePrompt] = useState(0);
-  const [showQuote, setShowQuote] = useState(true);
-  const [quoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length));
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export default function GamificationView({ notes, books, dailyNotes, onBack }: Props) {
+  const stats = useMemo(() => {
+    const totalNotes = notes.length;
+    const totalBooks = books.length;
+    const finishedBooks = books.filter(b => b.status === 'finished').length;
+    const totalWords = notes.reduce((acc, n) => acc + (n.wordCount || 0), 0);
+    const totalQuotes = notes.filter(n => n.type === 'quote').length;
+    const totalInsights = notes.filter(n => n.type === 'insight').length;
+    const totalFavorites = notes.filter(n => n.isFavorite).length;
+    const streak = calcStreak(notes, dailyNotes);
+    const totalDailyNotes = dailyNotes.length;
+    const hasLinkedNotes = notes.some(n => (n.linkedNoteIds?.length || 0) > 0);
+    const uniqueTags = new Set(notes.flatMap(n => n.tags || [])).size;
 
-  // Ротация промпта раз в минуту
-  useEffect(() => {
-    const todayIdx = new Date().getDate() % PROMPTS.length;
-    setActivePrompt(todayIdx);
-  }, [currentDate]);
+    // XP calculation
+    const xp =
+      totalNotes * 10 +
+      totalBooks * 20 +
+      finishedBooks * 50 +
+      totalWords * 0.05 +
+      totalQuotes * 15 +
+      totalInsights * 20 +
+      streak * 25 +
+      totalDailyNotes * 8 +
+      uniqueTags * 5;
 
-  const getDailyNote = useCallback((date: string): DailyNote => {
-    return dailyNotes.find(d => d.date === date) || createDailyNote(date);
-  }, [dailyNotes]);
+    const currentLevel = getLevel(Math.floor(xp));
+    const nextLevel = LEVELS[currentLevel.level] || currentLevel;
+    const xpInLevel = Math.floor(xp) - currentLevel.minXP;
+    const xpToNext = nextLevel.maxXP - currentLevel.minXP;
+    const progress = Math.min(xpInLevel / xpToNext, 1);
 
-  const currentNote = getDailyNote(currentDate);
-
-  useEffect(() => {
-    const note = getDailyNote(currentDate);
-    setTextValue(htmlToText(note.content));
-    setIsSaved(false);
-  }, [currentDate, getDailyNote]);
-
-  // Auto-save
-  useEffect(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    if (!textValue && !currentNote.mood) return;
-    saveTimerRef.current = setTimeout(() => {
-      const updated: DailyNote = {
-        ...currentNote,
-        content: textToHtml(textValue),
-        updatedAt: new Date().toISOString(),
-      };
-      onSave(updated);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2000);
-    }, 1000);
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [textValue]); // eslint-disable-line
-
-  const handleMood = (mood: 1 | 2 | 3 | 4 | 5) => {
-    try { navigator.vibrate?.(8); } catch {}
-    const updated: DailyNote = {
-      ...currentNote,
-      content: textToHtml(textValue),
-      mood,
-      updatedAt: new Date().toISOString(),
+    return {
+      totalNotes, totalBooks, finishedBooks, totalWords, totalQuotes,
+      totalInsights, totalFavorites, streak, totalDailyNotes,
+      hasLinkedNotes, uniqueTags,
+      xp: Math.floor(xp), currentLevel, nextLevel, progress,
     };
-    onSave(updated);
-  };
+  }, [notes, books, dailyNotes]);
 
-  const goBack = () => {
-    const d = new Date(currentDate + 'T12:00:00');
-    d.setDate(d.getDate() - 1);
-    setCurrentDate(formatDate(d));
-    try { navigator.vibrate?.(6); } catch {}
-  };
+  const badges: Badge[] = useMemo(() => [
+    {
+      id: 'first_note',
+      emoji: '✍️', title: 'Первая запись', color: '#72b472',
+      desc: 'Создай свою первую заметку',
+      earned: stats.totalNotes >= 1,
+    },
+    {
+      id: 'ten_notes',
+      emoji: '📝', title: 'Записной', color: '#7ab4a4',
+      desc: '10 записей в дневнике',
+      earned: stats.totalNotes >= 10,
+      progress: Math.min(stats.totalNotes, 10), total: 10,
+    },
+    {
+      id: 'fifty_notes',
+      emoji: '🗂️', title: 'Архивариус', color: '#d4a84e',
+      desc: '50 записей — серьёзный архив',
+      earned: stats.totalNotes >= 50,
+      progress: Math.min(stats.totalNotes, 50), total: 50,
+    },
+    {
+      id: 'first_book',
+      emoji: '📚', title: 'Библиофил', color: '#d4914a',
+      desc: 'Добавь первую книгу в библиотеку',
+      earned: stats.totalBooks >= 1,
+    },
+    {
+      id: 'finished_book',
+      emoji: '🏆', title: 'Дочитал!', color: '#d4a84e',
+      desc: 'Отметь книгу как прочитанную',
+      earned: stats.finishedBooks >= 1,
+    },
+    {
+      id: 'five_books',
+      emoji: '📖', title: 'Читатель', color: '#c8a882',
+      desc: '5 прочитанных книг',
+      earned: stats.finishedBooks >= 5,
+      progress: Math.min(stats.finishedBooks, 5), total: 5,
+    },
+    {
+      id: 'streak_3',
+      emoji: '🔥', title: 'Три дня подряд', color: '#c86060',
+      desc: '3 дня без перерыва',
+      earned: stats.streak >= 3,
+      progress: Math.min(stats.streak, 3), total: 3,
+    },
+    {
+      id: 'streak_7',
+      emoji: '⚡', title: 'Неделя', color: '#8a7ab4',
+      desc: '7 дней без перерыва',
+      earned: stats.streak >= 7,
+      progress: Math.min(stats.streak, 7), total: 7,
+    },
+    {
+      id: 'streak_30',
+      emoji: '🌟', title: 'Месяц', color: '#d4a84e',
+      desc: '30 дней без перерыва',
+      earned: stats.streak >= 30,
+      progress: Math.min(stats.streak, 30), total: 30,
+    },
+    {
+      id: 'quotes',
+      emoji: '💬', title: 'Коллекционер цитат', color: '#7a8ab4',
+      desc: '10 цитат из книг',
+      earned: stats.totalQuotes >= 10,
+      progress: Math.min(stats.totalQuotes, 10), total: 10,
+    },
+    {
+      id: 'insights',
+      emoji: '💡', title: 'Мыслитель', color: '#a47ab4',
+      desc: '5 инсайтов — ты глубоко мыслишь',
+      earned: stats.totalInsights >= 5,
+      progress: Math.min(stats.totalInsights, 5), total: 5,
+    },
+    {
+      id: 'words_1000',
+      emoji: '✒️', title: 'Тысяча слов', color: '#b47a7a',
+      desc: '1000 слов написано',
+      earned: stats.totalWords >= 1000,
+      progress: Math.min(stats.totalWords, 1000), total: 1000,
+    },
+    {
+      id: 'journal',
+      emoji: '📔', title: 'Журналист', color: '#7ab4a4',
+      desc: 'Сделай 7 записей в журнале дня',
+      earned: stats.totalDailyNotes >= 7,
+      progress: Math.min(stats.totalDailyNotes, 7), total: 7,
+    },
+    {
+      id: 'tags',
+      emoji: '🏷️', title: 'Организатор', color: '#72b472',
+      desc: 'Используй 5 разных тегов',
+      earned: stats.uniqueTags >= 5,
+      progress: Math.min(stats.uniqueTags, 5), total: 5,
+    },
+    {
+      id: 'linked',
+      emoji: '🔗', title: 'Связист', color: '#8a7ab4',
+      desc: 'Свяжи две записи между собой',
+      earned: stats.hasLinkedNotes,
+    },
+    {
+      id: 'favorites',
+      emoji: '⭐', title: 'Любимчики', color: '#d4a84e',
+      desc: 'Добавь 5 записей в избранное',
+      earned: stats.totalFavorites >= 5,
+      progress: Math.min(stats.totalFavorites, 5), total: 5,
+    },
+  ], [stats]);
 
-  const goForward = () => {
-    const today = formatDate(new Date());
-    if (currentDate >= today) return;
-    const d = new Date(currentDate + 'T12:00:00');
-    d.setDate(d.getDate() + 1);
-    setCurrentDate(formatDate(d));
-    try { navigator.vibrate?.(6); } catch {}
-  };
-
-  const isToday = currentDate === formatDate(new Date());
-  const linkedNotes = notes.filter(n => formatDate(new Date(n.createdAt)) === currentDate);
-  const wordCount = textValue.trim() ? textValue.trim().split(/\s+/).length : 0;
-  const charCount = textValue.length;
-  const streak = calcStreak(dailyNotes);
-  const totalEntries = dailyNotes.filter(d => htmlToText(d.content).length > 0).length;
-  const moodLabel = currentNote.mood ? MOODS.find(m => m.value === currentNote.mood)?.label : null;
-  const moodColor = currentNote.mood ? MOODS.find(m => m.value === currentNote.mood)?.color : null;
-
-  // Последние 7 дней — заполненность
-  const last7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const dateStr = formatDate(d);
-    const note = dailyNotes.find(n => n.date === dateStr);
-    const filled = note && (htmlToText(note.content).length > 10 || note.mood);
-    return { dateStr, filled, mood: note?.mood };
-  });
+  const earned = badges.filter(b => b.earned).length;
+  const lv = stats.currentLevel;
 
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100%', overflow: 'hidden',
-      background: 'var(--bg-base)',
+      height: '100%', background: 'var(--bg-base)', overflow: 'hidden',
     }}>
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* Header */}
       <div style={{
-        paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
-        paddingBottom: 12,
-        paddingLeft: 16, paddingRight: 16,
-        background: 'var(--bg-base)',
+        padding: '16px 16px 12px',
         borderBottom: '1px solid var(--border)',
-        flexShrink: 0,
+        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12,
       }}>
-        {/* Date navigation */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 12,
-        }}>
-          <button onClick={goBack} style={{
-            width: 36, height: 36, borderRadius: 11,
-            background: 'var(--bg-raised)', border: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: 'var(--text-secondary)',
-          }}><ChevronLeft size={18} /></button>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              fontSize: 20, fontWeight: 700,
-              fontFamily: 'Lora, serif',
-              color: 'var(--text-primary)',
-              lineHeight: 1.2,
-            }}>
-              {formatDisplayDate(currentDate)}
-            </div>
-            <div style={{
-              fontSize: 12, color: 'var(--text-muted)',
-              fontFamily: 'Inter, sans-serif',
-              textTransform: 'capitalize', marginTop: 2,
-            }}>
-              {getDayOfWeek(currentDate)}
-              {moodLabel && (
-                <span style={{ marginLeft: 8, color: moodColor || 'var(--text-muted)' }}>
-                  · {moodLabel}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <button onClick={goForward} disabled={isToday} style={{
-            width: 36, height: 36, borderRadius: 11,
-            background: 'var(--bg-raised)', border: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: isToday ? 'default' : 'pointer',
-            color: isToday ? 'var(--border-mid)' : 'var(--text-secondary)',
-            opacity: isToday ? 0.4 : 1,
-          }}><ChevronRight size={18} /></button>
-        </div>
-
-        {/* Mood selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{
-            fontSize: 10, color: 'var(--text-muted)',
-            fontFamily: 'Inter,sans-serif',
-            textTransform: 'uppercase', letterSpacing: '0.07em',
-            flexShrink: 0,
-          }}>Настроение</span>
-          <div style={{ display: 'flex', gap: 5, flex: 1 }}>
-            {MOODS.map(m => (
-              <button
-                key={m.value}
-                onClick={() => handleMood(m.value as 1|2|3|4|5)}
-                title={m.label}
-                style={{
-                  flex: 1, height: 34, borderRadius: 10,
-                  background: currentNote.mood === m.value ? 'var(--bg-active)' : 'var(--bg-raised)',
-                  border: currentNote.mood === m.value ? `1.5px solid ${m.color}` : '1px solid var(--border)',
-                  cursor: 'pointer', fontSize: 17,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.15s',
-                  transform: currentNote.mood === m.value ? 'scale(1.15)' : 'scale(1)',
-                }}
-              >{m.emoji}</button>
-            ))}
-          </div>
+        <button
+        onClick={onBack}
+        style={{
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 10, width: 34, height: 34, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0,
+        }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div>
+          <h2 style={{
+            fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700,
+            color: 'var(--text-primary)', margin: 0,
+          }}>Достижения</h2>
+          <p style={{
+            fontFamily: 'Inter, sans-serif', fontSize: 12,
+            color: 'var(--text-muted)', margin: '2px 0 0',
+          }}>
+            {earned} из {badges.length} бейджей получено
+          </p>
         </div>
       </div>
 
-      {/* ── Scrollable body ───────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
 
-        {/* Quote of the day — only on today, collapsible */}
-        {isToday && showQuote && (
-          <div
-            style={{
-              margin: '12px 16px 0',
-              padding: '12px 14px',
-              borderRadius: 14,
-              background: 'var(--bg-raised)',
-              border: '1px solid var(--border)',
-              animation: 'fadeUp 0.3s ease',
-              position: 'relative',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <Quote size={14} color="var(--accent)" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ flex: 1 }}>
-                <p style={{
-                  fontSize: 13, lineHeight: 1.55,
-                  color: 'var(--text-secondary)',
-                  fontFamily: 'Lora, serif',
-                  fontStyle: 'italic',
-                  margin: 0, marginBottom: 4,
-                }}>{QUOTES[quoteIdx].text}</p>
-                <p style={{
-                  fontSize: 11, color: 'var(--text-muted)',
-                  fontFamily: 'Inter, sans-serif',
-                  margin: 0,
-                }}>— {QUOTES[quoteIdx].author}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowQuote(false)}
-              style={{
-                position: 'absolute', top: 8, right: 8,
-                width: 20, height: 20, borderRadius: 6,
-                background: 'var(--bg-active)', border: 'none',
-                cursor: 'pointer', color: 'var(--text-muted)',
-                fontSize: 11, lineHeight: 1,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >✕</button>
-          </div>
-        )}
-
-        {/* Writing prompt */}
-        <div style={{ margin: '10px 16px 0' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            padding: '9px 12px',
-            borderRadius: 11,
-            background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-active))',
-            border: '1px solid var(--border)',
-          }}>
-            <Lightbulb size={13} color="var(--gold)" />
-            <span style={{
-              fontSize: 12, color: 'var(--text-secondary)',
-              fontFamily: 'Inter, sans-serif', lineHeight: 1.4,
-              fontStyle: 'italic',
-            }}>{PROMPTS[activePrompt]}</span>
-          </div>
-        </div>
-
-        {/* Textarea — main writing area */}
+        {/* Level card */}
         <div style={{
-          margin: '10px 16px 0',
-          borderRadius: 14,
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-mid)',
-          overflow: 'hidden',
-          flexShrink: 0,
+          background: `linear-gradient(135deg, ${lv.color}18, ${lv.color}08)`,
+          border: `1.5px solid ${lv.color}40`,
+          borderRadius: 20,
+          padding: '20px',
+          marginBottom: 20,
+          animation: 'fadeSlideUp 0.4s ease both',
         }}>
-          <textarea
-            ref={textareaRef}
-            value={textValue}
-            onChange={e => setTextValue(e.target.value)}
-            placeholder="Начни писать здесь..."
-            rows={10}
-            style={{
-              width: '100%',
-              padding: '16px',
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: 15.5,
-              lineHeight: 1.78,
-              color: 'var(--text-primary)',
-              fontFamily: 'Lora, Georgia, serif',
-              boxSizing: 'border-box',
-              caretColor: 'var(--accent)',
-              minHeight: 200,
-            }}
-          />
-          {/* Word / char count bar */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '8px 14px',
-            borderTop: '1px solid var(--border)',
-          }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
-              {wordCount} {wordCount === 1 ? 'слово' : wordCount < 5 ? 'слова' : 'слов'}
-              &nbsp;·&nbsp;{charCount} симв.
-            </span>
-            {isSaved && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 20,
+              background: `${lv.color}22`,
+              border: `2px solid ${lv.color}60`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 32,
+            }}>{lv.emoji}</div>
+            <div style={{ flex: 1 }}>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                fontSize: 11, color: '#6a9e8a',
-                fontFamily: 'Inter,sans-serif',
-                animation: 'fadeIn 0.2s ease',
-              }}>
-                <CheckCircle2 size={12} /> Сохранено
-              </div>
-            )}
+                fontFamily: 'Inter, sans-serif', fontSize: 11,
+                color: 'var(--text-muted)', marginBottom: 2,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}>Уровень {lv.level}</div>
+              <div style={{
+                fontFamily: 'Lora, serif', fontSize: 22, fontWeight: 700,
+                color: 'var(--text-primary)', lineHeight: 1.2,
+              }}>{lv.title}</div>
+              <div style={{
+                fontFamily: 'Inter, sans-serif', fontSize: 13,
+                color: lv.color, marginTop: 2, fontWeight: 600,
+              }}>{stats.xp} XP</div>
+            </div>
+          </div>
+
+          {/* XP Progress */}
+          <div style={{ marginTop: 16 }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between',
+              fontFamily: 'Inter, sans-serif', fontSize: 11,
+              color: 'var(--text-muted)', marginBottom: 6,
+            }}>
+              <span>{stats.xp - lv.minXP} / {stats.nextLevel.maxXP - lv.minXP} XP до «{stats.nextLevel.title}»</span>
+              <span>{Math.round(stats.progress * 100)}%</span>
+            </div>
+            <div style={{
+              height: 8, background: 'var(--bg-raised)',
+              borderRadius: 99, overflow: 'hidden',
+              border: '1px solid var(--border)',
+            }}>
+              <div style={{
+                height: '100%', width: `${stats.progress * 100}%`,
+                background: `linear-gradient(90deg, ${lv.color}, ${lv.color}aa)`,
+                borderRadius: 99,
+                transition: 'width 1s cubic-bezier(0.22,1,0.36,1)',
+              }} />
+            </div>
           </div>
         </div>
 
         {/* Stats row */}
         <div style={{
-          margin: '12px 16px 0',
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 8,
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10,
+          marginBottom: 20,
         }}>
-          {/* Streak */}
-          <div style={{
-            padding: '12px 10px',
-            borderRadius: 12,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            textAlign: 'center',
-            animation: 'card-enter 0.35s ease 0.05s both',
-          }}>
-            <div style={{ fontSize: 20, marginBottom: 3 }}>
-              <Flame size={18} color={streak > 0 ? '#d4914a' : 'var(--text-muted)'} style={{ display: 'inline' }} />
-            </div>
-            <div style={{
-              fontSize: 18, fontWeight: 700,
-              color: streak > 0 ? 'var(--accent)' : 'var(--text-muted)',
-              fontFamily: 'Lora, serif', lineHeight: 1,
-            }}>{streak}</div>
-            <div style={{
-              fontSize: 10, color: 'var(--text-muted)',
-              fontFamily: 'Inter,sans-serif', marginTop: 3,
-            }}>Стрик</div>
-          </div>
-
-          {/* Total entries */}
-          <div style={{
-            padding: '12px 10px',
-            borderRadius: 12,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            textAlign: 'center',
-            animation: 'card-enter 0.35s ease 0.10s both',
-          }}>
-            <div style={{ marginBottom: 3 }}>
-              <BarChart2 size={18} color="var(--text-muted)" style={{ display: 'inline' }} />
-            </div>
-            <div style={{
-              fontSize: 18, fontWeight: 700,
-              color: 'var(--text-secondary)',
-              fontFamily: 'Lora, serif', lineHeight: 1,
-            }}>{totalEntries}</div>
-            <div style={{
-              fontSize: 10, color: 'var(--text-muted)',
-              fontFamily: 'Inter,sans-serif', marginTop: 3,
-            }}>Записей</div>
-          </div>
-
-          {/* Linked notes */}
-          <div style={{
-            padding: '12px 10px',
-            borderRadius: 12,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            textAlign: 'center',
-            animation: 'card-enter 0.35s ease 0.15s both',
-          }}>
-            <div style={{ marginBottom: 3 }}>
-              <Link2 size={18} color="var(--text-muted)" style={{ display: 'inline' }} />
-            </div>
-            <div style={{
-              fontSize: 18, fontWeight: 700,
-              color: 'var(--text-secondary)',
-              fontFamily: 'Lora, serif', lineHeight: 1,
-            }}>{linkedNotes.length}</div>
-            <div style={{
-              fontSize: 10, color: 'var(--text-muted)',
-              fontFamily: 'Inter,sans-serif', marginTop: 3,
-            }}>Заметок</div>
-          </div>
-        </div>
-
-        {/* Last 7 days activity */}
-        <div style={{ margin: '12px 16px 0' }}>
-          <p style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.07em', color: 'var(--text-muted)',
-            fontFamily: 'Inter,sans-serif', marginBottom: 8,
-          }}>Последние 7 дней</p>
-          <div style={{
-            display: 'flex', gap: 6, alignItems: 'flex-end',
-          }}>
-            {last7.map((day, i) => {
-              const mood = day.mood ? MOODS.find(m => m.value === day.mood) : null;
-              const isCurrentDay = day.dateStr === currentDate;
-              return (
-                <div
-                  key={i}
-                  onClick={() => setCurrentDate(day.dateStr)}
-                  style={{
-                    flex: 1, display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: 4,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{
-                    width: '100%', height: day.filled ? 28 : 14,
-                    borderRadius: 6,
-                    background: day.filled
-                      ? (mood?.color || 'var(--accent-dim)')
-                      : 'var(--bg-raised)',
-                    border: isCurrentDay ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-                    transition: 'all 0.2s',
-                    opacity: day.filled ? 0.85 : 0.5,
-                  }} />
-                  <span style={{
-                    fontSize: 9, color: isCurrentDay ? 'var(--accent)' : 'var(--text-muted)',
-                    fontFamily: 'Inter,sans-serif', fontWeight: isCurrentDay ? 700 : 400,
-                  }}>
-                    {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('ru-RU', { weekday: 'narrow' })}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Linked notes section */}
-        {linkedNotes.length > 0 && (
-          <div style={{ margin: '12px 16px 0' }}>
-            <button
-              onClick={() => setShowLinked(v => !v)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                width: '100%', padding: '10px 12px',
-                borderRadius: 12,
-                background: showLinked ? 'var(--bg-active)' : 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                cursor: 'pointer', textAlign: 'left',
-                transition: 'background 0.15s',
-              }}
-            >
-              <BookOpen size={14} color="var(--text-muted)" />
-              <span style={{
-                flex: 1, fontSize: 12, color: 'var(--text-secondary)',
-                fontFamily: 'Inter,sans-serif', fontWeight: 600,
-              }}>
-                Записи за этот день ({linkedNotes.length})
-              </span>
-              <ChevronRight
-                size={14}
-                color="var(--text-muted)"
-                style={{
-                  transform: showLinked ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                }}
-              />
-            </button>
-
-            {showLinked && (
+          {[
+            { val: stats.streak,      label: 'Стрик',    emoji: '🔥' },
+            { val: stats.totalNotes,  label: 'Записей',  emoji: '📝' },
+            { val: stats.totalBooks,  label: 'Книг',     emoji: '📚' },
+          ].map((s, i) => (
+            <div key={i} style={{
+              background: 'var(--bg-card)',
+              border: 'var(--card-border)',
+              borderRadius: 16, padding: '14px 10px',
+              textAlign: 'center',
+              animation: `fadeSlideUp 0.4s ease ${i * 0.08}s both`,
+            }}>
+              <div style={{ fontSize: 24 }}>{s.emoji}</div>
               <div style={{
-                marginTop: 6, display: 'flex', flexDirection: 'column', gap: 5,
-                animation: 'slideDown 0.2s ease',
-              }}>
-                {linkedNotes.map(n => (
-                  <button
-                    key={n.id}
-                    onClick={() => { onOpenNote(n); setShowLinked(false); }}
-                    style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 10,
-                      padding: '10px 12px', borderRadius: 11,
-                      background: 'var(--bg-raised)',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer', textAlign: 'left',
-                    }}
-                  >
-                    <div style={{
-                      fontSize: 14, flex: 1,
-                      color: 'var(--text-primary)',
-                      fontFamily: 'Inter,sans-serif',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
-                      {n.title || 'Без названия'}
-                    </div>
-                    <span style={{
-                      fontSize: 11, color: 'var(--text-muted)',
-                      fontFamily: 'Inter,sans-serif', flexShrink: 0,
-                    }}>
-                      {new Date(n.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                fontFamily: 'Lora, serif', fontSize: 22, fontWeight: 700,
+                color: 'var(--text-primary)', lineHeight: 1.2,
+              }}>{s.val}</div>
+              <div style={{
+                fontFamily: 'Inter, sans-serif', fontSize: 11,
+                color: 'var(--text-muted)', marginTop: 2,
+              }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
 
-        {/* Bottom spacer */}
-        <div style={{ height: 24, flexShrink: 0 }} />
+        {/* Badges */}
+        <div style={{
+          fontFamily: 'Inter, sans-serif', fontSize: 12,
+          color: 'var(--text-muted)', marginBottom: 12,
+          textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600,
+        }}>Бейджи</div>
+
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10,
+        }}>
+          {badges.map((badge, i) => (
+            <BadgeCard key={badge.id} badge={badge} index={i} />
+          ))}
+        </div>
+
+        <div style={{ height: 20 }} />
       </div>
+    </div>
+  );
+}
+
+function BadgeCard({ badge, index }: { badge: Badge; index: number }) {
+  return (
+    <div style={{
+      background: badge.earned ? `${badge.color}12` : 'var(--bg-card)',
+      border: badge.earned
+        ? `1.5px solid ${badge.color}40`
+        : 'var(--card-border)',
+      borderRadius: 16,
+      padding: '14px 12px',
+      opacity: badge.earned ? 1 : 0.5,
+      transition: 'opacity 0.2s',
+      animation: `fadeSlideUp 0.35s ease ${index * 0.04}s both`,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {badge.earned && (
+        <div style={{
+          position: 'absolute', top: 6, right: 8,
+          fontSize: 10, color: badge.color,
+          fontFamily: 'Inter, sans-serif', fontWeight: 700,
+        }}>✓</div>
+      )}
+      <div style={{ fontSize: 28, marginBottom: 8 }}>{badge.emoji}</div>
+      <div style={{
+        fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
+        color: 'var(--text-primary)', marginBottom: 4, lineHeight: 1.3,
+      }}>{badge.title}</div>
+      <div style={{
+        fontFamily: 'Inter, sans-serif', fontSize: 11,
+        color: 'var(--text-muted)', lineHeight: 1.4,
+      }}>{badge.desc}</div>
+
+      {/* Progress bar for unearned badges */}
+      {!badge.earned && badge.progress !== undefined && badge.total && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{
+            height: 4, background: 'var(--bg-raised)',
+            borderRadius: 99, overflow: 'hidden',
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${(badge.progress / badge.total) * 100}%`,
+              background: badge.color,
+              borderRadius: 99,
+              transition: 'width 0.8s ease',
+            }} />
+          </div>
+          <div style={{
+            fontFamily: 'Inter, sans-serif', fontSize: 10,
+            color: 'var(--text-muted)', marginTop: 3,
+          }}>{badge.progress} / {badge.total}</div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,630 +1,477 @@
-import { useState, useEffect } from 'react';
-import { Flashcard, Note } from '../types';
-import { createFlashcard, rateFlashcard } from '../store';
-import {
-  Plus, Brain, RotateCcw, Check, ChevronDown,
-  Flame, Star, BookOpen, Trash2, ChevronLeft, ChevronRight,
-} from 'lucide-react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { Note, Book } from '../types';
+import { X, Info, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
 interface Props {
-  flashcards: Flashcard[];
   notes: Note[];
-  onSave: (card: Flashcard) => void;
-  onDelete: (id: string) => void;
-  onRate: (card: Flashcard) => void;
+  books: Book[];
+  onOpenNote: (note: Note) => void;
+  onBack: () => void;
 }
 
-type Mode = 'list' | 'create' | 'review';
+interface GNode {
+  id: string;
+  label: string;
+  type: 'note' | 'book' | 'tag';
+  color: string;
+  r: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  fx?: number;
+  fy?: number;
+  data?: Note | Book;
+}
 
-export default function FlashcardsView({ flashcards, notes, onSave, onDelete, onRate }: Props) {
-  const [mode, setMode] = useState<Mode>('list');
-  const [front, setFront] = useState('');
-  const [back, setBack] = useState('');
-  const [noteId, setNoteId] = useState('');
-  const [tagInput, setTagInput] = useState('');
-  const [reviewIdx, setReviewIdx] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [sessionRated, setSessionRated] = useState<string[]>([]);
-  const [enterAnim, setEnterAnim] = useState(false);
+interface GLink { source: string; target: string; }
 
-  const dueCards = flashcards.filter(c => new Date(c.nextReview) <= new Date());
-  const reviewCards = dueCards.filter(c => !sessionRated.includes(c.id));
-  const current = reviewCards[reviewIdx] || null;
+const TYPE_COLORS: Record<string, string> = {
+  note: '#c8a882', quote: '#d4a84e', insight: '#72b472',
+  question: '#7a8ab4', summary: '#b47a7a', idea: '#a47ab4',
+  task: '#7ab4a4', book: '#d4914a', tag: '#8c7660',
+};
 
-  useEffect(() => {
-    if (mode === 'review') {
-      setReviewIdx(0);
-      setShowAnswer(false);
-      setSessionRated([]);
-    }
-  }, [mode]);
+function buildGraph(notes: Note[], books: Book[]): { nodes: GNode[]; links: GLink[] } {
+  const nodes: GNode[] = [];
+  const links: GLink[] = [];
+  const ids = new Set<string>();
 
-  useEffect(() => {
-    setEnterAnim(true);
-    const t = setTimeout(() => setEnterAnim(false), 400);
-    return () => clearTimeout(t);
-  }, [reviewIdx]);
-
-  const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
-
-  const handleCreate = () => {
-    if (!front.trim() || !back.trim()) return;
-    const card = createFlashcard({
-      front: front.trim(),
-      back: back.trim(),
-      noteId,
-      tags: tagInput ? tagInput.split(',').map(t => t.trim()).filter(Boolean) : [],
+  books.forEach((book, i) => {
+    const angle = (i / Math.max(books.length, 1)) * Math.PI * 2;
+    nodes.push({
+      id: `book_${book.id}`, label: book.title.slice(0, 16),
+      type: 'book', color: TYPE_COLORS.book, r: 14,
+      x: 200 + Math.cos(angle) * 120, y: 200 + Math.sin(angle) * 120,
+      vx: 0, vy: 0, data: book,
     });
-    onSave(card);
-    setFront(''); setBack(''); setNoteId(''); setTagInput('');
-    setMode('list');
-    vibe(12);
-  };
+    ids.add(`book_${book.id}`);
+  });
 
-  const handleRate = (rating: 1 | 2 | 3 | 4) => {
-    if (!current) return;
-    vibe(8);
-    const updated = rateFlashcard(current, rating);
-    onRate(updated);
-    setSessionRated(prev => [...prev, current.id]);
-    setShowAnswer(false);
-    if (reviewIdx >= reviewCards.length - 2) {
-      setReviewIdx(0);
+  const tagCount = new Map<string, number>();
+  notes.forEach(n => n.tags?.forEach(t => tagCount.set(t, (tagCount.get(t) || 0) + 1)));
+  tagCount.forEach((count, tag) => {
+    if (count < 1) return;
+    const id = `tag_${tag}`;
+    nodes.push({
+      id, label: `#${tag}`, type: 'tag', color: TYPE_COLORS.tag,
+      r: 7 + Math.min(count * 2, 8),
+      x: 200 + (Math.random() - 0.5) * 300,
+      y: 200 + (Math.random() - 0.5) * 300,
+      vx: 0, vy: 0,
+    });
+    ids.add(id);
+  });
+
+  notes.forEach((note, i) => {
+    const angle = (i / Math.max(notes.length, 1)) * Math.PI * 2;
+    const id = `note_${note.id}`;
+    nodes.push({
+      id, label: (note.title || 'Без названия').slice(0, 18),
+      type: 'note', color: TYPE_COLORS[note.type] || TYPE_COLORS.note,
+      r: note.isFavorite ? 11 : 8,
+      x: 200 + Math.cos(angle) * 180, y: 200 + Math.sin(angle) * 180,
+      vx: 0, vy: 0, data: note,
+    });
+    ids.add(id);
+    if (note.bookId && ids.has(`book_${note.bookId}`))
+      links.push({ source: id, target: `book_${note.bookId}` });
+    note.tags?.forEach(tag => {
+      if (ids.has(`tag_${tag}`)) links.push({ source: id, target: `tag_${tag}` });
+    });
+    note.linkedNoteIds?.forEach(lid => {
+      if (ids.has(`note_${lid}`)) links.push({ source: id, target: `note_${lid}` });
+    });
+  });
+
+  return { nodes, links };
+}
+
+export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef   = useRef<HTMLDivElement>(null);
+  const animRef   = useRef<number>(0);
+  const nodesRef  = useRef<GNode[]>([]);
+  const linksRef  = useRef<GLink[]>([]);
+  const scaleRef  = useRef(1);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  const dragRef   = useRef<{ node: GNode | null; startX: number; startY: number; panStart: { x: number; y: number } | null }>({
+    node: null, startX: 0, startY: 0, panStart: null,
+  });
+
+  const [selected, setSelected]  = useState<GNode | null>(null);
+  const [hint, setHint]           = useState(true);
+
+  const { nodes, links } = useMemo(() => buildGraph(notes, books), [notes, books]);
+
+  // Init refs
+  useEffect(() => {
+    nodesRef.current = nodes.map(n => ({ ...n }));
+    linksRef.current = links;
+    scaleRef.current = 1;
+    const W = wrapRef.current?.clientWidth  || 380;
+    const H = wrapRef.current?.clientHeight || 400;
+    offsetRef.current = { x: W / 2 - 200, y: H / 2 - 200 };
+  }, [nodes, links]);
+
+  // Force simulation + draw on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      const W = wrapRef.current?.clientWidth  || 380;
+      const H = wrapRef.current?.clientHeight || 400;
+      canvas.width  = W * devicePixelRatio;
+      canvas.height = H * devicePixelRatio;
+      canvas.style.width  = `${W}px`;
+      canvas.style.height = `${H}px`;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    };
+    resize();
+
+    const tick = () => {
+      const ns = nodesRef.current;
+      const ls = linksRef.current;
+      const W = canvas.width  / devicePixelRatio;
+      const H = canvas.height / devicePixelRatio;
+
+      // Forces
+      const alpha = 0.06;
+      ns.forEach(n => {
+        if (n.fx !== undefined) { n.x = n.fx; n.y = n.fy!; return; }
+        // Repulsion
+        ns.forEach(m => {
+          if (m.id === n.id) return;
+          const dx = n.x - m.x, dy = n.y - m.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const force = 2200 / (dist * dist);
+          n.vx += (dx / dist) * force * alpha;
+          n.vy += (dy / dist) * force * alpha;
+        });
+        // Center gravity
+        n.vx += (W / 2 - n.x) * 0.004;
+        n.vy += (H / 2 - n.y) * 0.004;
+      });
+
+      // Links (spring)
+      ls.forEach(l => {
+        const s = ns.find(n => n.id === l.source);
+        const t = ns.find(n => n.id === l.target);
+        if (!s || !t) return;
+        const dx = t.x - s.x, dy = t.y - s.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const target = s.type === 'book' || t.type === 'book' ? 100 : 70;
+        const force = (dist - target) * 0.03;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        if (!s.fx) { s.vx += fx; s.vy += fy; }
+        if (!t.fx) { t.vx -= fx; t.vy -= fy; }
+      });
+
+      ns.forEach(n => {
+        if (n.fx !== undefined) return;
+        n.vx *= 0.78; n.vy *= 0.78;
+        n.x += n.vx; n.y += n.vy;
+        n.x = Math.max(n.r + 4, Math.min(W - n.r - 4, n.x));
+        n.y = Math.max(n.r + 4, Math.min(H - n.r - 4, n.y));
+      });
+
+      // Draw
+      ctx.save();
+      ctx.clearRect(0, 0, W, H);
+      ctx.translate(offsetRef.current.x, offsetRef.current.y);
+      ctx.scale(scaleRef.current, scaleRef.current);
+
+      // Links
+      ls.forEach(l => {
+        const s = ns.find(n => n.id === l.source);
+        const t = ns.find(n => n.id === l.target);
+        if (!s || !t) return;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(t.x, t.y);
+        ctx.strokeStyle = 'rgba(80,65,45,0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      // Nodes
+      ns.forEach(n => {
+        // Outer ring
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = `${n.color}22`;
+        ctx.fill();
+        ctx.strokeStyle = n.color;
+        ctx.lineWidth = n.type === 'book' ? 2.5 : 1.5;
+        ctx.stroke();
+        // Inner dot
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = n.color;
+        ctx.fill();
+        // Label
+        ctx.fillStyle = 'rgba(200,168,130,0.85)';
+        ctx.font = `${n.type === 'book' ? 9.5 : 8.5}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(n.label, n.x, n.y + n.r + 11);
+      });
+
+      ctx.restore();
+      animRef.current = requestAnimationFrame(tick);
+    };
+
+    animRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animRef.current);
+  }, []);
+
+  // Canvas → world coords
+  const toWorld = useCallback((cx: number, cy: number) => ({
+    x: (cx - offsetRef.current.x) / scaleRef.current,
+    y: (cy - offsetRef.current.y) / scaleRef.current,
+  }), []);
+
+  const hitTest = useCallback((wx: number, wy: number) =>
+    nodesRef.current.find(n => Math.hypot(n.x - wx, n.y - wy) < n.r + 6) || null,
+  []);
+
+  // Pointer events
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const w  = toWorld(cx, cy);
+    const hit = hitTest(w.x, w.y);
+    if (hit) {
+      dragRef.current = { node: hit, startX: cx, startY: cy, panStart: null };
+      hit.fx = hit.x; hit.fy = hit.y;
+      try { navigator.vibrate?.(6); } catch {}
+    } else {
+      dragRef.current = { node: null, startX: cx, startY: cy, panStart: { ...offsetRef.current } };
     }
+  }, [toWorld, hitTest]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    if (d.node) {
+      const w = toWorld(cx, cy);
+      d.node.fx = w.x; d.node.fy = w.y;
+      d.node.x  = w.x; d.node.y  = w.y;
+    } else if (d.panStart) {
+      offsetRef.current = {
+        x: d.panStart.x + (cx - d.startX),
+        y: d.panStart.y + (cy - d.startY),
+      };
+    }
+  }, [toWorld]);
+
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current;
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const moved = Math.hypot(cx - d.startX, cy - d.startY);
+    if (d.node) {
+      if (moved < 5) setSelected(d.node);
+      d.node.fx = undefined; d.node.fy = undefined;
+    }
+    dragRef.current = { node: null, startX: 0, startY: 0, panStart: null };
+  }, []);
+
+  // Pinch zoom
+  const lastPinch = useRef(0);
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastPinch.current = Math.hypot(dx, dy);
+    }
+  }, []);
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      if (lastPinch.current > 0) {
+        const ratio = dist / lastPinch.current;
+        scaleRef.current = Math.max(0.3, Math.min(4, scaleRef.current * ratio));
+      }
+      lastPinch.current = dist;
+    }
+  }, []);
+
+  const zoom = (dir: 1 | -1) => {
+    scaleRef.current = Math.max(0.3, Math.min(4, scaleRef.current * (dir > 0 ? 1.25 : 0.8)));
+  };
+  const resetView = () => {
+    scaleRef.current = 1;
+    const W = wrapRef.current?.clientWidth  || 380;
+    const H = wrapRef.current?.clientHeight || 400;
+    offsetRef.current = { x: W / 2 - 200, y: H / 2 - 200 };
   };
 
-  const ratingLabels: { rating: 1|2|3|4; label: string; color: string; emoji: string }[] = [
-    { rating: 1, label: 'Снова', color: '#c07070', emoji: '✕' },
-    { rating: 2, label: 'Трудно', color: '#c09040', emoji: '◑' },
-    { rating: 3, label: 'Хорошо', color: '#6a9a6a', emoji: '◕' },
-    { rating: 4, label: 'Легко', color: '#4a8a7a', emoji: '✓' },
-  ];
-
-  const totalDue = dueCards.length;
-  const totalCards = flashcards.length;
+  const isEmpty = nodes.length === 0;
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      height: '100%', overflow: 'hidden',
-      background: 'var(--bg-base)',
-    }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{
-        padding: '16px 20px 12px',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-        background: 'var(--bg-base)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0,
-      }}>
-        {mode !== 'list' ? (
-          <button
-            onClick={() => { setMode('list'); vibe(); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--accent)', fontSize: '15px', fontFamily: 'Inter,sans-serif',
-              padding: '4px 0',
-            }}
-          >
-            <ChevronLeft size={18} /> Назад
-          </button>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Brain size={20} color="var(--accent)" />
-            <span style={{
-              fontSize: '18px', fontWeight: 700,
-              fontFamily: 'Lora, serif', color: 'var(--text-primary)',
-            }}>Карточки</span>
+      <div style={{ padding: '16px 16px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+        onClick={onBack}
+        style={{
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 10, width: 34, height: 34, display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0,
+        }}
+      >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div>
+          <h2 style={{ fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            Граф связей
+          </h2>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
+            {nodes.length} узлов · {links.length} связей
+          </p>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 10, padding: '8px 16px', borderBottom: '1px solid var(--border)', overflowX: 'auto', flexShrink: 0 }}>
+        {[
+          { color: TYPE_COLORS.book, label: 'Книги' },
+          { color: TYPE_COLORS.note, label: 'Заметки' },
+          { color: TYPE_COLORS.insight, label: 'Инсайты' },
+          { color: TYPE_COLORS.quote, label: 'Цитаты' },
+          { color: TYPE_COLORS.tag, label: 'Теги' },
+        ].map(item => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{item.label}</span>
           </div>
-        )}
+        ))}
+      </div>
 
-        {mode === 'list' && (
-          <button
-            onClick={() => { setMode('create'); vibe(); }}
-            style={{
-              width: 36, height: 36, borderRadius: '10px',
-              background: 'var(--accent)', border: 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: '#fff',
-            }}
-          >
-            <Plus size={18} />
-          </button>
-        )}
-
-        {mode === 'create' && (
-          <span style={{
-            fontSize: '16px', fontWeight: 600,
-            fontFamily: 'Inter,sans-serif', color: 'var(--text-primary)',
-          }}>Новая карточка</span>
-        )}
-        {mode === 'review' && (
-          <span style={{
-            fontSize: '13px', color: 'var(--text-muted)',
-            fontFamily: 'Inter,sans-serif',
-          }}>
-            {sessionRated.length} / {dueCards.length}
+      {/* Hint */}
+      {hint && (
+        <div style={{
+          margin: '8px 16px 0', padding: '8px 12px',
+          background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12,
+          display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+          animation: 'fadeIn 0.3s ease',
+        }}>
+          <Info size={13} color="var(--accent)" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif', lineHeight: 1.4, flex: 1 }}>
+            Тяни узлы · Щипок для зума · Нажми для открытия
           </span>
+          <button onClick={() => setHint(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0 }}>
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* Canvas */}
+      <div ref={wrapRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', touchAction: 'none' }}>
+        {isEmpty ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
+            <div style={{ fontSize: 48 }}>🕸️</div>
+            <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Граф пуст</div>
+            <div style={{ fontSize: 13, textAlign: 'center', maxWidth: 240, lineHeight: 1.6 }}>
+              Создай записи и книги — они появятся здесь как связанные узлы
+            </div>
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            style={{ width: '100%', height: '100%', cursor: 'grab', display: 'block' }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+          />
+        )}
+
+        {/* Zoom controls */}
+        {!isEmpty && (
+          <div style={{
+            position: 'absolute', right: 12, bottom: 12,
+            display: 'flex', flexDirection: 'column', gap: 6,
+          }}>
+            {[
+              { icon: <ZoomIn size={16} />, fn: () => zoom(1) },
+              { icon: <ZoomOut size={16} />, fn: () => zoom(-1) },
+              { icon: <Maximize2 size={16} />, fn: resetView },
+            ].map((b, i) => (
+              <button key={i} onClick={b.fn} style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-secondary)', cursor: 'pointer',
+                boxShadow: 'var(--shadow)',
+              }}>{b.icon}</button>
+            ))}
+          </div>
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain' }}>
-
-        {/* LIST MODE */}
-        {mode === 'list' && (
-          <div style={{ padding: '16px 20px' }}>
-            {/* Stats row */}
+      {/* Selected node panel */}
+      {selected && selected.data && (
+        <div style={{
+          position: 'fixed', bottom: 72, left: '50%', transform: 'translateX(-50%)',
+          width: 'min(calc(100vw - 32px), 398px)',
+          background: 'var(--bg-card)', border: '1px solid var(--border-mid)',
+          borderRadius: 18, padding: '16px',
+          boxShadow: 'var(--shadow-lg)', zIndex: 200,
+          animation: 'sheetSlideUp 0.25s cubic-bezier(0.34,1.2,0.64,1)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px',
-              marginBottom: '20px',
+              width: 40, height: 40, borderRadius: 12,
+              background: `${selected.color}22`, border: `1.5px solid ${selected.color}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
             }}>
-              {[
-                { label: 'Всего', value: totalCards, icon: <BookOpen size={16} />, color: 'var(--text-secondary)' },
-                { label: 'К повторению', value: totalDue, icon: <Flame size={16} />, color: totalDue > 0 ? '#e07a3a' : 'var(--text-secondary)' },
-                { label: 'Выучено', value: flashcards.filter(c => c.repetitions >= 3).length, icon: <Star size={16} />, color: '#6a9a4a' },
-              ].map(s => (
-                <div key={s.label} style={{
-                  background: 'var(--bg-card)', borderRadius: '14px',
-                  padding: '14px 12px', textAlign: 'center',
-                  border: '1px solid var(--border)',
-                }}>
-                  <div style={{ color: s.color, marginBottom: '6px', display: 'flex', justifyContent: 'center' }}>
-                    {s.icon}
-                  </div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora,serif' }}>
-                    {s.value}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: 'Inter,sans-serif' }}>
-                    {s.label}
-                  </div>
-                </div>
-              ))}
+              {selected.type === 'book' ? '📚' : selected.type === 'tag' ? '🏷️' : '📝'}
             </div>
-
-            {/* Review button */}
-            {totalDue > 0 && (
-              <button
-                onClick={() => { setMode('review'); vibe(12); }}
-                style={{
-                  width: '100%', padding: '16px',
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-                  border: 'none', borderRadius: '16px', cursor: 'pointer',
-                  color: '#fff', fontSize: '16px', fontWeight: 600,
-                  fontFamily: 'Inter,sans-serif',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                  marginBottom: '20px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                  animation: 'scaleInBounce 0.4s ease',
-                }}
-              >
-                <Brain size={20} />
-                Начать повторение ({totalDue})
-                <Flame size={16} color="rgba(255,255,255,0.8)" />
-              </button>
-            )}
-
-            {/* Cards list */}
-            {flashcards.length === 0 ? (
-              <div style={{
-                textAlign: 'center', padding: '60px 20px',
-                color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif',
-              }}>
-                <Brain size={48} color="var(--border-mid)" style={{ marginBottom: '16px' }} />
-                <p style={{ fontSize: '16px', marginBottom: '8px', color: 'var(--text-secondary)' }}>
-                  Нет карточек
-                </p>
-                <p style={{ fontSize: '13px', lineHeight: '1.5' }}>
-                  Создайте первую карточку для повторения
-                </p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'Lora, serif', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                {selected.type === 'book'
+                  ? (selected.data as Book).title
+                  : (selected.data as Note).title || 'Без названия'}
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {flashcards.map((card, i) => {
-                  const isDue = new Date(card.nextReview) <= new Date();
-                  return (
-                    <div
-                      key={card.id}
-                      style={{
-                        background: 'var(--bg-card)', borderRadius: '14px',
-                        padding: '14px 16px',
-                        border: `1px solid ${isDue ? 'var(--accent)' : 'var(--border)'}`,
-                        animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
-                        opacity: 0,
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                        <div style={{ flex: 1 }}>
-                          <p style={{
-                            fontSize: '14px', fontWeight: 600,
-                            color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif',
-                            marginBottom: '4px', lineHeight: '1.4',
-                          }}>
-                            {card.front}
-                          </p>
-                          <p style={{
-                            fontSize: '12px', color: 'var(--text-muted)',
-                            fontFamily: 'Inter,sans-serif', lineHeight: '1.4',
-                          }}>
-                            {card.back.length > 80 ? card.back.slice(0, 80) + '…' : card.back}
-                          </p>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
-                          {isDue && (
-                            <span style={{
-                              fontSize: '10px', padding: '2px 8px',
-                              background: 'rgba(224,122,58,0.2)',
-                              color: '#e07a3a', borderRadius: '99px',
-                              fontFamily: 'Inter,sans-serif',
-                            }}>К повторению</span>
-                          )}
-                          <button
-                            onClick={() => { onDelete(card.id); vibe(); }}
-                            style={{
-                              background: 'none', border: 'none',
-                              color: 'var(--text-muted)', cursor: 'pointer',
-                              padding: '4px',
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        marginTop: '10px', paddingTop: '10px',
-                        borderTop: '1px solid var(--border)',
-                      }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
-                          Повторений: {card.repetitions}
-                        </span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
-                          · Интервал: {card.interval}д
-                        </span>
-                        {card.lastRating && (
-                          <span style={{
-                            fontSize: '11px', marginLeft: 'auto',
-                            color: card.lastRating >= 3 ? '#6a9a6a' : '#c07070',
-                            fontFamily: 'Inter,sans-serif',
-                          }}>
-                            {['', '✕', '◑', '◕', '✓'][card.lastRating]}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* CREATE MODE */}
-        {mode === 'create' && (
-          <div style={{ padding: '20px' }}>
-            <div style={{
-              background: 'var(--bg-card)', borderRadius: '16px',
-              padding: '20px', border: '1px solid var(--border)',
-              marginBottom: '16px', animation: 'fadeSlideUp 0.3s ease',
-            }}>
-              <label style={{
-                fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-                letterSpacing: '0.08em', color: 'var(--text-muted)',
-                fontFamily: 'Inter,sans-serif', display: 'block', marginBottom: '8px',
-              }}>
-                Вопрос / Понятие
-              </label>
-              <textarea
-                value={front}
-                onChange={e => setFront(e.target.value)}
-                placeholder="Что такое транзактный анализ?"
-                rows={3}
-                style={{
-                  width: '100%', background: 'var(--bg-raised)',
-                  border: '1px solid var(--border)', borderRadius: '10px',
-                  padding: '12px 14px', color: 'var(--text-primary)',
-                  fontSize: '15px', fontFamily: 'Inter,sans-serif',
-                  resize: 'none', outline: 'none', lineHeight: '1.5',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            <div style={{
-              background: 'var(--bg-card)', borderRadius: '16px',
-              padding: '20px', border: '1px solid var(--border)',
-              marginBottom: '16px',
-            }}>
-              <label style={{
-                fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-                letterSpacing: '0.08em', color: 'var(--text-muted)',
-                fontFamily: 'Inter,sans-serif', display: 'block', marginBottom: '8px',
-              }}>
-                Ответ / Определение
-              </label>
-              <textarea
-                value={back}
-                onChange={e => setBack(e.target.value)}
-                placeholder="Метод психотерапии, основанный на анализе ролей Родитель / Взрослый / Ребёнок..."
-                rows={4}
-                style={{
-                  width: '100%', background: 'var(--bg-raised)',
-                  border: '1px solid var(--border)', borderRadius: '10px',
-                  padding: '12px 14px', color: 'var(--text-primary)',
-                  fontSize: '15px', fontFamily: 'Inter,sans-serif',
-                  resize: 'none', outline: 'none', lineHeight: '1.5',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* Link to note */}
-            <div style={{
-              background: 'var(--bg-card)', borderRadius: '16px',
-              padding: '16px 20px', border: '1px solid var(--border)',
-              marginBottom: '16px',
-            }}>
-              <label style={{
-                fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-                letterSpacing: '0.08em', color: 'var(--text-muted)',
-                fontFamily: 'Inter,sans-serif', display: 'block', marginBottom: '8px',
-              }}>
-                Привязать к заметке (необязательно)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={noteId}
-                  onChange={e => setNoteId(e.target.value)}
-                  style={{
-                    width: '100%', background: 'var(--bg-raised)',
-                    border: '1px solid var(--border)', borderRadius: '10px',
-                    padding: '10px 36px 10px 14px', color: noteId ? 'var(--text-primary)' : 'var(--text-muted)',
-                    fontSize: '14px', fontFamily: 'Inter,sans-serif',
-                    appearance: 'none', outline: 'none', cursor: 'pointer',
-                  }}
-                >
-                  <option value="">— Без привязки —</option>
-                  {notes.map(n => (
-                    <option key={n.id} value={n.id}>{n.title || 'Без названия'}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} color="var(--text-muted)" style={{
-                  position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                }} />
+              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)' }}>
+                {selected.type === 'book'
+                  ? (selected.data as Book).author
+                  : `${(selected.data as Note).type} · ${new Date((selected.data as Note).createdAt).toLocaleDateString('ru-RU')}`}
               </div>
             </div>
-
-            <button
-              onClick={handleCreate}
-              disabled={!front.trim() || !back.trim()}
-              style={{
-                width: '100%', padding: '16px',
-                background: front.trim() && back.trim()
-                  ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
-                  : 'var(--bg-raised)',
-                border: 'none', borderRadius: '14px', cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
-                color: front.trim() && back.trim() ? '#fff' : 'var(--text-muted)',
-                fontSize: '16px', fontWeight: 600, fontFamily: 'Inter,sans-serif',
-                transition: 'all 0.2s',
-              }}
-            >
-              Создать карточку
+            <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+              <X size={16} />
             </button>
           </div>
-        )}
-
-        {/* REVIEW MODE */}
-        {mode === 'review' && (
-          <div style={{ padding: '20px' }}>
-            {reviewCards.length === 0 ? (
-              <div style={{
-                textAlign: 'center', padding: '60px 20px',
-                animation: 'scaleInBounce 0.4s ease',
-              }}>
-                <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
-                <p style={{
-                  fontSize: '20px', fontWeight: 700,
-                  color: 'var(--text-primary)', fontFamily: 'Lora,serif',
-                  marginBottom: '10px',
-                }}>
-                  Сессия завершена!
-                </p>
-                <p style={{
-                  fontSize: '14px', color: 'var(--text-muted)',
-                  fontFamily: 'Inter,sans-serif', marginBottom: '30px',
-                }}>
-                  Вы повторили {sessionRated.length} карточек
-                </p>
-                <button
-                  onClick={() => { setMode('list'); vibe(); }}
-                  style={{
-                    padding: '14px 32px',
-                    background: 'var(--accent)', border: 'none',
-                    borderRadius: '14px', color: '#fff',
-                    fontSize: '15px', fontWeight: 600,
-                    fontFamily: 'Inter,sans-serif', cursor: 'pointer',
-                  }}
-                >
-                  Готово
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* Progress */}
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', marginBottom: '16px',
-                }}>
-                  <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
-                    Осталось: {reviewCards.length}
-                  </span>
-                  <div style={{
-                    flex: 1, margin: '0 14px',
-                    height: '4px', background: 'var(--border)',
-                    borderRadius: '99px', overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${(sessionRated.length / dueCards.length) * 100}%`,
-                      background: 'var(--accent)',
-                      borderRadius: '99px',
-                      transition: 'width 0.4s ease',
-                    }} />
-                  </div>
-                  <span style={{ fontSize: '13px', color: 'var(--accent)', fontFamily: 'Inter,sans-serif', fontWeight: 600 }}>
-                    {Math.round((sessionRated.length / dueCards.length) * 100)}%
-                  </span>
-                </div>
-
-                {/* Card */}
-                <div
-                  onClick={() => { setShowAnswer(true); vibe(6); }}
-                  style={{
-                    minHeight: '260px', borderRadius: '20px',
-                    background: 'var(--bg-card)',
-                    border: '1px solid var(--border-mid)',
-                    padding: '32px 24px',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    textAlign: 'center', cursor: 'pointer',
-                    marginBottom: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                    animation: enterAnim ? 'fadeSlideUp 0.35s ease' : 'none',
-                    transition: 'transform 0.1s',
-                  }}
-                >
-                  {!showAnswer ? (
-                    <>
-                      <div style={{
-                        fontSize: '11px', fontWeight: 600,
-                        textTransform: 'uppercase', letterSpacing: '0.1em',
-                        color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif',
-                        marginBottom: '20px',
-                      }}>
-                        Вопрос
-                      </div>
-                      <p style={{
-                        fontSize: '18px', fontWeight: 600,
-                        color: 'var(--text-primary)', fontFamily: 'Lora,serif',
-                        lineHeight: '1.5',
-                      }}>
-                        {current?.front}
-                      </p>
-                      <div style={{
-                        marginTop: '24px', display: 'flex',
-                        alignItems: 'center', gap: '6px',
-                        color: 'var(--text-muted)', fontSize: '13px',
-                        fontFamily: 'Inter,sans-serif',
-                      }}>
-                        <RotateCcw size={14} /> Нажмите, чтобы открыть
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{
-                        fontSize: '11px', fontWeight: 600,
-                        textTransform: 'uppercase', letterSpacing: '0.1em',
-                        color: 'var(--accent)', fontFamily: 'Inter,sans-serif',
-                        marginBottom: '20px',
-                      }}>
-                        Ответ
-                      </div>
-                      <p style={{
-                        fontSize: '16px', color: 'var(--text-primary)',
-                        fontFamily: 'Inter,sans-serif', lineHeight: '1.6',
-                      }}>
-                        {current?.back}
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                {/* Rating buttons */}
-                {showAnswer && (
-                  <div style={{
-                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
-                    gap: '8px', animation: 'fadeSlideUp 0.3s ease',
-                  }}>
-                    {ratingLabels.map(r => (
-                      <button
-                        key={r.rating}
-                        onClick={() => handleRate(r.rating)}
-                        style={{
-                          padding: '14px 8px',
-                          background: 'var(--bg-card)',
-                          border: `1px solid ${r.color}40`,
-                          borderRadius: '14px', cursor: 'pointer',
-                          display: 'flex', flexDirection: 'column',
-                          alignItems: 'center', gap: '6px',
-                        }}
-                      >
-                        <span style={{ fontSize: '18px', color: r.color }}>{r.emoji}</span>
-                        <span style={{
-                          fontSize: '11px', color: 'var(--text-secondary)',
-                          fontFamily: 'Inter,sans-serif', fontWeight: 500,
-                        }}>{r.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {!showAnswer && (
-                  <button
-                    onClick={() => { setShowAnswer(true); vibe(6); }}
-                    style={{
-                      width: '100%', padding: '16px',
-                      background: 'var(--accent)', border: 'none',
-                      borderRadius: '14px', cursor: 'pointer',
-                      color: '#fff', fontSize: '16px', fontWeight: 600,
-                      fontFamily: 'Inter,sans-serif',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                    }}
-                  >
-                    <Check size={18} /> Показать ответ
-                  </button>
-                )}
-
-                {/* Nav */}
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', marginTop: '16px',
-                }}>
-                  <button
-                    onClick={() => { setReviewIdx(i => Math.max(0, i - 1)); vibe(6); }}
-                    disabled={reviewIdx === 0}
-                    style={{
-                      background: 'var(--bg-card)', border: '1px solid var(--border)',
-                      borderRadius: '10px', padding: '10px 16px',
-                      color: reviewIdx === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
-                      cursor: reviewIdx === 0 ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      fontSize: '13px', fontFamily: 'Inter,sans-serif',
-                    }}
-                  >
-                    <ChevronLeft size={16} /> Назад
-                  </button>
-                  <button
-                    onClick={() => { setReviewIdx(i => Math.min(reviewCards.length - 1, i + 1)); setShowAnswer(false); vibe(6); }}
-                    disabled={reviewIdx >= reviewCards.length - 1}
-                    style={{
-                      background: 'var(--bg-card)', border: '1px solid var(--border)',
-                      borderRadius: '10px', padding: '10px 16px',
-                      color: reviewIdx >= reviewCards.length - 1 ? 'var(--text-muted)' : 'var(--text-primary)',
-                      cursor: reviewIdx >= reviewCards.length - 1 ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      fontSize: '13px', fontFamily: 'Inter,sans-serif',
-                    }}
-                  >
-                    Далее <ChevronRight size={16} />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+          {selected.type === 'note' && (
+            <button
+              onClick={() => { onOpenNote(selected.data as Note); setSelected(null); }}
+              style={{
+                marginTop: 12, width: '100%', padding: '10px 16px',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
+                border: 'none', borderRadius: 12,
+                color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}
+            >Открыть запись →</button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

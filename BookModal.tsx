@@ -1,253 +1,261 @@
 import { useState } from 'react';
-import { Plus, Search, FileText, X, ChevronRight } from 'lucide-react';
-import { Book, BookStatus, Note } from '../types';
-
-const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+import { X, Trash2, Check } from 'lucide-react';
+import { Book, BookStatus } from '../types';
 
 interface Props {
-  books: Book[];
-  notes: Note[];
-  onAddBook: () => void;
-  onEditBook: (book: Book) => void;
-  onNewNoteForBook: (bookId: string) => void;
+  book?: Book;
+  onSave: (data: Partial<Book>) => void;
+  onDelete?: (id: string) => void;
+  onClose: () => void;
 }
 
-const STATUS_META: Record<BookStatus, { label: string; color: string; bg: string; icon: string }> = {
-  reading:   { label: 'Читаю',     color: '#6a9e8a', bg: 'rgba(106,158,138,0.15)', icon: '📖' },
-  finished:  { label: 'Прочитано', color: '#c4813c', bg: 'rgba(196,129,60,0.15)',  icon: '✅' },
-  want:      { label: 'Хочу',      color: '#8a7a9a', bg: 'rgba(138,122,154,0.15)', icon: '🔖' },
-  paused:    { label: 'Пауза',     color: '#9a8a4a', bg: 'rgba(154,138,74,0.15)',  icon: '⏸' },
-  abandoned: { label: 'Брошено',   color: '#7a5a5a', bg: 'rgba(122,90,90,0.15)',   icon: '🚫' },
-};
+const STATUS_OPTIONS: { value: BookStatus; label: string; icon: string }[] = [
+  { value: 'reading',   label: 'Читаю',     icon: '📖' },
+  { value: 'finished',  label: 'Прочитано', icon: '✅' },
+  { value: 'want',      label: 'Хочу',      icon: '🔖' },
+  { value: 'paused',    label: 'Пауза',     icon: '⏸' },
+  { value: 'abandoned', label: 'Брошено',   icon: '🚫' },
+];
 
-export default function Library({ books, notes, onAddBook, onEditBook, onNewNoteForBook }: Props) {
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<BookStatus | 'all'>('all');
+const COVER_COLORS = [
+  '#3d2a1a', '#2a3d2a', '#1a2a3d', '#3d1a2a',
+  '#2a2a1a', '#3d2a3d', '#1a3d3d', '#3d3d2a',
+];
 
-  const noteCount = (bookId: string) => notes.filter(n => n.bookId === bookId).length;
+const EMOJIS = ['📚','📖','🧠','💡','🌱','🔍','✍️','📝','💭','🎯','🌿','🧩','🔮','📊','🗺️','⚡'];
 
-  const filtered = books
-    .filter(b => {
-      if (filter !== 'all' && b.status !== filter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        return b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      const order: BookStatus[] = ['reading', 'finished', 'want', 'paused', 'abandoned'];
-      return order.indexOf(a.status) - order.indexOf(b.status) || b.createdAt.localeCompare(a.createdAt);
+export default function BookModal({ book, onSave, onDelete, onClose }: Props) {
+  const [title, setTitle]   = useState(book?.title || '');
+  const [author, setAuthor] = useState(book?.author || '');
+  const [genre, setGenre]   = useState(book?.genre || '');
+  const [desc, setDesc]     = useState(book?.description || '');
+  const [status, setStatus] = useState<BookStatus>(book?.status || 'want');
+  const [color, setColor]   = useState(book?.color || COVER_COLORS[0]);
+  const [emoji, setEmoji]   = useState(book?.coverEmoji || '📚');
+  const [rating, setRating] = useState(book?.rating || 0);
+  const [totalPages, setTotalPages] = useState(book?.totalPages?.toString() || '');
+  const [currentPage, setCurrentPage] = useState(book?.currentPage?.toString() || '');
+
+  const handleSave = () => {
+    if (!title.trim()) return;
+    onSave({
+      title:       title.trim(),
+      author:      author.trim(),
+      genre:       genre.trim() || undefined,
+      description: desc.trim() || undefined,
+      status,
+      color,
+      coverEmoji:  emoji,
+      rating:      rating || undefined,
+      totalPages:  totalPages ? parseInt(totalPages) : undefined,
+      currentPage: currentPage ? parseInt(currentPage) : undefined,
     });
+  };
 
-  const grouped = (Object.keys(STATUS_META) as BookStatus[]).reduce((acc, status) => {
-    const g = filtered.filter(b => b.status === status);
-    if (g.length > 0) acc[status] = g;
-    return acc;
-  }, {} as Record<BookStatus, Book[]>);
+  const Label = ({ children }: { children: React.ReactNode }) => (
+    <label style={{
+      display: 'block', fontSize: '12px', fontWeight: 500,
+      color: 'var(--text-muted)', marginBottom: '6px',
+      fontFamily: 'Inter, sans-serif',
+    }}>
+      {children}
+    </label>
+  );
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{
-        padding: 'calc(env(safe-area-inset-top,0px) + 12px) 14px 10px',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--bg-base)', flexShrink: 0,
-        animation: 'fadeIn 0.3s ease-out both',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <div>
-            <h1 className="font-serif" style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Библиотека
-            </h1>
-            <p style={{ margin: '1px 0 0', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-              {books.length} {books.length === 1 ? 'книга' : 'книг'}
-            </p>
-          </div>
-          <button
-            onClick={() => { vibe(8); onAddBook(); }}
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+
+        {/* Handle */}
+        <div style={{
+          width: 36, height: 4, borderRadius: 99,
+          background: 'var(--border-mid)', margin: '-8px auto 18px',
+        }} />
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <h2 className="font-serif" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {book ? 'Редактировать книгу' : 'Добавить книгу'}
+          </h2>
+          <button onClick={onClose}
             style={{
-              width: 38, height: 38, borderRadius: '12px',
-              background: 'var(--accent)', border: 'none',
+              width: 36, height: 36, borderRadius: '10px',
+              background: 'var(--bg-active)', border: 'none',
+              color: 'var(--text-muted)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', transition: 'transform 0.12s',
             }}
-            onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.88)'; }}
-            onPointerUp={e   => { e.currentTarget.style.transform = 'scale(1)'; }}
-            onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <Plus size={20} color="#0e0c09" strokeWidth={2.5} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Search */}
-        <div style={{ position: 'relative', marginBottom: '10px' }}>
-          <Search size={14} style={{
-            position: 'absolute', left: '12px', top: '50%',
-            transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none',
-          }} />
-          <input
-            className="input-base"
-            style={{ paddingLeft: '36px', paddingRight: search ? '36px' : '14px', padding: '10px 14px 10px 36px', fontSize: '14px' }}
-            placeholder="Поиск книг…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} style={{
-              position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px',
-            }}>
-              <X size={14} />
-            </button>
-          )}
+        {/* Cover preview + emoji/color */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '18px', alignItems: 'flex-start' }}>
+          <div style={{
+            width: 64, height: 84, borderRadius: '12px',
+            background: color, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '28px', boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+          }}>
+            {emoji}
+          </div>
+          <div style={{ flex: 1 }}>
+            {/* Emoji picker */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+              {EMOJIS.map(e => (
+                <button key={e} onClick={() => setEmoji(e)}
+                  style={{
+                    width: 32, height: 32, borderRadius: '8px', fontSize: '16px',
+                    background: emoji === e ? 'var(--bg-active)' : 'var(--bg-raised)',
+                    border: `1px solid ${emoji === e ? 'var(--accent-dim)' : 'var(--border)'}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            {/* Color picker */}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {COVER_COLORS.map(c => (
+                <div key={c} className={`color-dot${color === c ? ' selected' : ''}`}
+                  style={{ background: c }} onClick={() => setColor(c)} />
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Status filter */}
-        <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '2px' }}>
-          {(['all', ...Object.keys(STATUS_META)] as (BookStatus | 'all')[]).map(s => (
-            <button key={s} onClick={() => { vibe(5); setFilter(s); }}
-              style={{
-                padding: '4px 11px', borderRadius: '99px', whiteSpace: 'nowrap',
-                background: filter === s ? 'var(--bg-active)' : 'var(--bg-raised)',
-                border: `1px solid ${filter === s ? 'var(--border-mid)' : 'var(--border)'}`,
-                color: filter === s ? 'var(--text-primary)' : 'var(--text-muted)',
-                cursor: 'pointer', fontSize: '12px', fontFamily: 'Inter, sans-serif',
-                fontWeight: filter === s ? 600 : 400,
-              }}
-            >
-              {s === 'all' ? 'Все' : STATUS_META[s as BookStatus].icon + ' ' + STATUS_META[s as BookStatus].label}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Fields */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <Label>Название *</Label>
+            <input className="input-base" placeholder="Название книги" value={title}
+              onChange={e => setTitle(e.target.value)} />
+          </div>
 
-      {/* List */}
-      <div className="scroll-area" style={{ padding: '8px 14px 80px' }}>
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px' }}>📚</div>
-            <p style={{ color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontSize: '15px' }}>
-              {search ? 'Ничего не найдено' : 'Библиотека пуста'}
-            </p>
-            {!search && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'Inter, sans-serif', marginTop: '6px' }}>
-                Добавьте первую книгу нажав +
-              </p>
+          <div>
+            <Label>Автор</Label>
+            <input className="input-base" placeholder="Имя автора" value={author}
+              onChange={e => setAuthor(e.target.value)} />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <Label>Жанр</Label>
+              <input className="input-base" placeholder="Психология…" value={genre}
+                onChange={e => setGenre(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Status */}
+          <div>
+            <Label>Статус</Label>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {STATUS_OPTIONS.map(s => (
+                <button key={s.value} onClick={() => setStatus(s.value)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    padding: '7px 12px', borderRadius: '10px',
+                    background: status === s.value ? 'var(--bg-active)' : 'var(--bg-raised)',
+                    border: `1px solid ${status === s.value ? 'var(--accent-dim)' : 'var(--border)'}`,
+                    color: status === s.value ? 'var(--text-primary)' : 'var(--text-muted)',
+                    cursor: 'pointer', fontSize: '12px', fontFamily: 'Inter, sans-serif',
+                    fontWeight: status === s.value ? 600 : 400,
+                  }}
+                >
+                  {status === s.value && <Check size={11} />}
+                  {s.icon} {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Pages */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <Label>Всего страниц</Label>
+              <input className="input-base" type="number" placeholder="320"
+                value={totalPages} onChange={e => setTotalPages(e.target.value)} />
+            </div>
+            {status === 'reading' && (
+              <div style={{ flex: 1 }}>
+                <Label>Текущая стр.</Label>
+                <input className="input-base" type="number" placeholder="0"
+                  value={currentPage} onChange={e => setCurrentPage(e.target.value)} />
+              </div>
             )}
           </div>
-        ) : (
-          (Object.keys(grouped) as BookStatus[]).map(status => (
-            <div key={status}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '7px',
-                padding: '14px 2px 8px',
-                fontSize: '11px', fontWeight: 600, letterSpacing: '0.06em',
-                textTransform: 'uppercase', color: STATUS_META[status].color,
-                fontFamily: 'Inter, sans-serif',
-              }}>
-                {STATUS_META[status].icon} {STATUS_META[status].label}
-                <span style={{
-                  background: STATUS_META[status].bg, color: STATUS_META[status].color,
-                  borderRadius: '99px', padding: '1px 8px', fontSize: '10px',
-                }}>
-                  {grouped[status].length}
-                </span>
-              </div>
 
-              {grouped[status].map((book, bi) => {
-                const nc = noteCount(book.id);
-                const pct = (book.totalPages && book.currentPage)
-                  ? Math.round((book.currentPage / book.totalPages) * 100) : 0;
-
-                return (
-                  <div
-                    key={book.id}
-                    className="card-hover"
-                    onClick={() => { vibe(8); onEditBook(book); }}
-                    style={{
-                      display: 'flex', gap: '12px', alignItems: 'center',
-                      padding: '13px 14px', borderRadius: '16px',
-                      background: 'var(--bg-card)', border: 'var(--card-border)',
-                      marginBottom: '9px',
-                      animation: 'card-enter 0.35s cubic-bezier(0.22,1,0.36,1) both',
-                      animationDelay: `${bi * 0.05}s`,
-                    }}
-                  >
-                    {/* Cover */}
-                    <div style={{
-                      width: 52, height: 68, borderRadius: '10px',
-                      background: book.color || 'var(--bg-raised)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '24px', flexShrink: 0,
-                      boxShadow: '0 3px 10px rgba(0,0,0,0.3)',
-                    }}>
-                      {book.coverEmoji}
-                    </div>
-
-                    {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="book-title" style={{
-                        marginBottom: '3px',
-                        overflow: 'hidden', textOverflow: 'ellipsis',
-                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                      }}>
-                        {book.title}
-                      </div>
-                      <div className="book-author" style={{ marginBottom: '6px' }}>
-                        {book.author}
-                      </div>
-
-                      {/* Progress */}
-                      {book.totalPages && book.status === 'reading' && (
-                        <div style={{ marginBottom: '6px' }}>
-                          <div style={{
-                            height: '3px', background: 'var(--bg-active)',
-                            borderRadius: '99px', overflow: 'hidden',
-                          }}>
-                            <div style={{
-                              height: '100%', width: `${pct}%`,
-                              background: 'var(--accent)', borderRadius: '99px',
-                              transition: 'width 0.4s',
-                            }} />
-                          </div>
-                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>
-                            {book.currentPage} / {book.totalPages} стр. · {pct}%
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Bottom row */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {book.rating && (
-                          <span style={{ fontSize: '12px', color: '#d4914a' }}>
-                            {'★'.repeat(book.rating)}{'☆'.repeat(5 - book.rating)}
-                          </span>
-                        )}
-                        {nc > 0 && (
-                          <button
-                            onClick={e => { e.stopPropagation(); onNewNoteForBook(book.id); }}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: '3px',
-                              padding: '3px 8px', borderRadius: '99px',
-                              background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
-                              color: 'var(--text-secondary)', cursor: 'pointer',
-                              fontSize: '11px', fontFamily: 'Inter, sans-serif',
-                            }}
-                          >
-                            <FileText size={10} /> {nc} зам.
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <ChevronRight size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-                  </div>
-                );
-              })}
+          {/* Rating */}
+          <div>
+            <Label>Рейтинг</Label>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {[1,2,3,4,5].map(i => (
+                <button key={i} onClick={() => setRating(i === rating ? 0 : i)}
+                  style={{
+                    fontSize: '22px', background: 'none', border: 'none',
+                    cursor: 'pointer', color: i <= rating ? '#c4813c' : 'var(--border-mid)',
+                    padding: '2px',
+                  }}
+                >
+                  ★
+                </button>
+              ))}
             </div>
-          ))
-        )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <Label>Описание / заметки</Label>
+            <textarea className="input-base"
+              style={{ resize: 'none', height: '80px' }}
+              placeholder="Краткое описание или личные заметки…"
+              value={desc} onChange={e => setDesc(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          {book && onDelete && (
+            <button onClick={() => onDelete(book.id)}
+              style={{
+                width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
+                background: 'rgba(196,72,72,0.1)', border: '1px solid rgba(196,72,72,0.25)',
+                color: 'var(--red)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
+          <button onClick={onClose}
+            style={{
+              flex: 1, padding: '14px',
+              borderRadius: '14px', border: '1px solid var(--border)',
+              background: 'var(--bg-raised)', color: 'var(--text-secondary)',
+              fontFamily: 'Inter, sans-serif', fontSize: '14px',
+              fontWeight: 500, cursor: 'pointer',
+            }}
+          >
+            Отмена
+          </button>
+          <button onClick={handleSave}
+            disabled={!title.trim()}
+            style={{
+              flex: 2, padding: '14px',
+              borderRadius: '14px', border: 'none',
+              background: title.trim()
+                ? 'linear-gradient(135deg, var(--accent), var(--accent-soft))'
+                : 'var(--bg-active)',
+              color: title.trim() ? '#0e0c09' : 'var(--text-muted)',
+              fontFamily: 'Inter, sans-serif', fontSize: '14px',
+              fontWeight: 700, cursor: title.trim() ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {book ? 'Сохранить' : 'Добавить'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,695 +1,634 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Sun, Moon, BookMarked, LogOut, Trash2, Cloud, RefreshCw,
-  CheckCircle, AlertCircle, RotateCcw, X, ChevronRight,
-  BookOpen, FileText, Star, MessageSquareQuote, Lightbulb,
-  Camera, Smile, GitBranch, Trophy,
+  ChevronLeft, ChevronRight, BookOpen, Link2,
+  CheckCircle2, Lightbulb, Flame, BarChart2, Quote,
 } from 'lucide-react';
-import { Theme, User, AppState, DeletedNote } from '../types';
-import { supabase } from '../supabase';
-import { syncLocalToCloud } from '../cloudStore';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { DailyNote, Note } from '../types';
+import { createDailyNote } from '../store';
 
 interface Props {
-  user: User;
-  state: AppState;
-  onTheme: (t: Theme) => void;
-  onLogout: () => void;
-  onClearData: () => void;
-  onRestoreNote: (noteId: string) => void;
-  onPermanentDelete: (noteId: string) => void;
-  onEmptyTrash: () => void;
-  onUpdateAvatar?: (avatar: string) => void;
-  onNavigate?: (tab: string) => void;
+  dailyNotes: DailyNote[];
+  notes: Note[];
+  onSave: (dn: DailyNote) => void;
+  onOpenNote: (note: Note) => void;
 }
 
-const THEMES: { id: Theme | 'auto'; label: string; icon: React.ReactNode; bg: string; text: string }[] = [
-  { id: 'dark',  label: 'Тёмная',     icon: <Moon size={16} />,       bg: '#15120e', text: '#c8a882' },
-  { id: 'light', label: 'Светлая',    icon: <Sun size={16} />,        bg: '#f5ece0', text: '#5c3e20' },
-  { id: 'sepia', label: 'Сепия',      icon: <BookMarked size={16} />, bg: '#221c12', text: '#c4a870' },
-  { id: 'auto',  label: 'Авто',       icon: <span style={{fontSize:14}}>🌗</span>, bg: '#1a1410', text: '#c8a882' },
+const MOODS = [
+  { value: 1, emoji: '😔', label: 'Тяжело',     color: '#8a5a5a' },
+  { value: 2, emoji: '😕', label: 'Сложно',     color: '#8a7a5a' },
+  { value: 3, emoji: '😐', label: 'Нейтрально', color: '#7a8a7a' },
+  { value: 4, emoji: '🙂', label: 'Хорошо',     color: '#6a8a7a' },
+  { value: 5, emoji: '😊', label: 'Отлично',    color: '#5a8a6a' },
 ];
 
-const AVATAR_EMOJIS = [
-  '🧠','🪶','📖','🌿','💡','🔮','🎭','🦋',
-  '🌙','⭐','🌊','🏔','🎯','🧘','🌸','🦉',
-  '📚','🖊','🎨','🔬','🌱','🍃','☯️','🕊',
+// Вдохновляющие вопросы-подсказки для психолога
+const PROMPTS = [
+  'Какая мысль сегодня не даёт покоя?',
+  'Что ты заметил в себе сегодня, чего раньше не замечал?',
+  'Какой инсайт принесла сегодняшняя работа?',
+  'Что ты хочешь запомнить из сегодняшнего дня?',
+  'Какую книгу или идею хочется поразмышлять сегодня?',
+  'Что тебя удивило или озадачило сегодня?',
+  'Какой вопрос ты бы хотел задать себе завтра?',
+  'Что ты чувствуешь прямо сейчас — и почему?',
+  'Какая встреча или разговор запомнились больше всего?',
+  'Что из прочитанного сегодня резонирует с тобой?',
 ];
 
-const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
+// Случайная психологическая цитата
+const QUOTES = [
+  { text: 'Тот, кто знает «зачем», может вынести любое «как».', author: 'Фридрих Ницше' },
+  { text: 'Между стимулом и реакцией есть пространство. В этом пространстве — наша свобода.', author: 'Виктор Франкл' },
+  { text: 'Мы не видим мир таким, какой он есть. Мы видим его таким, какие мы есть.', author: 'Анаис Нин' },
+  { text: 'Всё, что нас раздражает в других, может помочь нам понять себя.', author: 'Карл Юнг' },
+  { text: 'Осознанность — это замечать мысли без того, чтобы ими становиться.', author: 'Дэниел Сигел' },
+  { text: 'Эмоции — это данные, а не директивы.', author: 'Сьюзан Дэвид' },
+  { text: 'Любопытство убивает тревогу. Будьте любопытны, а не тревожны.', author: 'Тодд Кашдан' },
+  { text: 'Принятие — это не согласие. Это видение реальности такой, какая она есть.', author: 'Тара Брах' },
+];
 
-export default function SettingsView({
-  user, state, onTheme, onLogout, onClearData,
-  onRestoreNote, onPermanentDelete, onEmptyTrash, onUpdateAvatar, onNavigate,
-}: Props) {
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
-  const [showTrash, setShowTrash]   = useState(false);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [avatar, setAvatar] = useState<string>(() => {
-    return localStorage.getItem(`psyche_avatar_${user.id}`) || '🧠';
-  });
-  const fileRef = useRef<HTMLInputElement>(null);
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
 
-  const deletedNotes: DeletedNote[] = state.deletedNotes || [];
+function formatDisplayDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  const today = formatDate(new Date());
+  const yesterday = formatDate(new Date(Date.now() - 86400000));
+  if (dateStr === today) return 'Сегодня';
+  if (dateStr === yesterday) return 'Вчера';
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+}
 
-  const stats = {
-    books:     state.books.length,
-    notes:     state.notes.length,
-    finished:  state.books.filter(b => b.status === 'finished').length,
-    reading:   state.books.filter(b => b.status === 'reading').length,
-    favorites: state.notes.filter(n => n.isFavorite).length,
-    words:     state.notes.reduce((acc, n) => acc + (n.wordCount || 0), 0),
-    quotes:    state.notes.filter(n => n.type === 'quote').length,
-    insights:  state.notes.filter(n => n.type === 'insight').length,
-  };
+function getDayOfWeek(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('ru-RU', { weekday: 'long' });
+}
 
-  const handleManualSync = async () => {
-    vibe(10);
-    setSyncStatus('syncing');
-    try {
-      await syncLocalToCloud(state, user.id);
-      setSyncStatus('done');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    } catch {
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    }
-  };
+function htmlToText(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
-  const handleChangePassword = async () => {
-    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: window.location.origin,
-    });
-    if (error) alert('Ошибка: ' + error.message);
-    else alert('Письмо со сменой пароля отправлено на ' + user.email);
-  };
+function textToHtml(text: string): string {
+  return text
+    .split('\n')
+    .map(line => `<p>${line || '<br>'}</p>`)
+    .join('');
+}
 
-  const handleSelectEmoji = (emoji: string) => {
-    setAvatar(emoji);
-    localStorage.setItem(`psyche_avatar_${user.id}`, emoji);
-    onUpdateAvatar?.(emoji);
-    setShowAvatarPicker(false);
-    vibe(8);
-  };
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      setAvatar(dataUrl);
-      localStorage.setItem(`psyche_avatar_${user.id}`, dataUrl);
-      onUpdateAvatar?.(dataUrl);
-      setShowAvatarPicker(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const isPhotoAvatar = avatar.startsWith('data:');
-
-  // ── Trash ────────────────────────────────────────────────────────────────
-  if (showTrash) {
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'slideLeft 0.26s cubic-bezier(0.22,1,0.36,1) both' }}>
-        <div style={{
-          padding: 'calc(env(safe-area-inset-top,0px) + 12px) 16px 12px',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-base)', flexShrink: 0,
-          display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <button
-            onClick={() => { vibe(6); setShowTrash(false); }}
-            style={{
-              width: 36, height: 36, borderRadius: 12,
-              background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              color: 'var(--text-muted)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          ><X size={18} /></button>
-          <div style={{ flex: 1 }}>
-            <h2 className="font-serif" style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
-              🗑 Корзина
-            </h2>
-            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-              {deletedNotes.length} удалённых записей
-            </p>
-          </div>
-          {deletedNotes.length > 0 && (
-            <button
-              onClick={() => { vibe(15); if (window.confirm('Очистить корзину? Это нельзя отменить.')) onEmptyTrash(); }}
-              style={{
-                padding: '6px 12px', borderRadius: 10,
-                background: 'rgba(180,50,50,0.15)', border: '1px solid rgba(180,50,50,0.3)',
-                color: '#d45858', cursor: 'pointer', fontSize: 12,
-                fontFamily: 'Inter, sans-serif', fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}
-            >
-              <Trash2 size={13} />Очистить
-            </button>
-          )}
-        </div>
-
-        <div className="scroll-area" style={{ padding: '12px 14px 80px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {deletedNotes.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', animation: 'fadeUp 0.4s ease-out both' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🗑</div>
-              <p style={{ color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontSize: 15 }}>Корзина пуста</p>
-              <p style={{ color: 'var(--text-muted)', fontSize: 12, fontFamily: 'Inter, sans-serif', marginTop: 6 }}>
-                Удалённые записи появятся здесь
-              </p>
-            </div>
-          ) : (
-            deletedNotes.map((note, i) => (
-              <div
-                key={note.id}
-                style={{
-                  background: 'var(--bg-card)', border: 'var(--card-border)',
-                  borderRadius: 14, padding: '12px 14px',
-                  animation: `card-enter 0.32s cubic-bezier(0.22,1,0.36,1) both`,
-                  animationDelay: `${i * 0.04}s`,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 6 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{
-                      margin: 0, fontSize: 14, fontWeight: 600,
-                      color: 'var(--text-primary)', fontFamily: 'Lora, serif',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                      {note.title || 'Без заголовка'}
-                    </p>
-                    <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-                      Удалено {format(new Date(note.deletedAt), 'd MMM yyyy', { locale: ru })}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <button
-                    onClick={() => { vibe(10); onRestoreNote(note.id); }}
-                    style={{
-                      flex: 1, padding: '8px', borderRadius: 10,
-                      background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
-                      color: 'var(--accent)', cursor: 'pointer', fontSize: 12,
-                      fontFamily: 'Inter, sans-serif', fontWeight: 600,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    }}
-                  >
-                    <RotateCcw size={13} />Восстановить
-                  </button>
-                  <button
-                    onClick={() => { vibe(15); if (window.confirm('Удалить навсегда?')) onPermanentDelete(note.id); }}
-                    style={{
-                      padding: '8px 14px', borderRadius: 10,
-                      background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
-                      color: '#d45858', cursor: 'pointer', fontSize: 12,
-                      fontFamily: 'Inter, sans-serif', fontWeight: 600,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                    }}
-                  >
-                    <X size={13} />Навсегда
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
+// Стрик — количество дней подряд с записями
+function calcStreak(dailyNotes: DailyNote[]): number {
+  const today = formatDate(new Date());
+  let streak = 0;
+  let d = new Date();
+  while (true) {
+    const dateStr = formatDate(d);
+    const note = dailyNotes.find(n => n.date === dateStr);
+    const hasContent = note && (htmlToText(note.content).length > 0 || note.mood);
+    if (!hasContent && dateStr !== today) break;
+    if (hasContent) streak++;
+    d.setDate(d.getDate() - 1);
+    if (streak > 365) break;
   }
+  return streak;
+}
 
-  // ── Avatar Picker Modal ───────────────────────────────────────────────────
-  const AvatarPickerModal = showAvatarPicker && (
-    <>
-      <div
-        onClick={() => setShowAvatarPicker(false)}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.6)',
-          animation: 'fadeIn 0.18s ease',
-        }}
-      />
+export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }: Props) {
+  const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
+  const [isSaved, setIsSaved] = useState(false);
+  const [showLinked, setShowLinked] = useState(false);
+  const [textValue, setTextValue] = useState('');
+  const [activePrompt, setActivePrompt] = useState(0);
+  const [showQuote, setShowQuote] = useState(true);
+  const [quoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Ротация промпта раз в минуту
+  useEffect(() => {
+    const todayIdx = new Date().getDate() % PROMPTS.length;
+    setActivePrompt(todayIdx);
+  }, [currentDate]);
+
+  const getDailyNote = useCallback((date: string): DailyNote => {
+    return dailyNotes.find(d => d.date === date) || createDailyNote(date);
+  }, [dailyNotes]);
+
+  const currentNote = getDailyNote(currentDate);
+
+  useEffect(() => {
+    const note = getDailyNote(currentDate);
+    setTextValue(htmlToText(note.content));
+    setIsSaved(false);
+  }, [currentDate, getDailyNote]);
+
+  // Manual save
+  const handleSave = () => {
+    try { navigator.vibrate?.(10); } catch {}
+    const updated: DailyNote = {
+      ...getDailyNote(currentDate),
+      content: textToHtml(textValue),
+      updatedAt: new Date().toISOString(),
+    };
+    onSave(updated);
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  // Auto-save every 5 seconds if text changed
+  useEffect(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (!textValue) return;
+    saveTimerRef.current = setTimeout(() => {
+      const updated: DailyNote = {
+        ...getDailyNote(currentDate),
+        content: textToHtml(textValue),
+        updatedAt: new Date().toISOString(),
+      };
+      onSave(updated);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 1500);
+    }, 5000);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [textValue, currentDate]); // eslint-disable-line
+
+  const handleMood = (mood: 1 | 2 | 3 | 4 | 5) => {
+    try { navigator.vibrate?.(8); } catch {}
+    const updated: DailyNote = {
+      ...currentNote,
+      content: textToHtml(textValue),
+      mood,
+      updatedAt: new Date().toISOString(),
+    };
+    onSave(updated);
+  };
+
+  const goBack = () => {
+    const d = new Date(currentDate + 'T12:00:00');
+    d.setDate(d.getDate() - 1);
+    setCurrentDate(formatDate(d));
+    try { navigator.vibrate?.(6); } catch {}
+  };
+
+  const goForward = () => {
+    const today = formatDate(new Date());
+    if (currentDate >= today) return;
+    const d = new Date(currentDate + 'T12:00:00');
+    d.setDate(d.getDate() + 1);
+    setCurrentDate(formatDate(d));
+    try { navigator.vibrate?.(6); } catch {}
+  };
+
+  const isToday = currentDate === formatDate(new Date());
+  const linkedNotes = notes.filter(n => formatDate(new Date(n.createdAt)) === currentDate);
+  const wordCount = textValue.trim() ? textValue.trim().split(/\s+/).length : 0;
+  const charCount = textValue.length;
+  const streak = calcStreak(dailyNotes);
+  const totalEntries = dailyNotes.filter(d => htmlToText(d.content).length > 0).length;
+  const moodLabel = currentNote.mood ? MOODS.find(m => m.value === currentNote.mood)?.label : null;
+  const moodColor = currentNote.mood ? MOODS.find(m => m.value === currentNote.mood)?.color : null;
+
+  // Последние 7 дней — заполненность
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = formatDate(d);
+    const note = dailyNotes.find(n => n.date === dateStr);
+    const filled = note && (htmlToText(note.content).length > 10 || note.mood);
+    return { dateStr, filled, mood: note?.mood };
+  });
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      height: '100%', overflow: 'hidden',
+      background: 'var(--bg-base)',
+    }}>
+      {/* ── Header ────────────────────────────────────────────────── */}
       <div style={{
-        position: 'fixed', bottom: 0, left: '50%',
-        transform: 'translateX(-50%)',
-        width: 'min(100vw, 430px)',
-        background: 'var(--bg-card)',
-        borderRadius: '24px 24px 0 0',
-        border: '1px solid var(--border-mid)',
-        borderBottom: 'none',
-        zIndex: 201,
-        animation: 'sheetSlideUp 0.32s cubic-bezier(0.22,1,0.36,1)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom,0px) + 16px)',
+        paddingTop: 'calc(14px + env(safe-area-inset-top, 0px))',
+        paddingBottom: 12,
+        paddingLeft: 16, paddingRight: 16,
+        background: 'var(--bg-base)',
+        borderBottom: '1px solid var(--border)',
+        flexShrink: 0,
       }}>
-        {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, marginBottom: 4 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--border-mid)' }} />
-        </div>
-
-        {/* Header */}
+        {/* Date navigation */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '8px 16px 12px',
-          borderBottom: '1px solid var(--border)',
+          marginBottom: 12,
         }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
-            Изменить аватар
-          </span>
-          <button
-            onClick={() => setShowAvatarPicker(false)}
-            style={{
-              width: 28, height: 28, borderRadius: 8,
-              background: 'var(--bg-raised)', border: 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--text-muted)',
-            }}
-          ><X size={14} /></button>
+          <button onClick={goBack} style={{
+            width: 36, height: 36, borderRadius: 11,
+            background: 'var(--bg-raised)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'var(--text-secondary)',
+          }}><ChevronLeft size={18} /></button>
+
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontSize: 20, fontWeight: 700,
+              fontFamily: 'Lora, serif',
+              color: 'var(--text-primary)',
+              lineHeight: 1.2,
+            }}>
+              {formatDisplayDate(currentDate)}
+            </div>
+            <div style={{
+              fontSize: 12, color: 'var(--text-muted)',
+              fontFamily: 'Inter, sans-serif',
+              textTransform: 'capitalize', marginTop: 2,
+            }}>
+              {getDayOfWeek(currentDate)}
+              {moodLabel && (
+                <span style={{ marginLeft: 8, color: moodColor || 'var(--text-muted)' }}>
+                  · {moodLabel}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <button onClick={goForward} disabled={isToday} style={{
+            width: 36, height: 36, borderRadius: 11,
+            background: 'var(--bg-raised)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: isToday ? 'default' : 'pointer',
+            color: isToday ? 'var(--border-mid)' : 'var(--text-secondary)',
+            opacity: isToday ? 0.4 : 1,
+          }}><ChevronRight size={18} /></button>
         </div>
 
-        {/* Upload photo */}
-        <div style={{ padding: '12px 16px 8px' }}>
-          <button
-            onClick={() => fileRef.current?.click()}
-            style={{
-              width: '100%', padding: '12px', borderRadius: 14,
-              background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
-              display: 'flex', alignItems: 'center', gap: 10,
-              cursor: 'pointer', color: 'var(--text-secondary)',
-              fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 500,
-            }}
-          >
-            <Camera size={18} color="var(--accent)" />
-            Загрузить фото
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoUpload} />
-        </div>
-
-        {/* Emoji grid label */}
-        <div style={{ padding: '4px 16px 8px' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
-            textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            <Smile size={11} style={{ display: 'inline', marginRight: 4 }} />
-            Или выбери эмодзи
-          </span>
-        </div>
-
-        {/* Emoji grid */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)',
-          gap: 6, padding: '0 16px 8px',
-        }}>
-          {AVATAR_EMOJIS.map(emoji => (
-            <button
-              key={emoji}
-              onClick={() => handleSelectEmoji(emoji)}
-              style={{
-                width: '100%', aspectRatio: '1',
-                borderRadius: 12, fontSize: 22,
-                background: avatar === emoji ? 'var(--bg-active)' : 'var(--bg-raised)',
-                border: `2px solid ${avatar === emoji ? 'var(--accent)' : 'transparent'}`,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s',
-              }}
-            >{emoji}</button>
-          ))}
+        {/* Mood selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            fontSize: 10, color: 'var(--text-muted)',
+            fontFamily: 'Inter,sans-serif',
+            textTransform: 'uppercase', letterSpacing: '0.07em',
+            flexShrink: 0,
+          }}>Настроение</span>
+          <div style={{ display: 'flex', gap: 5, flex: 1 }}>
+            {MOODS.map(m => (
+              <button
+                key={m.value}
+                onClick={() => handleMood(m.value as 1|2|3|4|5)}
+                title={m.label}
+                style={{
+                  flex: 1, height: 34, borderRadius: 10,
+                  background: currentNote.mood === m.value ? 'var(--bg-active)' : 'var(--bg-raised)',
+                  border: currentNote.mood === m.value ? `1.5px solid ${m.color}` : '1px solid var(--border)',
+                  cursor: 'pointer', fontSize: 17,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.15s',
+                  transform: currentNote.mood === m.value ? 'scale(1.15)' : 'scale(1)',
+                }}
+              >{m.emoji}</button>
+            ))}
+          </div>
         </div>
       </div>
-    </>
-  );
 
-  // ── Main Settings ─────────────────────────────────────────────────────────
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-      {AvatarPickerModal}
+      {/* ── Scrollable body ───────────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
-      <div className="scroll-area" style={{ padding: '0 0 80px' }}>
-
-        {/* ── Profile hero ──────────────────────────────────────────── */}
-        <div style={{
-          padding: 'calc(env(safe-area-inset-top,0px) + 20px) 20px 20px',
-          background: 'linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-base) 100%)',
-          borderBottom: '1px solid var(--border)',
-          animation: 'fadeUp 0.35s ease-out both',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            {/* Avatar — tappable */}
-            <button
-              onClick={() => { vibe(8); setShowAvatarPicker(true); }}
-              style={{
-                width: 64, height: 64, borderRadius: 20,
-                background: isPhotoAvatar ? 'none' : 'linear-gradient(135deg, var(--bg-active), var(--bg-raised))',
-                border: '2px solid var(--border-mid)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 30, flexShrink: 0,
-                cursor: 'pointer', position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 4px 16px var(--shadow)',
-                padding: 0,
-              }}
-            >
-              {isPhotoAvatar ? (
-                <img src={avatar} alt="avatar"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 18 }} />
-              ) : (
-                <span>{avatar}</span>
-              )}
-              {/* Edit overlay */}
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: 18,
-                background: 'rgba(0,0,0,0.35)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.15s',
-              }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
-              >
-                <Camera size={16} color="#fff" />
-              </div>
-            </button>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
-                {user.name}
-              </p>
-              <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif' }}>
-                {user.email}
-              </p>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-                С {format(new Date(user.createdAt), 'd MMMM yyyy', { locale: ru })}
-              </p>
-            </div>
-
-            {/* Edit avatar hint */}
-            <button
-              onClick={() => { vibe(8); setShowAvatarPicker(true); }}
-              style={{
-                padding: '6px 10px', borderRadius: 10,
-                background: 'var(--bg-card)', border: '1px solid var(--border)',
-                color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11,
-                fontFamily: 'Inter, sans-serif',
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}
-            >
-              <Camera size={12} />
-              Аватар
-            </button>
-          </div>
-        </div>
-
-        {/* ── Stats grid ────────────────────────────────────────────── */}
-        <div style={{ padding: '16px 16px 0', animation: 'fadeUp 0.4s ease-out 0.05s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Ваша статистика
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-            {[
-              { icon: <FileText size={14} />,          val: stats.notes,     label: 'Записей'   },
-              { icon: <BookOpen size={14} />,           val: stats.books,     label: 'Книг'      },
-              { icon: <Star size={14} />,               val: stats.favorites, label: 'Избранных' },
-              { icon: <MessageSquareQuote size={14} />, val: stats.quotes,    label: 'Цитат'     },
-              { icon: <Lightbulb size={14} />,          val: stats.insights,  label: 'Инсайтов'  },
-              { icon: <BookOpen size={14} />,           val: stats.reading,   label: 'Читаю'     },
-              { icon: <CheckCircle size={14} />,        val: stats.finished,  label: 'Прочитано' },
-              { icon: <FileText size={14} />,           val: stats.words,     label: 'Слов'      },
-            ].map((s, i) => (
-              <div key={i} style={{
-                background: 'var(--bg-card)', border: 'var(--card-border)',
-                borderRadius: 12, padding: '10px 8px', textAlign: 'center',
-                animation: `card-enter 0.32s cubic-bezier(0.22,1,0.36,1) both`,
-                animationDelay: `${0.05 + i * 0.03}s`,
-              }}>
-                <div style={{ color: 'var(--accent)', marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
-                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
-                  {s.val.toLocaleString()}
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-                  {s.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Quick nav: Graph & Achievements ───────────────────────── */}
-        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.08s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Разделы
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { icon: <GitBranch size={18} color="var(--accent)" />, label: 'Граф связей', desc: 'Визуализация книг и записей', tab: 'graph' },
-              { icon: <Trophy size={18} color="#d4a84e" />,          label: 'Достижения',  desc: 'Бейджи, уровень, прогресс',  tab: 'achievements' },
-            ].map(item => (
-              <button
-                key={item.tab}
-                onClick={() => { vibe(8); onNavigate?.(item.tab); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  padding: '13px 16px',
-                  background: 'var(--bg-card)', border: 'var(--card-border)',
-                  borderRadius: 16, cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'background 0.15s',
-                }}
-                onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
-                onPointerUp={e => (e.currentTarget.style.background = 'var(--bg-card)')}
-                onPointerLeave={e => (e.currentTarget.style.background = 'var(--bg-card)')}
-              >
-                <div style={{
-                  width: 38, height: 38, borderRadius: 12,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>{item.icon}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{item.desc}</div>
-                </div>
-                <ChevronRight size={16} color="var(--text-muted)" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Theme ─────────────────────────────────────────────────── */}
-        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.1s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Тема оформления
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-            {THEMES.map(t => (
-              <button
-                key={t.id}
-                onClick={() => { vibe(8); onTheme(t.id); }}
-                style={{
-                  padding: '14px 8px', borderRadius: 14, cursor: 'pointer',
-                  background: t.bg,
-                  border: `2px solid ${state.theme === t.id ? 'var(--accent)' : 'rgba(128,100,60,0.3)'}`,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                  boxShadow: state.theme === t.id ? '0 0 0 3px var(--accent-glow)' : 'none',
-                  transition: 'all 0.2s',
-                }}
-              >
-                <span style={{ color: t.text }}>{t.icon}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: t.text, fontFamily: 'Inter, sans-serif' }}>
-                  {t.label}
-                </span>
-                {state.theme === t.id && (
-                  <span style={{ fontSize: 10, color: '#d4914a' }}>✓ Активна</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Cloud sync ────────────────────────────────────────────── */}
-        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.15s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Облачное хранилище
-          </p>
-          <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 12,
-                background: 'rgba(100,180,120,0.15)', border: '1px solid rgba(100,180,120,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <Cloud size={18} color="var(--green)" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                  Supabase Cloud
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--green)', fontFamily: 'Inter, sans-serif' }}>
-                  ● Подключено и активно
-                </p>
-              </div>
-              <button
-                onClick={handleManualSync}
-                disabled={syncStatus === 'syncing'}
-                style={{
-                  padding: '7px 12px', borderRadius: 10,
-                  background: syncStatus === 'done' ? 'rgba(100,180,120,0.15)'
-                    : syncStatus === 'error' ? 'rgba(180,80,80,0.15)' : 'var(--bg-raised)',
-                  border: `1px solid ${syncStatus === 'done' ? 'rgba(100,180,120,0.4)'
-                    : syncStatus === 'error' ? 'rgba(180,80,80,0.4)' : 'var(--border)'}`,
-                  color: syncStatus === 'done' ? 'var(--green)'
-                    : syncStatus === 'error' ? '#d45858' : 'var(--text-secondary)',
-                  cursor: 'pointer', fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 600,
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  transition: 'all 0.2s',
-                }}
-              >
-                {syncStatus === 'syncing' ? <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                  : syncStatus === 'done'  ? <CheckCircle size={13} />
-                  : syncStatus === 'error' ? <AlertCircle size={13} />
-                  : <RefreshCw size={13} />}
-                {syncStatus === 'syncing' ? 'Синхр...'
-                  : syncStatus === 'done'  ? 'Готово'
-                  : syncStatus === 'error' ? 'Ошибка' : 'Синхр.'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Account actions ───────────────────────────────────────── */}
-        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.2s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Аккаунт
-          </p>
-          <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', borderRadius: 16, overflow: 'hidden' }}>
-
-            {/* Change password */}
-            <button
-              onClick={() => { vibe(8); handleChangePassword(); }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', background: 'none', border: 'none',
-                borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                textAlign: 'left', transition: 'background 0.15s',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                color: 'var(--accent)',
-              }}>
-                <Cloud size={16} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
-                  Сменить пароль
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-                  Письмо придёт на {user.email.slice(0, 22)}{user.email.length > 22 ? '…' : ''}
-                </p>
-              </div>
-              <ChevronRight size={16} color="var(--text-muted)" />
-            </button>
-
-            {/* Trash */}
-            <button
-              onClick={() => { vibe(8); setShowTrash(true); }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', background: 'none', border: 'none',
-                borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                textAlign: 'left', transition: 'background 0.15s',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'rgba(180,100,50,0.12)', border: '1px solid rgba(180,100,50,0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                color: '#d4914a',
-              }}>
-                <Trash2 size={16} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
-                  Корзина
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-                  {deletedNotes.length > 0 ? `${deletedNotes.length} удалённых записей` : 'Пусто'}
-                </p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {deletedNotes.length > 0 && (
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
-                    background: 'var(--accent-glow)', borderRadius: 99, padding: '1px 7px',
-                  }}>{deletedNotes.length}</span>
-                )}
-                <ChevronRight size={16} color="var(--text-muted)" />
-              </div>
-            </button>
-
-            {/* Logout */}
-            <button
-              onClick={() => { vibe(12); onLogout(); }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', background: 'none', border: 'none',
-                cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s',
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                color: '#d45858',
-              }}>
-                <LogOut size={16} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 14, color: '#d45858', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
-                  Выйти из аккаунта
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-                  {user.email}
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* ── Danger zone ───────────────────────────────────────────── */}
-        <div style={{ padding: '20px 16px 0', animation: 'fadeUp 0.4s ease-out 0.25s both' }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', opacity: 0.7,
-            fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Опасная зона
-          </p>
-          <button
-            onClick={() => { vibe(15); onClearData(); }}
+        {/* Quote of the day — only on today, collapsible */}
+        {isToday && showQuote && (
+          <div
             style={{
-              width: '100%', padding: '13px 16px', borderRadius: 14,
-              background: 'rgba(180,50,50,0.08)', border: '1px solid rgba(180,50,50,0.2)',
-              color: '#d45858', cursor: 'pointer', fontSize: 14,
-              fontFamily: 'Inter, sans-serif', fontWeight: 500,
-              display: 'flex', alignItems: 'center', gap: 8,
-              transition: 'all 0.15s',
+              margin: '12px 16px 0',
+              padding: '12px 14px',
+              borderRadius: 14,
+              background: 'var(--bg-raised)',
+              border: '1px solid var(--border)',
+              animation: 'fadeUp 0.3s ease',
+              position: 'relative',
             }}
           >
-            <Trash2 size={15} />
-            Сбросить все данные
-          </button>
-          <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
-            Это действие нельзя отменить
-          </p>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <Quote size={14} color="var(--accent)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{
+                  fontSize: 13, lineHeight: 1.55,
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'Lora, serif',
+                  fontStyle: 'italic',
+                  margin: 0, marginBottom: 4,
+                }}>{QUOTES[quoteIdx].text}</p>
+                <p style={{
+                  fontSize: 11, color: 'var(--text-muted)',
+                  fontFamily: 'Inter, sans-serif',
+                  margin: 0,
+                }}>— {QUOTES[quoteIdx].author}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowQuote(false)}
+              style={{
+                position: 'absolute', top: 8, right: 8,
+                width: 20, height: 20, borderRadius: 6,
+                background: 'var(--bg-active)', border: 'none',
+                cursor: 'pointer', color: 'var(--text-muted)',
+                fontSize: 11, lineHeight: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >✕</button>
+          </div>
+        )}
+
+        {/* Writing prompt */}
+        <div style={{ margin: '10px 16px 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            padding: '9px 12px',
+            borderRadius: 11,
+            background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-active))',
+            border: '1px solid var(--border)',
+          }}>
+            <Lightbulb size={13} color="var(--gold)" />
+            <span style={{
+              fontSize: 12, color: 'var(--text-secondary)',
+              fontFamily: 'Inter, sans-serif', lineHeight: 1.4,
+              fontStyle: 'italic',
+            }}>{PROMPTS[activePrompt]}</span>
+          </div>
         </div>
 
-        {/* ── Version ───────────────────────────────────────────────── */}
-        <div style={{ padding: '24px 0 12px', textAlign: 'center', animation: 'fadeIn 0.6s ease-out 0.3s both' }}>
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontStyle: 'italic' }}>
-            Psyche · Дневник Разума
-          </p>
-          <p style={{ margin: '3px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', opacity: 0.5 }}>
-            v2.6 · Supabase Cloud
-          </p>
+        {/* Textarea — main writing area */}
+        <div style={{
+          margin: '10px 16px 0',
+          borderRadius: 14,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-mid)',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}>
+          <textarea
+            ref={textareaRef}
+            value={textValue}
+            onChange={e => setTextValue(e.target.value)}
+            placeholder="Начни писать здесь..."
+            rows={10}
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              fontSize: 15.5,
+              lineHeight: 1.78,
+              color: 'var(--text-primary)',
+              fontFamily: 'Lora, Georgia, serif',
+              boxSizing: 'border-box',
+              caretColor: 'var(--accent)',
+              minHeight: 200,
+            }}
+          />
+          {/* Word / char count bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 14px',
+            borderTop: '1px solid var(--border)',
+          }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
+              {wordCount} {wordCount === 1 ? 'слово' : wordCount < 5 ? 'слова' : 'слов'}
+              &nbsp;·&nbsp;{charCount} симв.
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isSaved && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  fontSize: 11, color: '#6a9e8a',
+                  fontFamily: 'Inter,sans-serif',
+                  animation: 'fadeIn 0.2s ease',
+                }}>
+                  <CheckCircle2 size={12} /> Сохранено
+                </div>
+              )}
+              <button
+                onClick={handleSave}
+                style={{
+                  padding: '5px 12px', borderRadius: 8,
+                  background: textValue.trim()
+                    ? 'linear-gradient(135deg, var(--accent), var(--accent-soft))'
+                    : 'var(--bg-raised)',
+                  border: textValue.trim() ? 'none' : '1px solid var(--border)',
+                  color: textValue.trim() ? '#0e0c09' : 'var(--text-muted)',
+                  fontSize: 12, fontWeight: 600,
+                  fontFamily: 'Inter, sans-serif',
+                  cursor: textValue.trim() ? 'pointer' : 'default',
+                  transition: 'all 0.2s',
+                }}
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Stats row */}
+        <div style={{
+          margin: '12px 16px 0',
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+          gap: 8,
+        }}>
+          {/* Streak */}
+          <div style={{
+            padding: '12px 10px',
+            borderRadius: 12,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            textAlign: 'center',
+            animation: 'card-enter 0.35s ease 0.05s both',
+          }}>
+            <div style={{ fontSize: 20, marginBottom: 3 }}>
+              <Flame size={18} color={streak > 0 ? '#d4914a' : 'var(--text-muted)'} style={{ display: 'inline' }} />
+            </div>
+            <div style={{
+              fontSize: 18, fontWeight: 700,
+              color: streak > 0 ? 'var(--accent)' : 'var(--text-muted)',
+              fontFamily: 'Lora, serif', lineHeight: 1,
+            }}>{streak}</div>
+            <div style={{
+              fontSize: 10, color: 'var(--text-muted)',
+              fontFamily: 'Inter,sans-serif', marginTop: 3,
+            }}>Стрик</div>
+          </div>
+
+          {/* Total entries */}
+          <div style={{
+            padding: '12px 10px',
+            borderRadius: 12,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            textAlign: 'center',
+            animation: 'card-enter 0.35s ease 0.10s both',
+          }}>
+            <div style={{ marginBottom: 3 }}>
+              <BarChart2 size={18} color="var(--text-muted)" style={{ display: 'inline' }} />
+            </div>
+            <div style={{
+              fontSize: 18, fontWeight: 700,
+              color: 'var(--text-secondary)',
+              fontFamily: 'Lora, serif', lineHeight: 1,
+            }}>{totalEntries}</div>
+            <div style={{
+              fontSize: 10, color: 'var(--text-muted)',
+              fontFamily: 'Inter,sans-serif', marginTop: 3,
+            }}>Записей</div>
+          </div>
+
+          {/* Linked notes */}
+          <div style={{
+            padding: '12px 10px',
+            borderRadius: 12,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            textAlign: 'center',
+            animation: 'card-enter 0.35s ease 0.15s both',
+          }}>
+            <div style={{ marginBottom: 3 }}>
+              <Link2 size={18} color="var(--text-muted)" style={{ display: 'inline' }} />
+            </div>
+            <div style={{
+              fontSize: 18, fontWeight: 700,
+              color: 'var(--text-secondary)',
+              fontFamily: 'Lora, serif', lineHeight: 1,
+            }}>{linkedNotes.length}</div>
+            <div style={{
+              fontSize: 10, color: 'var(--text-muted)',
+              fontFamily: 'Inter,sans-serif', marginTop: 3,
+            }}>Заметок</div>
+          </div>
+        </div>
+
+        {/* Last 7 days activity */}
+        <div style={{ margin: '12px 16px 0' }}>
+          <p style={{
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.07em', color: 'var(--text-muted)',
+            fontFamily: 'Inter,sans-serif', marginBottom: 8,
+          }}>Последние 7 дней</p>
+          <div style={{
+            display: 'flex', gap: 6, alignItems: 'flex-end',
+          }}>
+            {last7.map((day, i) => {
+              const mood = day.mood ? MOODS.find(m => m.value === day.mood) : null;
+              const isCurrentDay = day.dateStr === currentDate;
+              return (
+                <div
+                  key={i}
+                  onClick={() => setCurrentDate(day.dateStr)}
+                  style={{
+                    flex: 1, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: '100%', height: day.filled ? 28 : 14,
+                    borderRadius: 6,
+                    background: day.filled
+                      ? (mood?.color || 'var(--accent-dim)')
+                      : 'var(--bg-raised)',
+                    border: isCurrentDay ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                    transition: 'all 0.2s',
+                    opacity: day.filled ? 0.85 : 0.5,
+                  }} />
+                  <span style={{
+                    fontSize: 9, color: isCurrentDay ? 'var(--accent)' : 'var(--text-muted)',
+                    fontFamily: 'Inter,sans-serif', fontWeight: isCurrentDay ? 700 : 400,
+                  }}>
+                    {new Date(day.dateStr + 'T12:00:00').toLocaleDateString('ru-RU', { weekday: 'narrow' })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Linked notes section */}
+        {linkedNotes.length > 0 && (
+          <div style={{ margin: '12px 16px 0' }}>
+            <button
+              onClick={() => setShowLinked(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                width: '100%', padding: '10px 12px',
+                borderRadius: 12,
+                background: showLinked ? 'var(--bg-active)' : 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                cursor: 'pointer', textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+            >
+              <BookOpen size={14} color="var(--text-muted)" />
+              <span style={{
+                flex: 1, fontSize: 12, color: 'var(--text-secondary)',
+                fontFamily: 'Inter,sans-serif', fontWeight: 600,
+              }}>
+                Записи за этот день ({linkedNotes.length})
+              </span>
+              <ChevronRight
+                size={14}
+                color="var(--text-muted)"
+                style={{
+                  transform: showLinked ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
+                }}
+              />
+            </button>
+
+            {showLinked && (
+              <div style={{
+                marginTop: 6, display: 'flex', flexDirection: 'column', gap: 5,
+                animation: 'slideDown 0.2s ease',
+              }}>
+                {linkedNotes.map(n => (
+                  <button
+                    key={n.id}
+                    onClick={() => { onOpenNote(n); setShowLinked(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '10px 12px', borderRadius: 11,
+                      background: 'var(--bg-raised)',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <div style={{
+                      fontSize: 14, flex: 1,
+                      color: 'var(--text-primary)',
+                      fontFamily: 'Inter,sans-serif',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {n.title || 'Без названия'}
+                    </div>
+                    <span style={{
+                      fontSize: 11, color: 'var(--text-muted)',
+                      fontFamily: 'Inter,sans-serif', flexShrink: 0,
+                    }}>
+                      {new Date(n.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bottom spacer */}
+        <div style={{ height: 24, flexShrink: 0 }} />
       </div>
     </div>
   );

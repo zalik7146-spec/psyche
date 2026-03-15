@@ -1,31 +1,65 @@
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "types": ["node"],
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1810;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d2418;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8c882;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c4813c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a060;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a06030;stop-opacity:1" />
+    </linearGradient>
+  </defs>
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bg)"/>
 
-    /* Path mapping */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
+  <!-- Subtle border glow -->
+  <rect width="512" height="512" rx="112" ry="112" fill="none" stroke="url(#gold)" stroke-width="6" opacity="0.3"/>
 
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src", "vite.config.ts"]
-}
+  <!-- Open book shape -->
+  <g transform="translate(256, 240)">
+    <!-- Left page -->
+    <path d="M-140,-90 Q-140,-100 -130,-100 L-20,-100 Q-10,-100 -10,-90 L-10,110 Q-10,120 -20,120 L-130,120 Q-145,120 -145,105 Z"
+          fill="#2a2015" stroke="url(#gold)" stroke-width="2" opacity="0.9"/>
+    <!-- Right page -->
+    <path d="M140,-90 Q140,-100 130,-100 L20,-100 Q10,-100 10,-90 L10,110 Q10,120 20,120 L130,120 Q145,120 145,105 Z"
+          fill="#2a2015" stroke="url(#gold)" stroke-width="2" opacity="0.9"/>
+    <!-- Spine -->
+    <rect x="-8" y="-105" width="16" height="230" rx="4" fill="url(#amber)" opacity="0.8"/>
+
+    <!-- Lines on left page -->
+    <line x1="-120" y1="-55" x2="-30" y2="-55" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+    <line x1="-120" y1="-30" x2="-30" y2="-30" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <line x1="-120" y1="-5" x2="-30" y2="-5" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <line x1="-120" y1="20" x2="-70" y2="20" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- Lines on right page -->
+    <line x1="30" y1="-55" x2="120" y2="-55" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+    <line x1="30" y1="-30" x2="120" y2="-30" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <line x1="30" y1="-5" x2="120" y2="-5" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <line x1="30" y1="20" x2="80" y2="20" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- Feather / quill on right page -->
+    <g transform="translate(75, 55) rotate(-35)">
+      <ellipse cx="0" cy="0" rx="5" ry="28" fill="url(#gold)" opacity="0.9"/>
+      <path d="M0,-28 Q18,-10 8,15 Q0,28 0,28 Q-8,10 0,-28Z" fill="url(#gold)" opacity="0.7"/>
+      <line x1="0" y1="-28" x2="0" y2="28" stroke="#1e1810" stroke-width="1.5" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- Ψ symbol (Psi - psychology) at top -->
+  <g transform="translate(256, 148)">
+    <text text-anchor="middle" dominant-baseline="middle"
+          font-family="Georgia, serif" font-size="72" font-weight="bold"
+          fill="url(#gold)" opacity="0.95">Ψ</text>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="256" y="430" text-anchor="middle"
+        font-family="Georgia, serif" font-size="36" font-weight="600" letter-spacing="8"
+        fill="url(#gold)" opacity="0.7">PSYCHE</text>
+</svg>
