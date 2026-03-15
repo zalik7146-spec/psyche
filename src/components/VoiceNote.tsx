@@ -141,7 +141,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{
-        width: '100%', maxWidth: 430,
+        width: 'min(100%, 430px)',
         background: 'var(--bg-raised)',
         borderRadius: '20px 20px 0 0',
         border: '1px solid var(--border)',

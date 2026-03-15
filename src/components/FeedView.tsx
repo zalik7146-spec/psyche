@@ -48,6 +48,63 @@ function Avatar({ profile, size = 36 }: { profile?: SocialProfile | null; size?:
   );
 }
 
+// ── ReactionBtn ─────────────────────────────────────────────────────────────
+const REACTIONS = ['❤️','🔥','💡','🙏','😮'];
+function ReactionBtn({ post, onLike }: { post: SocialPost; onLike: (p: SocialPost) => void }) {
+  const [showPicker, setShowPicker] = useState(false);
+  const [myReaction, setMyReaction] = useState(post.isLiked ? '❤️' : '');
+
+  const handleReact = (emoji: string) => {
+    vibe(10);
+    setShowPicker(false);
+    if (myReaction === emoji) {
+      setMyReaction('');
+      onLike({ ...post, isLiked: false });
+    } else {
+      setMyReaction(emoji);
+      onLike({ ...post, isLiked: true });
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {showPicker && (
+        <div style={{
+          position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 24, padding: '6px 8px', display: 'flex', gap: 4,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          animation: 'scaleIn 0.15s cubic-bezier(0.22,1,0.36,1)',
+          zIndex: 50,
+        }}>
+          {REACTIONS.map(r => (
+            <button key={r} onClick={() => handleReact(r)} style={{
+              background: myReaction === r ? 'var(--accent-muted)' : 'none',
+              border: 'none', cursor: 'pointer', fontSize: 20, padding: '4px 6px',
+              borderRadius: 12, transition: 'all 0.15s',
+            }}>{r}</button>
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => { vibe(6); setShowPicker(v => !v); }}
+        onBlur={() => setTimeout(() => setShowPicker(false), 200)}
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
+          color: myReaction ? 'var(--accent)' : 'var(--text-muted)',
+          borderRadius: 10, transition: 'all 0.15s', fontSize: 14,
+        }}
+      >
+        <span style={{ fontSize: 18 }}>{myReaction || '🤍'}</span>
+        <span style={{ fontSize: 13, fontFamily: 'Inter,sans-serif', fontWeight: 500 }}>
+          {post.likesCount || 0}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 // ── ActionBtn ───────────────────────────────────────────────────────────────
 function ActionBtn({ icon, label, active, color, onClick }: {
   icon: React.ReactNode; label: string | number; active?: boolean;
@@ -206,14 +263,16 @@ function PostCard({ post, userId, onLike, onSave, onComment, onProfile, onDelete
         }}>{plain}</div>
       </div>
 
-      {/* Tags */}
+      {/* Tags — кликабельные хэштеги */}
       {post.tags.length > 0 && (
         <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {post.tags.slice(0, 4).map(t => (
-            <span key={t} style={{
+            <button key={t} onClick={() => { vibe(6); onHashtag?.(t); }} style={{
               fontSize: 11, color: 'var(--accent)', background: 'var(--accent-muted)',
-              borderRadius: 20, padding: '2px 8px', fontFamily: 'Inter, sans-serif',
-            }}>#{t}</span>
+              borderRadius: 20, padding: '3px 10px', fontFamily: 'Inter, sans-serif',
+              border: 'none', cursor: 'pointer', transition: 'all 0.15s',
+              fontWeight: 600,
+            }}>#{t}</button>
           ))}
         </div>
       )}
@@ -223,11 +282,8 @@ function PostCard({ post, userId, onLike, onSave, onComment, onProfile, onDelete
         padding: '10px 16px 14px', display: 'flex', alignItems: 'center', gap: 4,
         borderTop: '1px solid var(--border)',
       }}>
-        <ActionBtn
-          icon={<Heart size={18} fill={post.isLiked ? 'var(--accent)' : 'none'} />}
-          label={post.likesCount || 0} active={!!post.isLiked}
-          color={post.isLiked ? 'var(--accent)' : 'var(--text-muted)'}
-          onClick={() => { vibe(10); onLike(post); }} />
+        {/* Реакции */}
+        <ReactionBtn post={post} onLike={onLike} />
         <ActionBtn icon={<MessageCircle size={18} />} label={post.commentsCount || 0}
           color='var(--text-muted)' onClick={() => { vibe(); onComment(post); }} />
         <ActionBtn
