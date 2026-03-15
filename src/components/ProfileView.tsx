@@ -3,7 +3,7 @@ import {
   Edit2, Check, X, BookOpen, FileText, Sparkles, Globe, Lock,
   Trash2, Settings, ChevronRight
 } from 'lucide-react';
-import type { User, SocialPost, SocialProfile, Book } from '../types';
+import type { User, SocialPost, SocialProfile, Book, Note } from '../types';
 import { getMyProfile, upsertProfile, getUserPosts, deletePost } from '../socialStore';
 
 const vibe = (ms = 8) => navigator.vibrate?.(ms);
@@ -79,11 +79,14 @@ const TOOLS = [
 ];
 
 export default function ProfileView({
-  user, books, onNavigate,
+  user, books, notes: _notes = [], onNavigate, onOpenWrapped, onOpenChallenges,
 }: {
   user: User;
   books: Book[];
+  notes?: Note[];
   onNavigate?: (tab: string) => void;
+  onOpenWrapped?: () => void;
+  onOpenChallenges?: () => void;
 }) {
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -366,6 +369,59 @@ export default function ProfileView({
                   </div>
                 </button>
               ))}
+            </div>
+
+            {/* Wrapped + Challenges row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button
+                onClick={() => { vibe(8); onOpenWrapped?.(); }}
+                style={{
+                  padding: '16px 14px', borderRadius: 18,
+                  background: 'linear-gradient(135deg, rgba(232,201,122,0.18), rgba(180,140,60,0.08))',
+                  border: '1px solid rgba(232,201,122,0.3)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+                onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
+                onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <div style={{ fontSize: 28 }}>🎉</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                    Итоги года
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
+                    Wrapped {new Date().getFullYear()}
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { vibe(8); onOpenChallenges?.(); }}
+                style={{
+                  padding: '16px 14px', borderRadius: 18,
+                  background: 'linear-gradient(135deg, rgba(232,122,122,0.18), rgba(180,60,60,0.08))',
+                  border: '1px solid rgba(232,122,122,0.3)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+                onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
+                onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <div style={{ fontSize: 28 }}>🏆</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                    Челленджи
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
+                    Цели и бейджи
+                  </div>
+                </div>
+              </button>
             </div>
 
             {/* Library quick link */}

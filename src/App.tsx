@@ -31,6 +31,8 @@ import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
 import NotificationsView from './components/NotificationsView';
 import VoiceNote       from './components/VoiceNote';
+import YearWrapped     from './components/YearWrapped';
+import ChallengesView  from './components/ChallengesView';
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
@@ -98,6 +100,8 @@ function AppInner() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showVoiceNote, setShowVoiceNote] = useState(false);
+  const [showWrapped, setShowWrapped] = useState(false);
+  const [showChallenges, setShowChallenges] = useState(false);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const syncedRef = useRef(false);
   const tabOrder: TabId[] = ['notes', 'library', 'daily', 'cards', 'settings', 'stats', 'graph', 'achievements', 'anki', 'share', 'feed', 'profile'];
@@ -741,7 +745,10 @@ function AppInner() {
           <ProfileView
             user={auth.user}
             books={state.books}
+            notes={state.notes}
             onNavigate={(tab) => handleTabChange(tab as TabId)}
+            onOpenWrapped={() => setShowWrapped(true)}
+            onOpenChallenges={() => setShowChallenges(true)}
           />
         )}
 
@@ -829,6 +836,22 @@ function AppInner() {
             setShowTemplates(false);
             handleNewNote();
           }}
+        />
+      )}
+
+      {showWrapped && (
+        <YearWrapped
+          notes={state.notes}
+          books={state.books}
+          onClose={() => setShowWrapped(false)}
+        />
+      )}
+
+      {showChallenges && (
+        <ChallengesView
+          notes={state.notes}
+          books={state.books}
+          onClose={() => setShowChallenges(false)}
         />
       )}
     </div>
