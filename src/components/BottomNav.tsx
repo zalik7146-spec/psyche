@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { BookOpen, FileText, Plus, Users, UserCircle, X, Sparkles, PenLine, Brain, Bell, Mic } from 'lucide-react';
+import { BookOpen, FileText, Plus, Users, UserCircle, X, Sparkles, PenLine, Brain, Bell } from 'lucide-react';
 import { TabId } from '../types';
 
 interface Props {
@@ -7,12 +7,11 @@ interface Props {
   onChange: (tab: TabId) => void;
   unreadNotifs?: number;
   onNotifications?: () => void;
-  onVoiceNote?: () => void;
 }
 
 const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
 
-export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifications, onVoiceNote }: Props) {
+export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifications }: Props) {
   const [showNewMenu, setShowNewMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -33,78 +32,57 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
   }, [showNewMenu]);
 
   const tabs = [
-    { id: 'notes'   as TabId, icon: <FileText size={22} />,     label: 'Записи'     },
-    { id: 'library' as TabId, icon: <BookOpen size={22} />,     label: 'Книги'      },
-    null, // FAB slot
-    { id: 'feed'    as TabId, icon: <Users size={22} />,        label: 'Люди'       },
-    { id: 'profile' as TabId, icon: <UserCircle size={22} />,   label: 'Профиль'    },
+    { id: 'notes'   as TabId, icon: <FileText size={22} />,   label: 'Записи'  },
+    { id: 'library' as TabId, icon: <BookOpen size={22} />,   label: 'Книги'   },
+    null,
+    { id: 'feed'    as TabId, icon: <Users size={22} />,      label: 'Люди'    },
+    { id: 'profile' as TabId, icon: <UserCircle size={22} />, label: 'Профиль' },
   ];
 
   const NAV_H = 60;
 
   return (
     <>
-      {/* ── Bottom navigation bar ─────────────────────────────────── */}
       <nav style={{
-        flexShrink: 0,
-        width: '100%',
+        flexShrink: 0, width: '100%',
         background: 'var(--nav-bg)',
         borderTop: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        position: 'relative',
-        zIndex: 50,
+        display: 'flex', alignItems: 'center',
+        position: 'relative', zIndex: 50,
         height: NAV_H,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-          {tabs.map((tab, _i) => {
+        {tabs.map((tab, _i) => {
           if (tab === null) {
-            /* ── FAB slot — строго по центру ──────────────────── */
             return (
               <div key="fab" style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                height: '100%',
+                flex: 1, display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                position: 'relative', height: '100%',
               }}>
                 <button
                   className="fab-btn"
                   onClick={() => { vibe(14); setShowNewMenu(v => !v); }}
                   style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 15,
+                    width: 50, height: 50, borderRadius: 15,
                     background: showNewMenu
-                      ? 'linear-gradient(145deg, #7a4518 0%, #4a2808 100%)'
-                      : 'linear-gradient(145deg, #d4914a 0%, #8a5220 100%)',
+                      ? 'linear-gradient(145deg,#7a4518,#4a2808)'
+                      : 'linear-gradient(145deg,#d4914a,#8a5220)',
                     border: '2px solid var(--nav-bg)',
                     boxShadow: showNewMenu
                       ? '0 2px 10px rgba(180,110,40,0.3)'
-                      : '0 3px 16px rgba(180,110,40,0.5), 0 1px 6px rgba(0,0,0,0.4)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                      : '0 3px 16px rgba(180,110,40,0.5),0 1px 6px rgba(0,0,0,0.4)',
+                    cursor: 'pointer', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
                     color: '#fff',
                     WebkitTapHighlightColor: 'transparent',
                     transition: 'background 0.2s, box-shadow 0.2s',
                     animation: 'fab-pop 0.45s cubic-bezier(0.34,1.4,0.64,1) both',
                     flexShrink: 0,
                   }}
-                  onPointerDown={e => {
-                    e.currentTarget.style.transform = 'scale(0.88)';
-                    e.currentTarget.style.transition = 'transform 0.08s';
-                  }}
-                  onPointerUp={e => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.transition = 'transform 0.22s cubic-bezier(0.34,1.4,0.64,1)';
-                  }}
-                  onPointerLeave={e => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.transition = 'transform 0.18s';
-                  }}
+                  onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.88)'; }}
+                  onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                 >
                   <div style={{
                     transform: showNewMenu ? 'rotate(45deg)' : 'rotate(0deg)',
@@ -124,30 +102,17 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
               key={tab.id}
               onClick={() => { vibe(6); onChange(tab.id); }}
               style={{
-                flex: 1,
-                display: 'flex', flexDirection: 'column',
+                flex: 1, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                gap: 4,
-                background: 'none', border: 'none', cursor: 'pointer',
+                gap: 4, background: 'none', border: 'none', cursor: 'pointer',
                 color: isActive ? 'var(--accent)' : 'var(--text-muted)',
                 transition: 'color 0.18s',
                 WebkitTapHighlightColor: 'transparent',
-                padding: '6px 4px',
-                position: 'relative',
-                height: NAV_H,
+                padding: '6px 4px', position: 'relative', height: NAV_H,
               }}
-              onPointerDown={e => {
-                e.currentTarget.style.transform = 'scale(0.85)';
-                e.currentTarget.style.transition = 'transform 0.08s';
-              }}
-              onPointerUp={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.transition = 'transform 0.22s cubic-bezier(0.34,1.4,0.64,1)';
-              }}
-              onPointerLeave={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.transition = 'transform 0.18s';
-              }}
+              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.85)'; }}
+              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               <div style={{ position: 'relative' }}>
                 {tab.icon}
@@ -158,7 +123,7 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
                     background: '#e74c3c', border: '2px solid var(--nav-bg)',
                     fontSize: 8, fontWeight: 700, color: '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: 'Inter,sans-serif',
                   }}>
                     {unreadNotifs > 9 ? '9+' : unreadNotifs}
                   </span>
@@ -166,7 +131,7 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
               </div>
               <span style={{
                 fontSize: 10, fontWeight: isActive ? 700 : 400,
-                fontFamily: 'Inter, sans-serif', lineHeight: 1,
+                fontFamily: 'Inter,sans-serif', lineHeight: 1,
                 letterSpacing: isActive ? '0.02em' : 0,
               }}>{tab.label}</span>
               {isActive && (
@@ -182,10 +147,9 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
         })}
       </nav>
 
-      {/* ── New note menu (bottom sheet, compact) ─────────────────── */}
+      {/* FAB Menu */}
       {showNewMenu && (
         <>
-          {/* Backdrop */}
           <div
             onClick={() => setShowNewMenu(false)}
             style={{
@@ -194,14 +158,12 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
               animation: 'fadeIn 0.18s ease',
             }}
           />
-
-          {/* Sheet — appears right above the nav bar */}
           <div
             ref={menuRef}
             className="new-menu-sheet"
             style={{
               position: 'fixed',
-              bottom: `calc(${NAV_H}px + env(safe-area-inset-bottom, 0px) + 10px)`,
+              bottom: `calc(${NAV_H}px + env(safe-area-inset-bottom,0px) + 10px)`,
               left: '50%',
               transform: 'translateX(-50%)',
               width: 'min(calc(100vw - 32px), 398px)',
@@ -209,12 +171,10 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
               borderRadius: 20,
               border: '1px solid var(--border-mid)',
               boxShadow: '0 -4px 40px rgba(0,0,0,0.55)',
-              zIndex: 100,
-              overflow: 'hidden',
+              zIndex: 100, overflow: 'hidden',
               animation: 'menuSlideUp 0.28s cubic-bezier(0.34,1.2,0.64,1)',
             }}
           >
-            {/* Header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '13px 16px 10px',
@@ -236,76 +196,53 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
               ><X size={14} /></button>
             </div>
 
-            {/* Options */}
             <div style={{ padding: '10px 12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-              {/* Free note */}
               <MenuOption
                 icon={<PenLine size={20} color="var(--accent)" />}
-                iconBg="linear-gradient(135deg, #d4a06030, #8a522020)"
+                iconBg="linear-gradient(135deg,#d4a06030,#8a522020)"
                 title="Свободная запись"
                 desc="Чистый лист — пиши что думаешь"
                 delay={0.05}
                 onClick={() => { vibe(10); setShowNewMenu(false); onChange('new'); }}
               />
-
-              {/* From template */}
               <MenuOption
                 icon={<Sparkles size={20} color="#6a9e8a" />}
-                iconBg="linear-gradient(135deg, #6a9e8a30, #4a7a6a20)"
+                iconBg="linear-gradient(135deg,#6a9e8a30,#4a7a6a20)"
                 title="Из шаблона"
                 desc="Готовая структура для разбора книги"
                 delay={0.10}
                 onClick={() => { vibe(10); setShowNewMenu(false); onChange('template'); }}
               />
-
-              {/* Flashcard */}
               <MenuOption
                 icon={<Brain size={20} color="#8a7a9a" />}
-                iconBg="linear-gradient(135deg, #8a7a9a30, #6a5a8a20)"
+                iconBg="linear-gradient(135deg,#8a7a9a30,#6a5a8a20)"
                 title="Карточка памяти"
                 desc="Создать карточку для повторения"
                 delay={0.15}
                 onClick={() => { vibe(10); setShowNewMenu(false); onChange('cards'); }}
               />
-
-              {/* Publish */}
               <MenuOption
                 icon={<Users size={20} color="#6a8a9a" />}
-                iconBg="linear-gradient(135deg, #6a8a9a30, #4a6a7a20)"
+                iconBg="linear-gradient(135deg,#6a8a9a30,#4a6a7a20)"
                 title="Поделиться в сообществе"
                 desc="Опубликовать мысль или инсайт"
                 delay={0.20}
                 onClick={() => { vibe(10); setShowNewMenu(false); onChange('feed'); }}
               />
-
-              {/* Daily */}
               <MenuOption
                 icon={<BookOpen size={20} color="#9a8a6a" />}
-                iconBg="linear-gradient(135deg, #9a8a6a30, #7a6a4a20)"
+                iconBg="linear-gradient(135deg,#9a8a6a30,#7a6a4a20)"
                 title="Запись в журнал"
                 desc="Дневниковая запись сегодняшнего дня"
                 delay={0.25}
                 onClick={() => { vibe(10); setShowNewMenu(false); onChange('daily'); }}
               />
-
-              {/* Voice note */}
-              <MenuOption
-                icon={<Mic size={20} color="#9a6a8a" />}
-                iconBg="linear-gradient(135deg, #9a6a8a30, #7a4a6a20)"
-                title="Голосовая заметка"
-                desc="Надиктуй мысль — текст создастся сам"
-                delay={0.30}
-                onClick={() => { vibe(10); setShowNewMenu(false); onVoiceNote?.(); }}
-              />
-
-              {/* Notifications */}
               <MenuOption
                 icon={<Bell size={20} color="#6a9a8a" />}
-                iconBg="linear-gradient(135deg, #6a9a8a30, #4a7a6a20)"
+                iconBg="linear-gradient(135deg,#6a9a8a30,#4a7a6a20)"
                 title={`Уведомления${unreadNotifs > 0 ? ` (${unreadNotifs})` : ''}`}
                 desc="Лайки, комментарии, Daily Review"
-                delay={0.35}
+                delay={0.30}
                 onClick={() => { vibe(10); setShowNewMenu(false); onNotifications?.(); }}
               />
             </div>
@@ -316,23 +253,16 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
   );
 }
 
-function MenuOption({
-  icon, iconBg, title, desc, delay, onClick,
-}: {
-  icon: React.ReactNode;
-  iconBg: string;
-  title: string;
-  desc: string;
-  delay: number;
-  onClick: () => void;
+function MenuOption({ icon, iconBg, title, desc, delay, onClick }: {
+  icon: React.ReactNode; iconBg: string; title: string;
+  desc: string; delay: number; onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: 14,
-        padding: '13px 14px',
-        borderRadius: 14,
+        padding: '13px 14px', borderRadius: 14,
         background: 'var(--bg-raised)',
         border: '1px solid var(--border)',
         cursor: 'pointer', textAlign: 'left', width: '100%',
@@ -345,8 +275,7 @@ function MenuOption({
     >
       <div style={{
         width: 42, height: 42, borderRadius: 12,
-        background: iconBg,
-        border: '1px solid var(--border-mid)',
+        background: iconBg, border: '1px solid var(--border-mid)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>

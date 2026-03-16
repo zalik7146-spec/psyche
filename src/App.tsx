@@ -33,6 +33,8 @@ import NotificationsView from './components/NotificationsView';
 
 import YearWrapped     from './components/YearWrapped';
 import ChallengesView  from './components/ChallengesView';
+import MessagesView    from './components/MessagesView';
+import FollowersView   from './components/FollowersView';
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
@@ -102,6 +104,10 @@ function AppInner() {
 
   const [showWrapped, setShowWrapped] = useState(false);
   const [showChallenges, setShowChallenges] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [messageRecipientId, setMessageRecipientId] = useState<string | undefined>(undefined);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [followersTab, setFollowersTab] = useState<'followers' | 'following'>('followers');
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const syncedRef = useRef(false);
   const tabOrder: TabId[] = ['notes', 'library', 'daily', 'cards', 'settings', 'stats', 'graph', 'achievements', 'anki', 'share', 'feed', 'profile'];
@@ -749,6 +755,8 @@ function AppInner() {
             onNavigate={(tab) => handleTabChange(tab as TabId)}
             onOpenWrapped={() => setShowWrapped(true)}
             onOpenChallenges={() => setShowChallenges(true)}
+            onOpenMessages={() => setShowMessages(true)}
+            onOpenFollowers={(tab) => { setFollowersTab(tab); setShowFollowers(true); }}
           />
         )}
 
@@ -779,7 +787,6 @@ function AppInner() {
         onChange={handleTabChange}
         unreadNotifs={unreadNotifs}
         onNotifications={() => { setUnreadNotifs(0); setShowNotifications(true); }}
-        onVoiceNote={() => {}}
       />
 
       {/* Modals */}
@@ -832,6 +839,31 @@ function AppInner() {
           books={state.books}
           onClose={() => setShowChallenges(false)}
         />
+      )}
+
+      {showMessages && auth.user && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+          <MessagesView
+            userId={auth.user.id}
+            initialRecipientId={messageRecipientId}
+            onBack={() => { setShowMessages(false); setMessageRecipientId(undefined); }}
+          />
+        </div>
+      )}
+
+      {showFollowers && auth.user && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+          <FollowersView
+            userId={auth.user.id}
+            initialTab={followersTab}
+            onBack={() => setShowFollowers(false)}
+            onOpenMessages={(recipientId) => {
+              setShowFollowers(false);
+              setMessageRecipientId(recipientId);
+              setShowMessages(true);
+            }}
+          />
+        </div>
       )}
     </div>
   );

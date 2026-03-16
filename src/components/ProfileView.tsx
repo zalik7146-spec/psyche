@@ -79,7 +79,7 @@ const TOOLS = [
 ];
 
 export default function ProfileView({
-  user, books, notes: _notes = [], onNavigate, onOpenWrapped, onOpenChallenges,
+  user, books, notes: _notes = [], onNavigate, onOpenWrapped, onOpenChallenges, onOpenMessages, onOpenFollowers,
 }: {
   user: User;
   books: Book[];
@@ -87,6 +87,8 @@ export default function ProfileView({
   onNavigate?: (tab: string) => void;
   onOpenWrapped?: () => void;
   onOpenChallenges?: () => void;
+  onOpenMessages?: () => void;
+  onOpenFollowers?: (tab: 'followers' | 'following') => void;
 }) {
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -185,20 +187,35 @@ export default function ProfileView({
           <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
             Профиль
           </div>
-          <button
-            onClick={() => { vibe(6); onNavigate?.('settings'); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 14px', borderRadius: 12,
-              background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              cursor: 'pointer', color: 'var(--text-secondary)',
-              fontSize: 13, fontFamily: 'Inter, sans-serif',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <Settings size={15} color='var(--accent)' />
-            Настройки
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => { vibe(6); onOpenMessages?.(); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 12px', borderRadius: 12,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                cursor: 'pointer', color: 'var(--text-secondary)',
+                fontSize: 13, fontFamily: 'Inter, sans-serif',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              ✉️ Сообщения
+            </button>
+            <button
+              onClick={() => { vibe(6); onNavigate?.('settings'); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 12px', borderRadius: 12,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                cursor: 'pointer', color: 'var(--text-secondary)',
+                fontSize: 13, fontFamily: 'Inter, sans-serif',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Settings size={15} color='var(--accent)' />
+              Настройки
+            </button>
+          </div>
         </div>
 
         {/* Avatar + info */}
@@ -296,13 +313,16 @@ export default function ProfileView({
             borderTop: '1px solid var(--border)',
           }}>
             {[
-              { v: posts.length, l: 'постов' },
-              { v: profile?.followersCount || 0, l: 'читателей' },
-              { v: profile?.followingCount || 0, l: 'читает' },
-              { v: totalLikes, l: 'лайков' },
+              { v: posts.length, l: 'постов', onClick: undefined },
+              { v: profile?.followersCount || 0, l: 'читателей', onClick: () => onOpenFollowers?.('followers') },
+              { v: profile?.followingCount || 0, l: 'читает', onClick: () => onOpenFollowers?.('following') },
+              { v: totalLikes, l: 'лайков', onClick: undefined },
             ].map(s => (
-              <div key={s.l} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{s.v}</div>
+              <div key={s.l}
+                onClick={s.onClick}
+                style={{ textAlign: 'center', cursor: s.onClick ? 'pointer' : 'default', padding: '4px 0', borderRadius: 8 }}
+              >
+                <div style={{ fontSize: 18, fontWeight: 700, color: s.onClick ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{s.v}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
               </div>
             ))}
