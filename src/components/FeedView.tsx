@@ -267,7 +267,7 @@ function PostCard({ post, userId, onLike, onSave, onComment, onProfile, onDelete
       {post.tags.length > 0 && (
         <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {post.tags.slice(0, 4).map(t => (
-            <button key={t} onClick={() => { vibe(6); onHashtag?.(t); }} style={{
+            <button key={t} onClick={() => { vibe(6); }} style={{
               fontSize: 11, color: 'var(--accent)', background: 'var(--accent-muted)',
               borderRadius: 20, padding: '3px 10px', fontFamily: 'Inter, sans-serif',
               border: 'none', cursor: 'pointer', transition: 'all 0.15s',

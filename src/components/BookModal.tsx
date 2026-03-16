@@ -1,416 +1,334 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Trash2, Search, Loader } from 'lucide-react';
-import { Book, BookStatus } from '../types';
+import { Book } from '../types';
 
 interface Props {
   book?: Book;
-  onSave: (data: Partial<Book>) => void;
-  onDelete?: (id: string) => void;
+  onSave: (book: Partial<Book>) => void;
+  onDelete?: (bookId: string) => void;
   onClose: () => void;
 }
 
-interface GoogleBook {
+const STATUSES: { value: Book['status']; label: string }[] = [
+  { value: 'reading',    label: '📖 Читаю' },
+  { value: 'finished',   label: '✅ Прочитано' },
+  { value: 'want',       label: '🔖 Хочу' },
+  { value: 'paused',     label: '⏸️ Пауза' },
+];
+
+const EMOJIS = ['📚','📖','📝','🧠','💡','🔬','🎭','🌍','❤️','🧘','⚡','🔮'];
+const COLORS = ['#b07d4a','#7c6f5e','#5c7a6b','#6b5c7a','#7a5c5c','#4a6b7a'];
+
+interface GBook {
   id: string;
-  volumeInfo: {
-    title: string;
-    authors?: string[];
-    description?: string;
-    pageCount?: number;
-    imageLinks?: { thumbnail?: string; smallThumbnail?: string };
-    categories?: string[];
-  };
+  title: string;
+  authors: string[];
+  thumbnail: string;
+  pages: number;
 }
 
-const STATUS_OPTIONS: { value: BookStatus; label: string; icon: string }[] = [
-  { value: 'reading',   label: 'Читаю',     icon: '📖' },
-  { value: 'finished',  label: 'Прочитано', icon: '✅' },
-  { value: 'want',      label: 'Хочу',      icon: '🔖' },
-  { value: 'paused',    label: 'Пауза',     icon: '⏸' },
-  { value: 'abandoned', label: 'Брошено',   icon: '🚫' },
-];
-
-const COVER_COLORS = [
-  '#3d2a1a', '#2a3d2a', '#1a2a3d', '#3d1a2a',
-  '#2a2a1a', '#3d2a3d', '#1a3d3d', '#3d3d2a',
-];
-
-const EMOJIS = ['📚','📖','🧠','💡','🌱','🔍','✍️','📝','💭','🎯','🌿','🧩','🔮','📊','🗺️','⚡'];
-
-const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
-
 export default function BookModal({ book, onSave, onDelete, onClose }: Props) {
-  const [title, setTitle]   = useState(book?.title || '');
-  const [author, setAuthor] = useState(book?.author || '');
-  const [genre, setGenre]   = useState(book?.genre || '');
-  const [desc, setDesc]     = useState(book?.description || '');
-  const [status, setStatus] = useState<BookStatus>(book?.status || 'want');
-  const [color, setColor]   = useState(book?.color || COVER_COLORS[0]);
-  const [emoji, setEmoji]   = useState(book?.coverEmoji || '📚');
-  const [rating, setRating] = useState(book?.rating || 0);
-  const [totalPages, setTotalPages] = useState(book?.totalPages?.toString() || '');
-  const [currentPage, setCurrentPage] = useState(book?.currentPage?.toString() || '');
-  const [coverUrl, setCoverUrl] = useState(book?.color?.startsWith('http') ? book.color : '');
-
-  // Google Books search
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<GoogleBook[]>([]);
+  const isEdit = !!book;
+  const [title, setTitle]     = useState(book?.title || '');
+  const [author, setAuthor]   = useState(book?.author || '');
+  const [status, setStatus]   = useState<Book['status']>(book?.status || 'want');
+  const [color, setColor]     = useState(book?.color || COLORS[0]);
+  const [emoji, setEmoji]     = useState(book?.coverEmoji || '📚');
+  const [pages, setPages]     = useState(book?.totalPages?.toString() || '');
+  const [rating, setRating]   = useState(book?.rating || 0);
+  const [genre, setGenre]     = useState(book?.genre || '');
+  const [query, setQuery]     = useState('');
+  const [results, setResults] = useState<GBook[]>([]);
   const [searching, setSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.length < 3) {
-      setSearchResults([]);
-      setShowResults(false);
-      return;
-    }
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(async () => {
+    if (query.trim().length < 2) { setResults([]); return; }
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(async () => {
       setSearching(true);
       try {
+        const q = encodeURIComponent(query.trim());
         const res = await fetch(
-          `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=6&langRestrict=ru`
+          `https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=6&printType=books`
         );
         const data = await res.json();
-        setSearchResults(data.items || []);
-        setShowResults(true);
-      } catch {
-        setSearchResults([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 600);
-    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [searchQuery]);
+        const items: GBook[] = (data.items || []).map((item: Record<string, unknown>) => {
+          const info = (item.volumeInfo as Record<string, unknown>) || {};
+          const links = (info.imageLinks as Record<string, string>) || {};
+          const img = (links.thumbnail || links.smallThumbnail || '').replace('http://', 'https://');
+          return {
+            id:       item.id as string,
+            title:    (info.title as string) || '',
+            authors:  (info.authors as string[]) || [],
+            thumbnail: img,
+            pages:    (info.pageCount as number) || 0,
+          };
+        }).filter((b: GBook) => b.title);
+        setResults(items);
+      } catch { setResults([]); }
+      setSearching(false);
+    }, 500);
+  }, [query]);
 
-  const selectGoogleBook = (gb: GoogleBook) => {
-    vibe(8);
-    const info = gb.volumeInfo;
-    setTitle(info.title || '');
-    setAuthor(info.authors?.join(', ') || '');
-    setDesc(info.description?.slice(0, 300) || '');
-    if (info.pageCount) setTotalPages(String(info.pageCount));
-    if (info.categories?.[0]) setGenre(info.categories[0]);
-    const thumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
-    if (thumb) setCoverUrl(thumb.replace('http://', 'https://'));
-    setShowResults(false);
-    setSearchQuery('');
+  const pickBook = (g: GBook) => {
+    setTitle(g.title);
+    setAuthor(g.authors.join(', '));
+    if (g.pages) setPages(g.pages.toString());
+    setResults([]);
+    setQuery('');
   };
 
   const handleSave = () => {
     if (!title.trim()) return;
-    vibe(10);
     onSave({
-      title:       title.trim(),
-      author:      author.trim(),
-      genre:       genre.trim() || undefined,
-      description: desc.trim() || undefined,
+      title:      title.trim(),
+      author:     author.trim(),
       status,
-      color:       coverUrl || color,
-      coverEmoji:  emoji,
-      rating:      rating || undefined,
-      totalPages:  totalPages ? parseInt(totalPages) : undefined,
-      currentPage: currentPage ? parseInt(currentPage) : undefined,
+      color,
+      coverEmoji: emoji,
+      genre:      genre.trim(),
+      totalPages: pages ? parseInt(pages) : undefined,
+      rating:     rating || undefined,
     });
+    onClose();
   };
 
-  const Label = ({ children }: { children: React.ReactNode }) => (
-    <label style={{
-      display: 'block', fontSize: '12px', fontWeight: 500,
-      color: 'var(--text-muted)', marginBottom: '6px',
-      fontFamily: 'Inter, sans-serif',
-    }}>
-      {children}
-    </label>
-  );
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', borderRadius: 12,
+    background: 'var(--bg-raised)', border: '1px solid var(--border)',
+    color: 'var(--text-primary)', fontSize: 15, boxSizing: 'border-box',
+    outline: 'none', fontFamily: 'Inter, sans-serif',
+  };
 
-  const Input = ({ value, onChange, placeholder, type = 'text' }: {
-    value: string; onChange: (v: string) => void;
-    placeholder?: string; type?: string;
-  }) => (
-    <input
-      type={type} value={value} placeholder={placeholder}
-      onChange={e => onChange(e.target.value)}
-      style={{
-        width: '100%', padding: '10px 14px', borderRadius: 10,
-        background: 'var(--bg-input)', border: '1px solid var(--border)',
-        color: 'var(--text-primary)', fontSize: '14px', outline: 'none',
-        fontFamily: 'Inter, sans-serif', boxSizing: 'border-box',
-      }}
-    />
-  );
+  const label: React.CSSProperties = {
+    fontSize: 11, color: 'var(--text-muted)', marginBottom: 6,
+    fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase',
+  };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 400,
-      background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{
-        width: 'min(100%, 430px)',
-        background: 'var(--bg-raised)',
-        borderRadius: '20px 20px 0 0',
-        border: '1px solid var(--border)',
-        maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-        animation: 'sheetSlideUp 0.35s cubic-bezier(0.22,1,0.36,1) both',
-      }}>
-        {/* Handle */}
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '12px auto 0' }} />
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.75)',
+        zIndex: 3000,
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: 430,
+          background: 'var(--bg-card)',
+          borderRadius: '20px 20px 0 0',
+          maxHeight: '92vh',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {/* Ручка */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)' }} />
+        </div>
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' }}>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif', margin: 0 }}>
-            {book ? 'Редактировать книгу' : 'Добавить книгу'}
-          </h3>
+        {/* Шапка */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '8px 20px 14px',
+          borderBottom: '1px solid var(--border)',
+          position: 'sticky', top: 0,
+          background: 'var(--bg-card)', zIndex: 10,
+        }}>
           <button onClick={onClose} style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 10, padding: 8, cursor: 'pointer', color: 'var(--text-muted)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--bg-raised)', border: 'none', borderRadius: 10,
+            color: 'var(--text-secondary)', padding: '7px 14px', cursor: 'pointer', fontSize: 14,
+          }}>Отмена</button>
+          <span style={{
+            fontFamily: 'Lora, serif', fontSize: 17,
+            color: 'var(--text-primary)', fontWeight: 600,
           }}>
-            <X size={16} />
+            {isEdit ? 'Редактировать' : 'Добавить книгу'}
+          </span>
+          <button onClick={handleSave} style={{
+            background: 'var(--accent)', border: 'none', borderRadius: 10,
+            color: '#fff', padding: '7px 16px', cursor: 'pointer',
+            fontSize: 14, fontWeight: 700,
+          }}>
+            {isEdit ? 'Сохранить' : 'Добавить'}
           </button>
         </div>
 
-        {/* Scrollable content */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: '0 16px 16px' }}>
+        {/* Тело */}
+        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Google Books Search */}
-          {!book && (
-            <div style={{ marginBottom: 16, position: 'relative' }}>
-              <Label>🔍 Найти книгу</Label>
-              <div style={{ position: 'relative' }}>
-                <Search size={14} style={{
-                  position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-                  color: 'var(--text-muted)', pointerEvents: 'none',
-                }} />
-                {searching && <Loader size={14} style={{
-                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                  color: 'var(--accent)', animation: 'spin 1s linear infinite',
-                }} />}
-                <input
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Название или автор..."
-                  style={{
-                    width: '100%', padding: '10px 14px 10px 36px',
-                    borderRadius: 10, background: 'var(--bg-input)',
-                    border: '1px solid var(--accent)', color: 'var(--text-primary)',
-                    fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif',
-                    boxSizing: 'border-box',
-                  }}
-                />
+          {/* Поиск Google Books */}
+          <div>
+            <div style={label}>🔍 Поиск в Google Books</div>
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Название, автор..."
+              style={inp}
+            />
+            {searching && (
+              <div style={{ textAlign: 'center', padding: '8px 0', color: 'var(--text-muted)', fontSize: 13 }}>
+                Ищем...
               </div>
-
-              {/* Results */}
-              {showResults && searchResults.length > 0 && (
-                <div style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  borderRadius: 12, zIndex: 10, overflow: 'hidden',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)', marginTop: 4,
-                }}>
-                  {searchResults.map(gb => (
-                    <button key={gb.id} onClick={() => selectGoogleBook(gb)} style={{
-                      width: '100%', padding: '10px 12px', background: 'none',
-                      border: 'none', borderBottom: '1px solid var(--border)',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
-                      textAlign: 'left',
-                    }}>
-                      {gb.volumeInfo.imageLinks?.smallThumbnail ? (
-                        <img
-                          src={gb.volumeInfo.imageLinks.smallThumbnail.replace('http://', 'https://')}
-                          alt="" style={{ width: 36, height: 48, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: 36, height: 48, background: 'var(--bg-card)',
-                          borderRadius: 4, flexShrink: 0, display: 'flex',
-                          alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                        }}>📚</div>
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {gb.volumeInfo.title}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                          {gb.volumeInfo.authors?.join(', ') || 'Автор неизвестен'}
-                        </div>
-                        {gb.volumeInfo.pageCount && (
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1 }}>
-                            {gb.volumeInfo.pageCount} стр.
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Cover preview if from Google Books */}
-          {coverUrl && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16,
-              padding: '10px 12px', background: 'var(--bg-card)', borderRadius: 12,
-              border: '1px solid var(--border)',
-            }}>
-              <img src={coverUrl} alt="Обложка" style={{ width: 48, height: 64, objectFit: 'cover', borderRadius: 6 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>Обложка из Google Books</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Нажмите ✕ чтобы удалить</div>
-              </div>
-              <button onClick={() => setCoverUrl('')} style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4,
+            )}
+            {results.length > 0 && (
+              <div style={{
+                marginTop: 8, borderRadius: 12, overflow: 'hidden',
+                border: '1px solid var(--border)',
               }}>
-                <X size={14} />
-              </button>
-            </div>
-          )}
-
-          {/* Title */}
-          <div style={{ marginBottom: 12 }}>
-            <Label>Название *</Label>
-            <Input value={title} onChange={setTitle} placeholder="Название книги" />
+                {results.map(g => (
+                  <button key={g.id} onClick={() => pickBook(g)} style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    background: 'var(--bg-raised)',
+                    border: 'none',
+                    borderBottom: '1px solid var(--border)',
+                    cursor: 'pointer', textAlign: 'left',
+                  }}>
+                    {g.thumbnail ? (
+                      <img src={g.thumbnail} alt=""
+                        style={{ width: 32, height: 44, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+                    ) : (
+                      <div style={{
+                        width: 32, height: 44, borderRadius: 4, flexShrink: 0,
+                        background: 'var(--bg-base)', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 18,
+                      }}>📚</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 14, color: 'var(--text-primary)', fontWeight: 600,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{g.title}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                        {g.authors.join(', ')}
+                        {g.pages > 0 && ` · ${g.pages} стр.`}
+                      </div>
+                    </div>
+                    <span style={{ color: 'var(--accent)', fontSize: 18 }}>+</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Author */}
-          <div style={{ marginBottom: 12 }}>
-            <Label>Автор</Label>
-            <Input value={author} onChange={setAuthor} placeholder="Автор" />
+          {/* Название */}
+          <div>
+            <div style={label}>Название *</div>
+            <input value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="Название книги" style={inp} />
           </div>
 
-          {/* Genre */}
-          <div style={{ marginBottom: 12 }}>
-            <Label>Жанр</Label>
-            <Input value={genre} onChange={setGenre} placeholder="Психология, философия..." />
+          {/* Автор */}
+          <div>
+            <div style={label}>Автор</div>
+            <input value={author} onChange={e => setAuthor(e.target.value)}
+              placeholder="Имя автора" style={inp} />
           </div>
 
-          {/* Status */}
-          <div style={{ marginBottom: 12 }}>
-            <Label>Статус</Label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {STATUS_OPTIONS.map(opt => (
-                <button key={opt.value} onClick={() => { vibe(6); setStatus(opt.value); }} style={{
-                  padding: '7px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
-                  background: status === opt.value ? 'var(--accent)' : 'var(--bg-card)',
-                  border: `1px solid ${status === opt.value ? 'var(--accent)' : 'var(--border)'}`,
-                  color: status === opt.value ? '#fff' : 'var(--text-secondary)',
-                  fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
+          {/* Жанр */}
+          <div>
+            <div style={label}>Жанр</div>
+            <input value={genre} onChange={e => setGenre(e.target.value)}
+              placeholder="Психология, философия..." style={inp} />
+          </div>
+
+          {/* Статус */}
+          <div>
+            <div style={label}>Статус</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {STATUSES.map(s => (
+                <button key={s.value} onClick={() => setStatus(s.value)} style={{
+                  padding: '11px 8px', borderRadius: 12,
+                  border: `2px solid ${status === s.value ? 'var(--accent)' : 'var(--border)'}`,
+                  background: status === s.value ? 'var(--accent-muted)' : 'var(--bg-raised)',
+                  color: 'var(--text-primary)', fontSize: 14, cursor: 'pointer',
+                  fontWeight: status === s.value ? 700 : 400,
+                  transition: 'all 0.15s',
                 }}>
-                  {opt.icon} {opt.label}
+                  {s.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Pages */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div>
-              <Label>Всего страниц</Label>
-              <Input value={totalPages} onChange={setTotalPages} placeholder="300" type="number" />
-            </div>
-            <div>
-              <Label>Текущая страница</Label>
-              <Input value={currentPage} onChange={setCurrentPage} placeholder="0" type="number" />
-            </div>
+          {/* Страниц */}
+          <div>
+            <div style={label}>Страниц</div>
+            <input value={pages} onChange={e => setPages(e.target.value.replace(/\D/g, ''))}
+              placeholder="Количество страниц" type="number"
+              style={inp} />
           </div>
 
-          {/* Rating */}
-          <div style={{ marginBottom: 12 }}>
-            <Label>Оценка</Label>
+          {/* Рейтинг */}
+          <div>
+            <div style={label}>Рейтинг</div>
             <div style={{ display: 'flex', gap: 6 }}>
-              {[1,2,3,4,5].map(r => (
-                <button key={r} onClick={() => { vibe(6); setRating(r === rating ? 0 : r); }} style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 24, padding: '2px 4px',
-                  filter: r <= rating ? 'none' : 'grayscale(1) opacity(0.3)',
-                  transition: 'all 0.15s',
+              {[1,2,3,4,5].map(n => (
+                <button key={n} onClick={() => setRating(rating === n ? 0 : n)} style={{
+                  fontSize: 28, background: 'none', border: 'none', cursor: 'pointer',
+                  opacity: n <= rating ? 1 : 0.25, transition: 'opacity 0.15s',
+                  padding: 0,
                 }}>⭐</button>
               ))}
             </div>
           </div>
 
-          {/* Emoji — only if no cover URL */}
-          {!coverUrl && (
-            <div style={{ marginBottom: 12 }}>
-              <Label>Эмодзи обложки</Label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {EMOJIS.map(e => (
-                  <button key={e} onClick={() => { vibe(4); setEmoji(e); }} style={{
-                    width: 36, height: 36, borderRadius: 8, cursor: 'pointer', fontSize: 18,
-                    background: emoji === e ? 'var(--accent)' : 'var(--bg-card)',
-                    border: `1px solid ${emoji === e ? 'var(--accent)' : 'var(--border)'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.15s',
-                  }}>
-                    {e}
-                  </button>
-                ))}
-              </div>
+          {/* Иконка */}
+          <div>
+            <div style={label}>Иконка</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {EMOJIS.map(e => (
+                <button key={e} onClick={() => setEmoji(e)} style={{
+                  width: 42, height: 42, fontSize: 22, borderRadius: 10,
+                  border: `2px solid ${emoji === e ? 'var(--accent)' : 'var(--border)'}`,
+                  background: emoji === e ? 'var(--accent-muted)' : 'var(--bg-raised)',
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}>{e}</button>
+              ))}
             </div>
-          )}
-
-          {/* Color — only if no cover URL */}
-          {!coverUrl && (
-            <div style={{ marginBottom: 12 }}>
-              <Label>Цвет обложки</Label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {COVER_COLORS.map(c => (
-                  <button key={c} onClick={() => { vibe(4); setColor(c); }} style={{
-                    width: 32, height: 32, borderRadius: 8, cursor: 'pointer',
-                    background: c,
-                    border: color === c ? '2px solid var(--accent)' : '2px solid transparent',
-                    outline: color === c ? '2px solid var(--accent)' : 'none',
-                    outlineOffset: 2, transition: 'all 0.15s',
-                  }} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Description */}
-          <div style={{ marginBottom: 16 }}>
-            <Label>Описание / Заметки</Label>
-            <textarea
-              value={desc} onChange={e => setDesc(e.target.value)}
-              placeholder="Краткое описание или личные заметки о книге..."
-              rows={3}
-              style={{
-                width: '100%', padding: '10px 14px', borderRadius: 10,
-                background: 'var(--bg-input)', border: '1px solid var(--border)',
-                color: 'var(--text-primary)', fontSize: 14, outline: 'none',
-                fontFamily: 'Inter, sans-serif', resize: 'none', boxSizing: 'border-box',
-                lineHeight: 1.6,
-              }}
-            />
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            {book && onDelete && (
-              <button onClick={() => { vibe(15); if (confirm('Удалить книгу?')) onDelete(book.id); }} style={{
-                width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                background: 'rgba(220,80,80,0.12)', border: '1px solid rgba(220,80,80,0.3)',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#dc5050',
-              }}>
-                <Trash2 size={18} />
-              </button>
-            )}
-            <button onClick={handleSave} disabled={!title.trim()} style={{
-              flex: 1, padding: '14px', borderRadius: 12,
-              background: title.trim()
-                ? 'linear-gradient(135deg, var(--accent), var(--accent-dark))'
-                : 'var(--bg-card)',
-              border: 'none', color: title.trim() ? '#fff' : 'var(--text-muted)',
-              fontSize: 15, fontWeight: 600, cursor: title.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
+          {/* Цвет */}
+          <div>
+            <div style={label}>Цвет</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {COLORS.map(c => (
+                <button key={c} onClick={() => setColor(c)} style={{
+                  width: 34, height: 34, borderRadius: '50%', background: c,
+                  border: `3px solid ${color === c ? 'var(--text-primary)' : 'transparent'}`,
+                  cursor: 'pointer', transition: 'border 0.15s',
+                }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Удалить (только при редактировании) */}
+          {isEdit && onDelete && book && (
+            <button onClick={() => {
+              if (confirm('Удалить книгу и все её записи?')) {
+                onDelete(book.id);
+                onClose();
+              }
+            }} style={{
+              width: '100%', padding: '12px', borderRadius: 12,
+              background: 'rgba(220,60,60,0.12)', border: '1px solid rgba(220,60,60,0.3)',
+              color: '#e05555', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              marginTop: 4,
             }}>
-              {book ? 'Сохранить изменения' : 'Добавить книгу'}
+              🗑️ Удалить книгу
             </button>
-          </div>
+          )}
 
-          <div style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
+          <div style={{ height: 20 }} />
         </div>
       </div>
     </div>

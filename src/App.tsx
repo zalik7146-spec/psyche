@@ -30,7 +30,7 @@ import FeedView        from './components/FeedView';
 import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
 import NotificationsView from './components/NotificationsView';
-import VoiceNote       from './components/VoiceNote';
+
 import YearWrapped     from './components/YearWrapped';
 import ChallengesView  from './components/ChallengesView';
 
@@ -99,7 +99,7 @@ function AppInner() {
   const [syncing, setSyncing]         = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showVoiceNote, setShowVoiceNote] = useState(false);
+
   const [showWrapped, setShowWrapped] = useState(false);
   const [showChallenges, setShowChallenges] = useState(false);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
@@ -779,7 +779,7 @@ function AppInner() {
         onChange={handleTabChange}
         unreadNotifs={unreadNotifs}
         onNotifications={() => { setUnreadNotifs(0); setShowNotifications(true); }}
-        onVoiceNote={() => setShowVoiceNote(true)}
+        onVoiceNote={() => {}}
       />
 
       {/* Modals */}
@@ -801,28 +801,7 @@ function AppInner() {
         </div>
       )}
 
-      {showVoiceNote && (
-        <VoiceNote
-          onSave={(text) => {
-            setShowVoiceNote(false);
-            setNewNoteBookId(undefined);
-            const note: Note = {
-              id: `note_${Date.now()}`,
-              type: 'note',
-              title: '🎙️ Голосовая заметка',
-              content: `<p>${text}</p>`,
-              tags: ['голосовая'],
-              isPinned: false,
-              isFavorite: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              linkedNoteIds: [],
-            };
-            handleSaveNote(note);
-          }}
-          onClose={() => setShowVoiceNote(false)}
-        />
-      )}
+
 
       {showTemplates && (
         <TemplatesModal
