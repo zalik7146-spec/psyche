@@ -845,7 +845,7 @@ function AppInner() {
         <MessagesView
           userId={auth.user.id}
           initialPartnerId={messageRecipientId}
-          onClose={() => { setShowMessages(false); setMessageRecipientId(undefined) }}
+          onBack={() => { setShowMessages(false); setMessageRecipientId(undefined) }}
         />
       )}
 
