@@ -842,13 +842,11 @@ function AppInner() {
       )}
 
       {showMessages && auth.user && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
-          <MessagesView
-            userId={auth.user.id}
-            initialRecipientId={messageRecipientId}
-            onBack={() => { setShowMessages(false); setMessageRecipientId(undefined); }}
-          />
-        </div>
+        <MessagesView
+          userId={auth.user.id}
+          initialPartnerId={messageRecipientId}
+          onClose={() => { setShowMessages(false); setMessageRecipientId(undefined) }}
+        />
       )}
 
       {showFollowers && auth.user && (

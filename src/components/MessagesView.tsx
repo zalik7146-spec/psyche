@@ -1,434 +1,491 @@
-import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Send, Search, MessageCircle } from 'lucide-react';
-import { supabase } from '../supabase';
-
-interface Props {
-  userId: string;
-  onBack: () => void;
-  initialRecipientId?: string;
-}
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { supabase } from '../supabase'
+import { ArrowLeft, Send, Search, MessageCircle } from 'lucide-react'
 
 interface Profile {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar: string;
+  id: string
+  username: string
+  display_name: string
+  avatar: string
 }
 
 interface Message {
-  id: string;
-  sender_id: string;
-  recipient_id: string;
-  content: string;
-  created_at: string;
-  is_read: boolean;
+  id: string
+  from_user_id: string
+  to_user_id: string
+  content: string
+  is_read: boolean
+  created_at: string
 }
 
 interface Conversation {
-  profile: Profile;
-  lastMessage: string;
-  lastTime: string;
-  unread: number;
+  partner: Profile
+  lastMessage: string
+  lastTime: string
+  unread: number
 }
 
-const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
-const fmt = (iso: string) => {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  if (diff < 60000) return 'только что';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} мин`;
-  if (diff < 86400000) return d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
-  return d.toLocaleDateString('ru', { day: 'numeric', month: 'short' });
-};
+interface Props {
+  userId: string
+  onClose: () => void
+  initialPartnerId?: string
+}
 
-export default function MessagesView({ userId, onBack, initialRecipientId }: Props) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConv, setActiveConv] = useState<Profile | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [text, setText] = useState('');
-  const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const bottomRef = useRef<HTMLDivElement>(null);
+const vibe = (ms = 8) => navigator.vibrate?.(ms)
 
-  useEffect(() => { loadConversations(); }, []);
+const timeAgo = (iso: string) => {
+  const d = new Date(iso)
+  const now = new Date()
+  const diff = (now.getTime() - d.getTime()) / 1000
+  if (diff < 60) return 'только что'
+  if (diff < 3600) return `${Math.floor(diff / 60)}м`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}ч`
+  if (diff < 172800) return 'вчера'
+  return d.toLocaleDateString('ru', { day: '2-digit', month: '2-digit' })
+}
 
-  useEffect(() => {
-    if (initialRecipientId) {
-      loadProfile(initialRecipientId).then(p => { if (p) openConversation(p); });
-    }
-  }, [initialRecipientId]);
+const EMOJI = ['❤️', '🔥', '💡', '👍', '🙏', '😊', '✨', '💭']
 
-  useEffect(() => {
-    if (!activeConv) return;
-    const channel = supabase
-      .channel(`messages:${userId}:${activeConv.id}`)
+export default function MessagesView({ userId, onClose, initialPartnerId }: Props) {
+  const [view, setView] = useState<'list' | 'chat'>(initialPartnerId ? 'chat' : 'list')
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
+  const [partner, setPartner] = useState<Profile | null>(null)
+  const [text, setText] = useState('')
+  const [search, setSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<Profile[]>([])
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [sending, setSending] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const channelRef = useRef<any>(null)
+
+  const loadConversations = useCallback(async () => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+    if (!data) return
+    const partnerIds = [...new Set(data.map((m: Message) =>
+      m.from_user_id === userId ? m.to_user_id : m.from_user_id
+    ))]
+    if (!partnerIds.length) return
+    const { data: profiles } = await supabase
+      .from('social_profiles')
+      .select('id,username,display_name,avatar')
+      .in('id', partnerIds)
+    if (!profiles) return
+    const convs: Conversation[] = partnerIds.map(pid => {
+      const msgs = data.filter((m: Message) =>
+        m.from_user_id === pid || m.to_user_id === pid
+      )
+      const last = msgs[0]
+      const prof = profiles.find((p: Profile) => p.id === pid)
+      const unread = msgs.filter((m: Message) =>
+        m.from_user_id === pid && !m.is_read
+      ).length
+      return {
+        partner: prof || { id: pid, username: '...', display_name: '...', avatar: '' },
+        lastMessage: last?.content || '',
+        lastTime: last ? timeAgo(last.created_at) : '',
+        unread
+      }
+    })
+    setConversations(convs)
+  }, [userId])
+
+  const openChat = useCallback(async (prof: Profile) => {
+    setPartner(prof)
+    setView('chat')
+    vibe(6)
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .or(
+        `and(from_user_id.eq.${userId},to_user_id.eq.${prof.id}),and(from_user_id.eq.${prof.id},to_user_id.eq.${userId})`
+      )
+      .order('created_at', { ascending: true })
+    setMessages(data || [])
+    await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('from_user_id', prof.id)
+      .eq('to_user_id', userId)
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      inputRef.current?.focus()
+    }, 100)
+    channelRef.current?.unsubscribe()
+    channelRef.current = supabase
+      .channel(`chat_${userId}_${prof.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter: `recipient_id=eq.${userId}`,
-      }, payload => {
-        const msg = payload.new as Message;
-        if (msg.sender_id === activeConv.id) {
-          setMessages(prev => [...prev, msg]);
-          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        filter: `to_user_id=eq.${userId}`
+      }, (payload: any) => {
+        if (payload.new.from_user_id === prof.id) {
+          setMessages(prev => [...prev, payload.new])
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
         }
       })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [activeConv, userId]);
+      .subscribe()
+  }, [userId])
 
-  const loadProfile = async (id: string): Promise<Profile | null> => {
-    const { data } = await supabase.from('social_profiles').select('id,username,display_name,avatar').eq('id', id).single();
-    return data as Profile | null;
-  };
-
-  const loadConversations = async () => {
-    setLoading(true);
-    try {
-      const { data: msgs } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
-        .order('created_at', { ascending: false });
-
-      if (!msgs || msgs.length === 0) { setLoading(false); return; }
-
-      const partnerIds = [...new Set(msgs.map((m: Message) =>
-        m.sender_id === userId ? m.recipient_id : m.sender_id
-      ))];
-
-      const { data: profiles } = await supabase
+  useEffect(() => {
+    loadConversations()
+    if (initialPartnerId) {
+      supabase
         .from('social_profiles')
         .select('id,username,display_name,avatar')
-        .in('id', partnerIds);
-
-      const convMap = new Map<string, Conversation>();
-      for (const msg of msgs as Message[]) {
-        const partnerId = msg.sender_id === userId ? msg.recipient_id : msg.sender_id;
-        if (!convMap.has(partnerId)) {
-          const profile = (profiles as Profile[])?.find(p => p.id === partnerId);
-          if (profile) {
-            const unread = (msgs as Message[]).filter(m =>
-              m.sender_id === partnerId && m.recipient_id === userId && !m.is_read
-            ).length;
-            convMap.set(partnerId, {
-              profile,
-              lastMessage: msg.content,
-              lastTime: fmt(msg.created_at),
-              unread,
-            });
-          }
-        }
-      }
-      setConversations(Array.from(convMap.values()));
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  };
-
-  const openConversation = async (profile: Profile) => {
-    setActiveConv(profile);
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .or(`and(sender_id.eq.${userId},recipient_id.eq.${profile.id}),and(sender_id.eq.${profile.id},recipient_id.eq.${userId})`)
-      .order('created_at', { ascending: true });
-    setMessages((data as Message[]) || []);
-    await supabase.from('messages').update({ is_read: true })
-      .eq('sender_id', profile.id).eq('recipient_id', userId);
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-  };
-
-  const sendMessage = async () => {
-    if (!text.trim() || !activeConv) return;
-    const content = text.trim();
-    setText('');
-    vibe(8);
-    const tempMsg: Message = {
-      id: Date.now().toString(),
-      sender_id: userId,
-      recipient_id: activeConv.id,
-      content,
-      created_at: new Date().toISOString(),
-      is_read: false,
-    };
-    setMessages(prev => [...prev, tempMsg]);
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-    await supabase.from('messages').insert({
-      sender_id: userId,
-      recipient_id: activeConv.id,
-      content,
-      is_read: false,
-    });
-  };
+        .eq('id', initialPartnerId)
+        .single()
+        .then(({ data }) => { if (data) openChat(data) })
+    }
+    return () => { channelRef.current?.unsubscribe() }
+  }, [loadConversations, initialPartnerId, openChat])
 
   const searchPeople = async (q: string) => {
-    setSearch(q);
-    if (q.length < 2) { setSearchResults([]); return; }
+    setSearch(q)
+    if (q.length < 2) { setSearchResults([]); return }
     const { data } = await supabase
       .from('social_profiles')
       .select('id,username,display_name,avatar')
-      .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
       .neq('id', userId)
-      .limit(10);
-    setSearchResults((data as Profile[]) || []);
-  };
+      .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+      .limit(8)
+    setSearchResults(data || [])
+  }
 
-  const avatarEl = (p: Profile, size = 44) => (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: 'linear-gradient(135deg,#d4914a,#8a5220)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.4, flexShrink: 0, overflow: 'hidden',
-      border: '2px solid var(--border)',
-    }}>
-      {p.avatar?.startsWith('data:') || p.avatar?.startsWith('http')
-        ? <img src={p.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-        : (p.avatar || p.username?.[0]?.toUpperCase() || '?')}
-    </div>
-  );
+  const sendMsg = async () => {
+    if (!text.trim() || !partner || sending) return
+    setSending(true)
+    vibe(8)
+    const newMsg = {
+      from_user_id: userId,
+      to_user_id: partner.id,
+      content: text.trim(),
+      is_read: false,
+      created_at: new Date().toISOString()
+    }
+    setMessages(prev => [...prev, { ...newMsg, id: Date.now().toString() }])
+    setText('')
+    setShowEmoji(false)
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    const { error } = await supabase.from('messages').insert(newMsg)
+    if (error) console.error('Send error:', error)
+    setSending(false)
+    loadConversations()
+  }
 
-  /* ── Chat view ── */
-  if (activeConv) return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '14px 16px',
-        background: 'var(--bg-card)',
-        borderBottom: '1px solid var(--border)',
-        flexShrink: 0,
-      }}>
-        <button onClick={() => { setActiveConv(null); loadConversations(); }} style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: 'var(--bg-raised)', border: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: 'var(--text-secondary)',
-        }}><ArrowLeft size={18} /></button>
-        {avatarEl(activeConv, 38)}
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif' }}>
-            {activeConv.display_name || activeConv.username}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--accent)', fontFamily: 'Inter,sans-serif' }}>
-            @{activeConv.username}
-          </div>
-        </div>
-      </div>
+  const addEmoji = (emoji: string) => {
+    setText(prev => prev + emoji)
+    inputRef.current?.focus()
+  }
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif', fontSize: 14 }}>
-            <MessageCircle size={40} style={{ opacity: 0.3, marginBottom: 12 }} />
-            <div>Начни разговор!</div>
-          </div>
-        )}
-        {messages.map((msg, i) => {
-          const isMine = msg.sender_id === userId;
-          const showTime = i === 0 || new Date(msg.created_at).getTime() - new Date(messages[i-1].created_at).getTime() > 300000;
-          return (
-            <div key={msg.id}>
-              {showTime && (
-                <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif', margin: '8px 0' }}>
-                  {fmt(msg.created_at)}
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
-                <div style={{
-                  maxWidth: '75%', padding: '10px 14px',
-                  borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  background: isMine
-                    ? 'linear-gradient(135deg,#d4914a,#8a5220)'
-                    : 'var(--bg-card)',
-                  border: isMine ? 'none' : '1px solid var(--border)',
-                  color: isMine ? '#fff' : 'var(--text-primary)',
-                  fontSize: 15, fontFamily: 'Inter,sans-serif', lineHeight: 1.5,
-                  animation: 'fadeSlideUp 0.2s ease',
-                }}>
-                  {msg.content}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
+  const av = (p: Profile) => p.avatar
+    ? (p.avatar.length === 2 || p.avatar.length === 1
+      ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{p.avatar}</div>
+      : <img src={p.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />)
+    : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: 'var(--accent)' }}>{(p.display_name || p.username || '?')[0].toUpperCase()}</div>
 
-      {/* Input */}
-      <div style={{
-        display: 'flex', alignItems: 'flex-end', gap: 10,
-        padding: '12px 16px',
-        background: 'var(--bg-card)',
-        borderTop: '1px solid var(--border)',
-        flexShrink: 0,
-        paddingBottom: 'calc(12px + env(safe-area-inset-bottom,0px))',
-      }}>
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-          placeholder="Написать сообщение..."
-          rows={1}
-          style={{
-            flex: 1, padding: '10px 14px',
-            background: 'var(--bg-raised)', border: '1px solid var(--border)',
-            borderRadius: 18, color: 'var(--text-primary)',
-            fontFamily: 'Inter,sans-serif', fontSize: 15,
-            resize: 'none', outline: 'none', lineHeight: 1.5,
-            maxHeight: 120, overflowY: 'auto',
-          }}
-        />
-        <button
-          onClick={sendMessage}
-          disabled={!text.trim()}
-          style={{
-            width: 42, height: 42, borderRadius: '50%',
-            background: text.trim() ? 'var(--accent)' : 'var(--bg-raised)',
-            border: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: text.trim() ? 'pointer' : 'default',
-            color: text.trim() ? '#fff' : 'var(--text-muted)',
-            transition: 'all 0.2s', flexShrink: 0,
-          }}
-        ><Send size={18} /></button>
-      </div>
-    </div>
-  );
-
-  /* ── Conversations list ── */
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '14px 16px 10px',
-        background: 'var(--bg-card)',
-        borderBottom: '1px solid var(--border)',
-        flexShrink: 0,
-      }}>
-        <button onClick={onBack} style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: 'var(--bg-raised)', border: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: 'var(--text-secondary)',
-        }}><ArrowLeft size={18} /></button>
-        <h2 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora,serif' }}>
-          Сообщения
-        </h2>
-      </div>
-
-      {/* Search */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <div style={{ position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input
-            value={search}
-            onChange={e => searchPeople(e.target.value)}
-            placeholder="Найти человека..."
-            style={{
-              width: '100%', padding: '10px 12px 10px 36px',
-              background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              borderRadius: 12, color: 'var(--text-primary)',
-              fontFamily: 'Inter,sans-serif', fontSize: 14, outline: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        {/* Search results */}
-        {searchResults.length > 0 && (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'var(--bg-base)',
+      display: 'flex', flexDirection: 'column',
+      maxWidth: 430, margin: '0 auto',
+      animation: 'slideInRight 0.28s cubic-bezier(0.22,1,0.36,1)'
+    }}>
+      {view === 'list' ? (
+        <>
+          {/* Header */}
           <div style={{
-            marginTop: 8, background: 'var(--bg-card)',
-            borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden',
+            padding: '56px 20px 16px',
+            background: 'var(--bg-raised)',
+            borderBottom: '1px solid var(--border)',
+            flexShrink: 0
           }}>
-            {searchResults.map(p => (
-              <button key={p.id} onClick={() => { setSearch(''); setSearchResults([]); openConversation(p); }}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 14px', background: 'none', border: 'none',
-                  borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-                onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
-                onPointerUp={e => (e.currentTarget.style.background = 'none')}
-              >
-                {avatarEl(p, 38)}
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif' }}>
-                    {p.display_name || p.username}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--accent)', fontFamily: 'Inter,sans-serif' }}>@{p.username}</div>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <button onClick={() => { onClose(); vibe(6) }} style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'var(--text-primary)'
+              }}>
+                <ArrowLeft size={16} />
               </button>
-            ))}
+              <span style={{ fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Сообщения
+              </span>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'var(--bg-card)', borderRadius: 12,
+              border: '1px solid var(--border)', padding: '10px 14px'
+            }}>
+              <Search size={15} color="var(--text-muted)" />
+              <input
+                value={search}
+                onChange={e => searchPeople(e.target.value)}
+                placeholder="Найти человека..."
+                style={{
+                  flex: 1, background: 'none', border: 'none', outline: 'none',
+                  color: 'var(--text-primary)', fontSize: 15
+                }}
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Conversations */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {loading && (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif', fontSize: 14 }}>
-            Загрузка...
-          </div>
-        )}
-        {!loading && conversations.length === 0 && (
-          <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-            <MessageCircle size={48} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 16 }} />
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'Lora,serif', marginBottom: 8 }}>
-              Нет сообщений
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
-              Найди человека через поиск выше и начни разговор
-            </div>
-          </div>
-        )}
-        {conversations.map(conv => (
-          <button
-            key={conv.profile.id}
-            onClick={() => openConversation(conv.profile)}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 16px', background: 'none', border: 'none',
-              borderBottom: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left',
-            }}
-            onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
-            onPointerUp={e => (e.currentTarget.style.background = 'none')}
-          >
-            {avatarEl(conv.profile)}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif' }}>
-                  {conv.profile.display_name || conv.profile.username}
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
-                  {conv.lastTime}
-                </span>
+          {/* Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+            {search.length >= 2 ? (
+              <>
+                <div style={{ padding: '8px 20px 4px', fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Результаты поиска
+                </div>
+                {searchResults.length === 0
+                  ? <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Никого не найдено</div>
+                  : searchResults.map(p => (
+                    <button key={p.id} onClick={() => { setSearch(''); setSearchResults([]); openChat(p) }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                        padding: '12px 20px', background: 'none', border: 'none',
+                        cursor: 'pointer', textAlign: 'left',
+                        transition: 'background 0.15s'
+                      }}
+                      onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
+                      onPointerUp={e => (e.currentTarget.style.background = 'none')}
+                    >
+                      <div style={{ width: 46, height: 46, borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-card)', border: '2px solid var(--border)', flexShrink: 0 }}>
+                        {av(p)}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>{p.display_name || p.username}</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>@{p.username}</div>
+                      </div>
+                    </button>
+                  ))
+                }
+              </>
+            ) : conversations.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 32px', color: 'var(--text-muted)' }}>
+                <MessageCircle size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
+                <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                  Нет сообщений
+                </div>
+                <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+                  Найди человека через поиск и начни общение
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{
-                  fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%',
-                }}>
-                  {conv.lastMessage}
-                </span>
-                {conv.unread > 0 && (
-                  <span style={{
-                    minWidth: 20, height: 20, borderRadius: 10,
-                    background: 'var(--accent)', color: '#fff',
-                    fontSize: 11, fontWeight: 700, fontFamily: 'Inter,sans-serif',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 6px',
-                  }}>{conv.unread}</span>
-                )}
+            ) : (
+              conversations.map((conv, i) => (
+                <button key={conv.partner.id}
+                  onClick={() => openChat(conv.partner)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                    padding: '14px 20px', background: 'none', border: 'none',
+                    cursor: 'pointer', textAlign: 'left',
+                    borderBottom: '1px solid var(--border)',
+                    animation: `fadeSlideUp 0.3s ease both`,
+                    animationDelay: `${i * 0.05}s`
+                  }}
+                  onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
+                  onPointerUp={e => (e.currentTarget.style.background = 'none')}
+                >
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-card)', border: '2px solid var(--border)' }}>
+                      {av(conv.partner)}
+                    </div>
+                    {conv.unread > 0 && (
+                      <div style={{
+                        position: 'absolute', top: -2, right: -2,
+                        width: 18, height: 18, borderRadius: '50%',
+                        background: 'var(--accent)', color: '#fff',
+                        fontSize: 10, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        border: '2px solid var(--bg-base)'
+                      }}>{conv.unread}</div>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>
+                        {conv.partner.display_name || conv.partner.username}
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>
+                        {conv.lastTime}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: 13, color: conv.unread > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
+                      fontWeight: conv.unread > 0 ? 600 : 400,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                    }}>
+                      {conv.lastMessage || 'Начните общение'}
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Chat Header */}
+          <div style={{
+            padding: '52px 16px 12px',
+            background: 'var(--bg-raised)',
+            borderBottom: '1px solid var(--border)',
+            flexShrink: 0,
+            display: 'flex', alignItems: 'center', gap: 12
+          }}>
+            <button onClick={() => { setView('list'); setPartner(null); setMessages([]); vibe(6) }}
+              style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: 'var(--text-primary)', flexShrink: 0
+              }}>
+              <ArrowLeft size={16} />
+            </button>
+            {partner && (
+              <>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', background: 'var(--bg-card)', border: '2px solid var(--border)', flexShrink: 0 }}>
+                  {av(partner)}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 15 }}>
+                    {partner.display_name || partner.username}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>@{partner.username}</div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Messages */}
+          <div style={{
+            flex: 1, overflowY: 'auto',
+            padding: '16px 16px 8px',
+            display: 'flex', flexDirection: 'column', gap: 8
+          }}>
+            {messages.length === 0 && (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', margin: 'auto', padding: 32 }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
+                <div style={{ fontSize: 14 }}>Начните общение</div>
               </div>
+            )}
+            {messages.map((msg, i) => {
+              const isMine = msg.from_user_id === userId
+              const showTime = i === 0 || (new Date(msg.created_at).getTime() - new Date(messages[i - 1].created_at).getTime()) > 300000
+              return (
+                <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
+                  {showTime && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', margin: '8px auto', textAlign: 'center' }}>
+                      {timeAgo(msg.created_at)}
+                    </div>
+                  )}
+                  <div style={{
+                    maxWidth: '78%',
+                    background: isMine
+                      ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
+                      : 'var(--bg-card)',
+                    color: isMine ? '#fff' : 'var(--text-primary)',
+                    borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    padding: '10px 14px',
+                    fontSize: 15, lineHeight: 1.5,
+                    border: isMine ? 'none' : '1px solid var(--border)',
+                    boxShadow: isMine ? '0 2px 12px rgba(176,125,74,0.3)' : '0 1px 4px rgba(0,0,0,0.1)',
+                    animation: 'msgIn 0.25s cubic-bezier(0.22,1,0.36,1)',
+                    wordBreak: 'break-word'
+                  }}>
+                    {msg.content}
+                  </div>
+                  {isMine && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3, paddingRight: 4 }}>
+                      {msg.is_read ? '✓✓' : '✓'}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Emoji Panel */}
+          {showEmoji && (
+            <div style={{
+              display: 'flex', gap: 8, padding: '10px 16px',
+              background: 'var(--bg-raised)', borderTop: '1px solid var(--border)',
+              flexShrink: 0, overflowX: 'auto'
+            }}>
+              {EMOJI.map(e => (
+                <button key={e} onClick={() => addEmoji(e)}
+                  style={{
+                    fontSize: 24, background: 'none', border: 'none',
+                    cursor: 'pointer', padding: '4px 6px', borderRadius: 8,
+                    flexShrink: 0, transition: 'transform 0.15s'
+                  }}
+                  onPointerDown={e2 => (e2.currentTarget.style.transform = 'scale(1.3)')}
+                  onPointerUp={e2 => (e2.currentTarget.style.transform = 'scale(1)')}
+                >{e}</button>
+              ))}
             </div>
-          </button>
-        ))}
-      </div>
+          )}
+
+          {/* Input */}
+          <div style={{
+            padding: `12px 16px calc(12px + env(safe-area-inset-bottom))`,
+            background: 'var(--bg-raised)',
+            borderTop: '1px solid var(--border)',
+            flexShrink: 0,
+            display: 'flex', alignItems: 'center', gap: 10
+          }}>
+            <button onClick={() => setShowEmoji(p => !p)}
+              style={{
+                width: 38, height: 38, borderRadius: '50%',
+                background: showEmoji ? 'var(--accent)' : 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                cursor: 'pointer', fontSize: 18,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s', flexShrink: 0
+              }}>😊</button>
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg() } }}
+              placeholder="Написать..."
+              style={{
+                flex: 1, padding: '10px 16px',
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                borderRadius: 24, color: 'var(--text-primary)',
+                fontSize: 15, outline: 'none',
+                transition: 'border-color 0.2s'
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+            />
+            <button
+              onClick={sendMsg}
+              disabled={!text.trim() || sending}
+              style={{
+                width: 42, height: 42, borderRadius: '50%',
+                background: text.trim() ? 'var(--accent)' : 'var(--bg-card)',
+                border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s', flexShrink: 0,
+                transform: text.trim() ? 'scale(1)' : 'scale(0.9)',
+                opacity: sending ? 0.6 : 1
+              }}
+            >
+              <Send size={16} color={text.trim() ? '#fff' : 'var(--text-muted)'} />
+            </button>
+          </div>
+        </>
+      )}
     </div>
-  );
+  )
 }
