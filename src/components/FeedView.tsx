@@ -308,7 +308,7 @@ function CommentsSheet({ post, userId, onClose }: {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getComments(post.id, userId).then(setComments);
+    getComments(post.id).then(setComments);
     setTimeout(() => inputRef.current?.focus(), 300);
   }, [post.id, userId]);
 
@@ -321,7 +321,7 @@ function CommentsSheet({ post, userId, onClose }: {
         const { data: userData } = await supabase.auth.getUser();
         const email = userData?.user?.email || '';
         const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
-        await upsertProfile({ id: userId, username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
+        await upsertProfile(userId, { username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
       }
       const comment = await addComment(post.id, userId, text.trim());
       if (comment) { setComments(prev => [...prev, comment]); setText(''); }
@@ -417,7 +417,7 @@ function EditPostSheet({ post, onClose, onSaved }: {
     setSaving(true); vibe(10);
     try {
       const updated = await updatePost(post.id, { content: content.trim() });
-      if (updated) { onSaved(updated); onClose(); }
+      if (updated) { onSaved({ ...post, content: content.trim() }); onClose(); }
     } catch (e) { console.error('Edit error:', e); }
     setSaving(false);
   };
@@ -506,10 +506,10 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
         const { data: userData } = await supabase.auth.getUser();
         const email = userData?.user?.email || '';
         const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
-        await upsertProfile({ id: userId, username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
+        await upsertProfile(userId, { username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
       }
-      const post = await createPost({
-        userId, type,
+      const post = await createPost(userId, {
+        type,
         title: title || content.replace(/<[^>]+>/g, '').slice(0, 60),
         content,
         bookTitle: selectedBook?.title,

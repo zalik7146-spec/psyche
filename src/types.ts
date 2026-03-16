@@ -141,7 +141,10 @@ export interface SocialProfile {
   followersCount: number;
   followingCount: number;
   postsCount: number;
-  createdAt: string;
+  website?: string;
+  location?: string;
+  specialization?: string;
+  createdAt?: string;
 }
 
 export type PostType = 'note' | 'quote' | 'insight' | 'summary' | 'flashcard' | 'book_review';

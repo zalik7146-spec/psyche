@@ -131,17 +131,12 @@ export default function ProfileView({
   const handleSave = async () => {
     if (!editUsername.trim() || !editName.trim()) return;
     setSaving(true); vibe(8);
-    const updated = await upsertProfile({
-      id: user.id,
+    const updated = await upsertProfile(user.id, {
       username: editUsername.trim().toLowerCase().replace(/\s+/g, '_'),
       displayName: editName.trim(),
       bio: editBio.trim(),
       isPublic: editPublic,
       avatar: avatarVal,
-      followersCount: profile?.followersCount || 0,
-      followingCount: profile?.followingCount || 0,
-      postsCount: posts.length,
-      createdAt: profile?.createdAt || new Date().toISOString(),
     });
     if (updated) setProfile(updated);
     setSaving(false);
