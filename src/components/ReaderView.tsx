@@ -1,291 +1,316 @@
-import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, Settings, Bookmark, BookmarkCheck, Search, ChevronLeft, ChevronRight, X, Plus, Heart } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
-interface Props {
-  book: { title: string; author: string; gutenbergId?: number; coverId?: string }
-  onBack: () => void
-  onCreateNote?: (title: string, content: string, type: string) => void
+interface ReaderBook {
+  id: string
+  title: string
+  author: string
+  textUrl?: string
+  coverUrl?: string
+  source?: string
 }
 
-const FONTS = [
-  { label: 'Lora', value: "'Lora', serif" },
-  { label: 'Inter', value: "'Inter', sans-serif" },
-  { label: 'Georgia', value: "Georgia, serif" },
-  { label: 'Mono', value: "'Courier New', monospace" },
-]
+interface Props {
+  book: ReaderBook
+  onClose: () => void
+  onCreateNote: (title: string, content: string, type: string) => void
+}
 
-const THEMES = [
-  { label: '🌙', bg: '#1a1710', color: '#e8d8c0' },
-  { label: '☀️', bg: '#f5ece0', color: '#2a2520' },
-  { label: '📜', bg: '#f4ecd8', color: '#5a4e3c' },
-]
+const FONTS = ['Lora, serif', 'Inter, sans-serif', 'Georgia, serif', "'Courier New', monospace"]
+const FONT_NAMES = ['Lora', 'Inter', 'Georgia', 'Mono']
+const THEMES = {
+  dark: { bg: '#15120e', text: '#eedfc4', panel: '#1e1b15' },
+  light: { bg: '#faf6f0', text: '#2c2416', panel: '#f0ebe0' },
+  sepia: { bg: '#1e1810', text: '#e8d4a0', panel: '#261f13' },
+}
 
-export default function ReaderView({ book, onBack, onCreateNote }: Props) {
-  const [text, setText] = useState('')
+const WORDS_PER_PAGE = 300
+
+export default function ReaderView({ book, onClose, onCreateNote }: Props) {
   const [pages, setPages] = useState<string[]>([])
-  const [page, setPage] = useState(0)
+  const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark')
   const [fontSize, setFontSize] = useState(17)
-  const [lineH, setLineH] = useState(1.8)
-  const [fontIdx, setFontIdx] = useState(0)
-  const [themeIdx, setThemeIdx] = useState(0)
+  const [lineHeight, setLineHeight] = useState(1.8)
+  const [fontIndex, setFontIndex] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
-  const [searchQ, setSearchQ] = useState('')
   const [bookmarks, setBookmarks] = useState<number[]>([])
   const [showBookmarks, setShowBookmarks] = useState(false)
-  const [selectedText, setSelectedText] = useState('')
-  const [showTextMenu, setShowTextMenu] = useState(false)
+  const [selection, setSelection] = useState('')
+  const [showSelMenu, setShowSelMenu] = useState(false)
+  const [pageAnim, setPageAnim] = useState<'left' | 'right' | null>(null)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
   const contentRef = useRef<HTMLDivElement>(null)
-  const touchStart = useRef(0)
+  const vibe = (ms = 8) => navigator.vibrate?.(ms)
 
-  // Load text
+  const colors = THEMES[theme]
+  const progress = pages.length ? Math.round(((currentPage + 1) / pages.length) * 100) : 0
+  const storageKey = `reader_${book.id}`
+
+  // Load saved page
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey)
+    if (saved) setCurrentPage(parseInt(saved) || 0)
+  }, [storageKey])
+
+  // Save page on change
+  useEffect(() => {
+    localStorage.setItem(storageKey, currentPage.toString())
+  }, [currentPage, storageKey])
+
+  // Load bookmarks
+  useEffect(() => {
+    const saved = localStorage.getItem(`bookmarks_${book.id}`)
+    if (saved) setBookmarks(JSON.parse(saved))
+  }, [book.id])
+
+  const saveBookmarks = (bm: number[]) => {
+    setBookmarks(bm)
+    localStorage.setItem(`bookmarks_${book.id}`, JSON.stringify(bm))
+  }
+
+  // Fetch book text
   useEffect(() => {
     const load = async () => {
       setLoading(true)
       setError('')
       try {
-        if (book.gutenbergId) {
-          const urls = [
-            `https://www.gutenberg.org/cache/epub/${book.gutenbergId}/pg${book.gutenbergId}.txt`,
-            `https://www.gutenberg.org/files/${book.gutenbergId}/${book.gutenbergId}-0.txt`,
-          ]
-          let txt = ''
-          for (const url of urls) {
-            try {
-              const r = await fetch(url)
-              if (r.ok) { txt = await r.text(); break }
-            } catch { continue }
-          }
-          if (txt) {
-            const clean = txt
-              .replace(/\r\n/g, '\n')
-              .replace(/\n{4,}/g, '\n\n\n')
-              .trim()
-            setText(clean)
-          } else {
-            setError('Текст временно недоступен. Попробуйте позже.')
-          }
-        } else {
+        let text = ''
+        if (book.textUrl) {
+          // Try direct fetch first
           try {
-            const r = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(book.title)}&limit=1`)
-            const d = await r.json()
-            const doc = d.docs?.[0]
-            if (doc) {
-              const desc = doc.first_sentence?.join?.('\n\n') || ''
-              setText(desc || `${book.title}\n\nАвтор: ${book.author}\n\nПолный текст доступен на OpenLibrary.org`)
-            } else {
-              setText(`${book.title}\n\nАвтор: ${book.author}`)
+            const res = await fetch(book.textUrl)
+            if (res.ok) {
+              const raw = await res.text()
+              // Strip HTML tags if needed
+              text = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
             }
           } catch {
-            setText(`${book.title}\n\nАвтор: ${book.author}`)
+            // If CORS blocked, use proxy
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(book.textUrl)}`
+            const res = await fetch(proxyUrl)
+            if (res.ok) {
+              const raw = await res.text()
+              text = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+            }
           }
         }
+
+        if (!text || text.length < 100) {
+          // Fallback: try Gutenberg ID from book.id
+          const gutId = book.id.replace('gutenberg_', '')
+          if (gutId && !isNaN(parseInt(gutId))) {
+            const urls = [
+              `https://www.gutenberg.org/cache/epub/${gutId}/pg${gutId}.txt`,
+              `https://www.gutenberg.org/files/${gutId}/${gutId}-0.txt`,
+              `https://www.gutenberg.org/files/${gutId}/${gutId}.txt`,
+            ]
+            for (const url of urls) {
+              try {
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+                const res = await fetch(proxyUrl)
+                if (res.ok) {
+                  text = await res.text()
+                  if (text.length > 500) break
+                }
+              } catch { continue }
+            }
+          }
+        }
+
+        if (!text || text.length < 100) {
+          setError('Полный текст недоступен. Попробуй другую книгу из каталога.')
+          setLoading(false)
+          return
+        }
+
+        // Split into pages by words
+        const words = text.split(/\s+/).filter(w => w.length > 0)
+        const pageArr: string[] = []
+        for (let i = 0; i < words.length; i += WORDS_PER_PAGE) {
+          pageArr.push(words.slice(i, i + WORDS_PER_PAGE).join(' '))
+        }
+        setPages(pageArr)
       } catch {
-        setError('Ошибка загрузки')
+        setError('Ошибка загрузки книги. Проверь подключение к интернету.')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     load()
-    // Load bookmarks
-    const saved = localStorage.getItem(`reader_bm_${book.title}`)
-    if (saved) setBookmarks(JSON.parse(saved))
-    // Load last page
-    const savedPage = localStorage.getItem(`reader_pg_${book.title}`)
-    if (savedPage) setPage(parseInt(savedPage))
   }, [book])
 
-  // Paginate
-  useEffect(() => {
-    if (!text) return
-    const charsPerPage = Math.floor((window.innerHeight - 140) / (fontSize * lineH)) * Math.floor(window.innerWidth / (fontSize * 0.55))
-    const p: string[] = []
-    for (let i = 0; i < text.length; i += charsPerPage) {
-      p.push(text.slice(i, i + charsPerPage))
+  const goPage = useCallback((dir: 'next' | 'prev') => {
+    if (dir === 'next' && currentPage < pages.length - 1) {
+      setPageAnim('left')
+      setTimeout(() => { setCurrentPage(p => p + 1); setPageAnim(null) }, 200)
+      vibe(6)
+    } else if (dir === 'prev' && currentPage > 0) {
+      setPageAnim('right')
+      setTimeout(() => { setCurrentPage(p => p - 1); setPageAnim(null) }, 200)
+      vibe(6)
     }
-    setPages(p.length ? p : [text])
-    if (page >= p.length) setPage(Math.max(0, p.length - 1))
-  }, [text, fontSize, lineH, page])
+  }, [currentPage, pages.length])
 
-  // Save page
-  useEffect(() => {
-    if (pages.length > 0) localStorage.setItem(`reader_pg_${book.title}`, page.toString())
-  }, [page, book.title, pages.length])
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
 
-  const toggleBookmark = () => {
-    const bm = bookmarks.includes(page) ? bookmarks.filter(b => b !== page) : [...bookmarks, page]
-    setBookmarks(bm)
-    localStorage.setItem(`reader_bm_${book.title}`, JSON.stringify(bm))
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx < 0) goPage('next')
+      else goPage('prev')
+    }
   }
 
   const handleTextSelect = () => {
-    const sel = window.getSelection()?.toString().trim()
-    if (sel && sel.length > 3) {
-      setSelectedText(sel)
-      setShowTextMenu(true)
+    const sel = window.getSelection()
+    const text = sel?.toString().trim() || ''
+    if (text.length > 3) {
+      setSelection(text)
+      setShowSelMenu(true)
+    } else {
+      setShowSelMenu(false)
     }
   }
 
-  const goPage = (d: number) => setPage(p => Math.max(0, Math.min(pages.length - 1, p + d)))
-
-  const handleTouchStart = (e: React.TouchEvent) => { touchStart.current = e.touches[0].clientX }
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const diff = touchStart.current - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 60) goPage(diff > 0 ? 1 : -1)
+  const toggleBookmark = () => {
+    vibe(10)
+    const bm = bookmarks.includes(currentPage)
+      ? bookmarks.filter(b => b !== currentPage)
+      : [...bookmarks, currentPage].sort((a, b) => a - b)
+    saveBookmarks(bm)
   }
 
-  const progress = pages.length > 1 ? ((page + 1) / pages.length * 100) : 100
-  const theme = THEMES[themeIdx]
-  const font = FONTS[fontIdx]
-
-  const searchResults = searchQ ? pages.reduce<number[]>((acc, p, i) => {
-    if (p.toLowerCase().includes(searchQ.toLowerCase())) acc.push(i)
-    return acc
-  }, []) : []
+  const isBookmarked = bookmarks.includes(currentPage)
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: theme.bg, color: theme.color, zIndex: 200, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, background: colors.bg, zIndex: 300, display: 'flex', flexDirection: 'column', fontFamily: FONTS[fontIndex] }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', paddingTop: 'max(8px, env(safe-area-inset-top))', gap: 8, borderBottom: '1px solid rgba(128,128,128,0.15)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4 }}><ArrowLeft size={20} /></button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '48px 16px 12px', background: colors.panel, borderBottom: `1px solid ${colors.text}22`, flexShrink: 0 }}>
+        <button onClick={() => { vibe(); onClose() }} style={{ background: `${colors.text}18`, border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 18, color: colors.text, flexShrink: 0 }}>←</button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</p>
-          <p style={{ margin: 0, fontSize: 11, opacity: 0.6 }}>{book.author}</p>
+          <div style={{ fontSize: 14, fontWeight: 700, color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</div>
+          <div style={{ fontSize: 11, color: `${colors.text}80` }}>{book.author}</div>
         </div>
-        <button onClick={() => setShowSearch(!showSearch)} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4 }}><Search size={18} /></button>
-        <button onClick={toggleBookmark} style={{ background: 'none', border: 'none', color: bookmarks.includes(page) ? '#e8b84b' : theme.color, cursor: 'pointer', padding: 4 }}>
-          {bookmarks.includes(page) ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-        </button>
-        <button onClick={() => setShowBookmarks(!showBookmarks)} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4, fontSize: 12, opacity: 0.7 }}>
-          {bookmarks.length > 0 ? `🔖${bookmarks.length}` : ''}
-        </button>
-        <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4 }}><Settings size={18} /></button>
+        <button onClick={() => { vibe(); toggleBookmark() }} style={{ background: isBookmarked ? '#b07d4a' : `${colors.text}18`, border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16 }}>🔖</button>
+        <button onClick={() => { vibe(); setShowBookmarks(b => !b) }} style={{ background: `${colors.text}18`, border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16 }}>📑</button>
+        <button onClick={() => { vibe(); setShowSettings(s => !s) }} style={{ background: showSettings ? '#b07d4a' : `${colors.text}18`, border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 16 }}>⚙️</button>
       </div>
 
-      {/* Search bar */}
-      {showSearch && (
-        <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(128,128,128,0.15)', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Поиск в тексте..."
-            style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 14, outline: 'none' }} autoFocus />
-          {searchResults.length > 0 && <span style={{ fontSize: 12, opacity: 0.6 }}>{searchResults.length} стр.</span>}
-          <button onClick={() => { setShowSearch(false); setSearchQ('') }} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer' }}><X size={18} /></button>
-        </div>
-      )}
-
-      {/* Search results */}
-      {showSearch && searchResults.length > 0 && (
-        <div style={{ padding: '4px 12px', display: 'flex', gap: 4, flexWrap: 'wrap', borderBottom: '1px solid rgba(128,128,128,0.1)' }}>
-          {searchResults.slice(0, 20).map(p => (
-            <button key={p} onClick={() => setPage(p)} style={{ padding: '3px 8px', borderRadius: 4, border: 'none', background: page === p ? 'var(--accent)' : 'rgba(128,128,128,0.15)', color: page === p ? '#fff' : theme.color, fontSize: 11, cursor: 'pointer' }}>стр.{p + 1}</button>
-          ))}
-        </div>
-      )}
-
-      {/* Bookmarks panel */}
-      {showBookmarks && bookmarks.length > 0 && (
-        <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12, color: theme.color, opacity: 0.6, marginRight: 4 }}>Закладки:</span>
-          {bookmarks.sort((a, b) => a - b).map(b => (
-            <button key={b} onClick={() => setPage(b)} style={{ padding: '3px 8px', borderRadius: 4, border: 'none', background: page === b ? '#e8b84b' : 'rgba(128,128,128,0.15)', color: page === b ? '#000' : theme.color, fontSize: 11, cursor: 'pointer' }}>📖 {b + 1}</button>
-          ))}
-        </div>
-      )}
-
-      {/* Settings */}
+      {/* Settings Panel */}
       {showSettings && (
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(128,128,128,0.15)', background: 'rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Размер</span>
-            <button onClick={() => setFontSize(s => Math.max(12, s - 1))} style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 16, cursor: 'pointer' }}>A-</button>
-            <span style={{ fontSize: 14, minWidth: 30, textAlign: 'center' }}>{fontSize}</span>
-            <button onClick={() => setFontSize(s => Math.min(28, s + 1))} style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 16, cursor: 'pointer' }}>A+</button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Интервал</span>
-            <input type="range" min="1.2" max="2.4" step="0.1" value={lineH} onChange={e => setLineH(parseFloat(e.target.value))}
-              style={{ flex: 1, accentColor: '#e8b84b' }} />
-            <span style={{ fontSize: 12, minWidth: 24 }}>{lineH}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Шрифт</span>
-            {FONTS.map((f, i) => (
-              <button key={f.label} onClick={() => setFontIdx(i)}
-                style={{ padding: '5px 10px', borderRadius: 6, border: fontIdx === i ? '2px solid #e8b84b' : '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 12, cursor: 'pointer', fontFamily: f.value }}>
-                {f.label}
+        <div style={{ background: colors.panel, borderBottom: `1px solid ${colors.text}22`, padding: '12px 16px', flexShrink: 0 }}>
+          {/* Theme */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            {(['dark', 'light', 'sepia'] as const).map(t => (
+              <button key={t} onClick={() => setTheme(t)} style={{ flex: 1, padding: '8px 4px', borderRadius: 10, border: theme === t ? '2px solid #b07d4a' : `1px solid ${colors.text}30`, background: THEMES[t].bg, color: THEMES[t].text, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                {t === 'dark' ? '🌙 Тёмная' : t === 'light' ? '☀️ Светлая' : '📜 Сепия'}
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Тема</span>
-            {THEMES.map((t, i) => (
-              <button key={i} onClick={() => setThemeIdx(i)}
-                style={{ width: 36, height: 36, borderRadius: 8, border: themeIdx === i ? '2px solid #e8b84b' : '1px solid rgba(128,128,128,0.2)', background: t.bg, color: t.color, fontSize: 16, cursor: 'pointer' }}>
-                {t.label}
+          {/* Font size */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: `${colors.text}80`, width: 80 }}>Размер</span>
+            <button onClick={() => setFontSize(s => Math.max(12, s - 1))} style={{ background: `${colors.text}18`, border: 'none', borderRadius: 8, width: 32, height: 32, color: colors.text, fontSize: 16, cursor: 'pointer' }}>A-</button>
+            <span style={{ color: colors.text, fontSize: 14, minWidth: 30, textAlign: 'center' }}>{fontSize}</span>
+            <button onClick={() => setFontSize(s => Math.min(28, s + 1))} style={{ background: `${colors.text}18`, border: 'none', borderRadius: 8, width: 32, height: 32, color: colors.text, fontSize: 16, cursor: 'pointer' }}>A+</button>
+          </div>
+          {/* Line height */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: `${colors.text}80`, width: 80 }}>Интервал</span>
+            <button onClick={() => setLineHeight(h => Math.max(1.2, parseFloat((h - 0.2).toFixed(1))))} style={{ background: `${colors.text}18`, border: 'none', borderRadius: 8, width: 32, height: 32, color: colors.text, fontSize: 14, cursor: 'pointer' }}>−</button>
+            <span style={{ color: colors.text, fontSize: 14, minWidth: 30, textAlign: 'center' }}>{lineHeight}</span>
+            <button onClick={() => setLineHeight(h => Math.min(2.4, parseFloat((h + 0.2).toFixed(1))))} style={{ background: `${colors.text}18`, border: 'none', borderRadius: 8, width: 32, height: 32, color: colors.text, fontSize: 14, cursor: 'pointer' }}>+</button>
+          </div>
+          {/* Font */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            {FONT_NAMES.map((name, i) => (
+              <button key={i} onClick={() => setFontIndex(i)} style={{ flex: 1, padding: '6px 4px', borderRadius: 8, border: fontIndex === i ? '2px solid #b07d4a' : `1px solid ${colors.text}30`, background: `${colors.text}10`, color: colors.text, fontSize: 11, cursor: 'pointer', fontFamily: FONTS[i] }}>
+                {name}
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Bookmarks Panel */}
+      {showBookmarks && (
+        <div style={{ background: colors.panel, borderBottom: `1px solid ${colors.text}22`, padding: '12px 16px', maxHeight: 200, overflowY: 'auto', flexShrink: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: colors.text, marginBottom: 8 }}>🔖 Закладки</div>
+          {bookmarks.length === 0 ? (
+            <div style={{ fontSize: 12, color: `${colors.text}60` }}>Нет закладок. Нажми 🔖 чтобы добавить.</div>
+          ) : bookmarks.map(p => (
+            <button key={p} onClick={() => { setCurrentPage(p); setShowBookmarks(false) }} style={{ display: 'block', width: '100%', textAlign: 'left', background: `${colors.text}10`, border: 'none', borderRadius: 8, padding: '8px 12px', color: colors.text, fontSize: 13, cursor: 'pointer', marginBottom: 6 }}>
+              Страница {p + 1} из {pages.length}
+            </button>
+          ))}
         </div>
       )}
 
       {/* Content */}
-      <div ref={contentRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseUp={handleTextSelect}
-        style={{ flex: 1, overflowY: 'auto', padding: '20px 20px', fontFamily: font.value, fontSize, lineHeight: lineH }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <div className="spinner" style={{ margin: '0 auto 16px' }} />
-            <p style={{ fontSize: 14, opacity: 0.6 }}>Загружаем книгу...</p>
+      <div
+        ref={contentRef}
+        style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', position: 'relative' }}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onMouseUp={handleTextSelect}
+        onTouchEndCapture={handleTextSelect}
+      >
+        {loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20 }}>
+            <div style={{ width: 48, height: 48, border: `3px solid ${colors.text}30`, borderTopColor: '#b07d4a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ color: `${colors.text}80`, fontSize: 14 }}>Загружаем книгу...</span>
           </div>
-        ) : error ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <p style={{ fontSize: 40, marginBottom: 12 }}>📚</p>
-            <p style={{ fontSize: 14, opacity: 0.6 }}>{error}</p>
+        )}
+        {error && !loading && (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>😕</div>
+            <div style={{ fontSize: 15, color: colors.text, marginBottom: 8 }}>{error}</div>
+            <button onClick={onClose} style={{ background: '#b07d4a', border: 'none', borderRadius: 12, padding: '12px 24px', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginTop: 16 }}>
+              ← Вернуться в каталог
+            </button>
           </div>
-        ) : (
-          <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            {searchQ ? (
-              pages[page]?.split(new RegExp(`(${searchQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')).map((part, i) =>
-                part.toLowerCase() === searchQ.toLowerCase()
-                  ? <mark key={i} style={{ background: '#e8b84b', color: '#000', borderRadius: 2, padding: '0 2px' }}>{part}</mark>
-                  : part
-              )
-            ) : pages[page]}
+        )}
+        {!loading && !error && pages.length > 0 && (
+          <div style={{ transform: pageAnim === 'left' ? 'translateX(-20px)' : pageAnim === 'right' ? 'translateX(20px)' : 'translateX(0)', opacity: pageAnim ? 0 : 1, transition: 'all 0.2s ease', fontSize, lineHeight, color: colors.text, letterSpacing: 0.3, userSelect: 'text' }}>
+            {pages[currentPage]}
           </div>
         )}
       </div>
 
-      {/* Text selection menu */}
-      {showTextMenu && selectedText && (
-        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, padding: '8px 12px', borderRadius: 12, background: 'var(--bg-raised)', border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)', zIndex: 300, animation: 'fadeSlideUp 0.2s ease' }}>
-          <button onClick={() => { onCreateNote?.(book.title + ' — заметка', selectedText, 'note'); setShowTextMenu(false) }}
-            style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--accent)', border: 'none', color: '#fff', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Plus size={14} /> Заметка
+      {/* Selection Menu */}
+      {showSelMenu && selection && (
+        <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 120, zIndex: 500, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '8px', display: 'flex', gap: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+          <button onClick={() => { onCreateNote(book.title, selection, 'note'); setShowSelMenu(false); window.getSelection()?.removeAllRanges(); vibe(10) }} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            📝 Заметка
           </button>
-          <button onClick={() => { onCreateNote?.(book.title + ' — цитата', selectedText, 'quote'); setShowTextMenu(false) }}
-            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Heart size={14} /> Цитата
+          <button onClick={() => { onCreateNote(book.title, selection, 'quote'); setShowSelMenu(false); window.getSelection()?.removeAllRanges(); vibe(10) }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 14px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            ❝ Цитата
           </button>
-          <button onClick={() => setShowTextMenu(false)} style={{ padding: '4px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={() => setShowSelMenu(false)} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 10px', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer' }}>✕</button>
         </div>
       )}
 
-      {/* Bottom bar */}
-      {pages.length > 1 && !loading && (
-        <div style={{ padding: '8px 16px', paddingBottom: 'max(8px, env(safe-area-inset-bottom))', borderTop: '1px solid rgba(128,128,128,0.15)', background: theme.bg }}>
+      {/* Bottom Navigation */}
+      {!loading && !error && pages.length > 0 && (
+        <div style={{ background: colors.panel, borderTop: `1px solid ${colors.text}22`, padding: `12px 16px calc(12px + env(safe-area-inset-bottom))`, flexShrink: 0 }}>
           {/* Progress bar */}
-          <div style={{ height: 3, borderRadius: 2, background: 'rgba(128,128,128,0.2)', marginBottom: 8 }}>
-            <div style={{ height: '100%', borderRadius: 2, background: '#e8b84b', width: `${progress}%`, transition: 'width 0.3s ease' }} />
+          <div style={{ height: 3, background: `${colors.text}20`, borderRadius: 2, marginBottom: 12, overflow: 'hidden' }}>
+            <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #b07d4a, #d4a96a)', borderRadius: 2, transition: 'width 0.3s' }} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <button onClick={() => goPage(-1)} disabled={page === 0}
-              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: page === 0 ? 'rgba(128,128,128,0.3)' : theme.color, cursor: page === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <ChevronLeft size={16} /> Назад
-            </button>
-            <span style={{ fontSize: 12, opacity: 0.6 }}>{page + 1} / {pages.length} · {Math.round(progress)}%</span>
-            <button onClick={() => goPage(1)} disabled={page === pages.length - 1}
-              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: page === pages.length - 1 ? 'rgba(128,128,128,0.3)' : theme.color, cursor: page === pages.length - 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-              Далее <ChevronRight size={16} />
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => goPage('prev')} disabled={currentPage === 0} style={{ background: currentPage === 0 ? `${colors.text}10` : `${colors.text}20`, border: 'none', borderRadius: 12, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentPage === 0 ? 'default' : 'pointer', fontSize: 20, color: currentPage === 0 ? `${colors.text}30` : colors.text }}>‹</button>
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              <span style={{ fontSize: 13, color: `${colors.text}80` }}>{currentPage + 1} / {pages.length}</span>
+              <span style={{ fontSize: 11, color: `${colors.text}50`, marginLeft: 8 }}>{progress}%</span>
+            </div>
+            <button onClick={() => goPage('next')} disabled={currentPage === pages.length - 1} style={{ background: currentPage === pages.length - 1 ? `${colors.text}10` : 'linear-gradient(135deg, #b07d4a, #8a5a2a)', border: 'none', borderRadius: 12, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentPage === pages.length - 1 ? 'default' : 'pointer', fontSize: 20, color: currentPage === pages.length - 1 ? `${colors.text}30` : '#fff' }}>›</button>
           </div>
         </div>
       )}

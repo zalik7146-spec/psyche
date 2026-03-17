@@ -107,7 +107,7 @@ function AppInner() {
   const [showWrapped, setShowWrapped] = useState(false);
   const [showChallenges, setShowChallenges] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
-  const [readerBook, setReaderBook] = useState<{ title: string; author: string; coverId?: string } | null>(null);
+  const [readerBook, setReaderBook] = useState<any>(null);
   const [showMessages, setShowMessages] = useState(false);
   const [messageRecipientId, setMessageRecipientId] = useState<string | undefined>(undefined);
   const [showFollowers, setShowFollowers] = useState(false);
@@ -672,9 +672,10 @@ function AppInner() {
           <Library
             books={state.books}
             notes={state.notes}
-            onAddBook={() => setBookModal({ open: true })}
-            onEditBook={book => setBookModal({ open: true, book })}
-            onNewNoteForBook={bookId => handleNewNote(bookId)}
+            onSave={handleSaveBook}
+            onDelete={handleDeleteBook}
+            onOpenCatalog={() => setShowCatalog(true)}
+            onOpenReader={(book: any) => setReaderBook(book)}
           />
         )}
 
@@ -831,24 +832,22 @@ function AppInner() {
 
       {showCatalog && (
         <BookCatalog
-          books={state.books}
-          onBack={() => setShowCatalog(false)}
-          onAddBook={(book: Book) => {
-            handleSaveBook(book)
-            setShowCatalog(false)
-          }}
-          onOpenReader={(book) => {
+          onClose={() => setShowCatalog(false)}
+          onRead={(book: any) => {
             setShowCatalog(false)
             setReaderBook(book)
+          }}
+          onAddToLibrary={(book: any) => {
+            handleSaveBook({ ...book, id: Date.now().toString(), tags: [], createdAt: new Date().toISOString() } as Book)
           }}
         />
       )}
 
       {readerBook && (
         <ReaderView
-          book={readerBook}
-          onBack={() => setReaderBook(null)}
-          onCreateNote={(title, content, type) => {
+          book={{ id: readerBook.id || Date.now().toString(), title: readerBook.title, author: readerBook.author, textUrl: readerBook.textUrl, coverUrl: readerBook.cover || readerBook.coverUrl }}
+          onClose={() => setReaderBook(null)}
+          onCreateNote={(title: string, content: string, type: string) => {
             handleSaveNote({ id: Date.now().toString(), title, content, type, tags: [], isPinned: false, isFavorite: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any)
           }}
         />
