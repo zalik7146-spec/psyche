@@ -18,6 +18,7 @@ export interface Book {
   totalPages?: number;
   currentPage?: number;
   tags?: string[];
+  coverUrl?: string;
 }
 
 export type NoteType = 'note' | 'quote' | 'insight' | 'question' | 'summary' | 'idea' | 'task';

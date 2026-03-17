@@ -794,7 +794,7 @@ function AppInner() {
         <BookModal
           book={bookModal.book}
           onSave={handleSaveBook}
-          onDelete={handleDeleteBook}
+          onDelete={() => bookModal.book && handleDeleteBook(bookModal.book.id)}
           onClose={() => setBookModal({ open: false })}
         />
       )}
