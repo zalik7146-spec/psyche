@@ -1,415 +1,294 @@
-import { useState, useEffect } from 'react'
-import { ArrowLeft, Plus, Heart, Minus, Sun, Moon, BookOpen, ExternalLink } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ArrowLeft, Settings, Bookmark, BookmarkCheck, Search, ChevronLeft, ChevronRight, X, Plus, Heart } from 'lucide-react'
 
 interface Props {
-  book: { title: string; author: string; coverId?: string }
+  book: { title: string; author: string; gutenbergId?: number; coverId?: string }
   onBack: () => void
-  onCreateNote: (data: { title: string; content: string; bookTitle: string; type: string }) => void
+  onCreateNote?: (title: string, content: string, type: string) => void
 }
 
+const FONTS = [
+  { label: 'Lora', value: "'Lora', serif" },
+  { label: 'Inter', value: "'Inter', sans-serif" },
+  { label: 'Georgia', value: "Georgia, serif" },
+  { label: 'Mono', value: "'Courier New', monospace" },
+]
+
+const THEMES = [
+  { label: '🌙', bg: '#1a1710', color: '#e8d8c0' },
+  { label: '☀️', bg: '#f5ece0', color: '#2a2520' },
+  { label: '📜', bg: '#f4ecd8', color: '#5a4e3c' },
+]
+
 export default function ReaderView({ book, onBack, onCreateNote }: Props) {
-  const [content, setContent] = useState('')
+  const [text, setText] = useState('')
+  const [pages, setPages] = useState<string[]>([])
+  const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [fontSize, setFontSize] = useState(18)
-  const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark')
-  const [progress, setProgress] = useState(0)
-  const [archiveUrl, setArchiveUrl] = useState('')
+  const [error, setError] = useState('')
+  const [fontSize, setFontSize] = useState(17)
+  const [lineH, setLineH] = useState(1.8)
+  const [fontIdx, setFontIdx] = useState(0)
+  const [themeIdx, setThemeIdx] = useState(0)
+  const [showSettings, setShowSettings] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchQ, setSearchQ] = useState('')
+  const [bookmarks, setBookmarks] = useState<number[]>([])
+  const [showBookmarks, setShowBookmarks] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
+  const [showTextMenu, setShowTextMenu] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const touchStart = useRef(0)
 
+  // Load text
   useEffect(() => {
-    const loadBook = async () => {
+    const load = async () => {
       setLoading(true)
+      setError('')
       try {
-        // Search for the book
-        const searchUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}&limit=1`
-        const searchRes = await fetch(searchUrl)
-        const searchData = await searchRes.json()
-
-        if (searchData.docs && searchData.docs.length > 0) {
-          const doc = searchData.docs[0]
-          const workKey = doc.key
-
-          // Get work details
-          const workUrl = `https://openlibrary.org${workKey}.json`
-          const workRes = await fetch(workUrl)
-          const workData = await workRes.json()
-
-          // Get description
-          let desc = ''
-          if (workData.description) {
-            desc = typeof workData.description === 'string' 
-              ? workData.description 
-              : workData.description.value || ''
+        if (book.gutenbergId) {
+          const urls = [
+            `https://www.gutenberg.org/cache/epub/${book.gutenbergId}/pg${book.gutenbergId}.txt`,
+            `https://www.gutenberg.org/files/${book.gutenbergId}/${book.gutenbergId}-0.txt`,
+          ]
+          let txt = ''
+          for (const url of urls) {
+            try {
+              const r = await fetch(url)
+              if (r.ok) { txt = await r.text(); break }
+            } catch { continue }
           }
-
-          // Archive.org link
-          if (doc.ia && doc.ia.length > 0) {
-            setArchiveUrl(`https://archive.org/details/${doc.ia[0]}`)
+          if (txt) {
+            const clean = txt
+              .replace(/\r\n/g, '\n')
+              .replace(/\n{4,}/g, '\n\n\n')
+              .trim()
+            setText(clean)
+          } else {
+            setError('Текст временно недоступен. Попробуйте позже.')
           }
-
-          // Build content
-          let fullContent = ''
-          
-          if (desc) {
-            fullContent += `📖 О книге\n\n${desc}\n\n`
-          }
-
-          if (workData.excerpts && workData.excerpts.length > 0) {
-            fullContent += `📝 Отрывки\n\n`
-            workData.excerpts.forEach((exc: any, i: number) => {
-              const text = typeof exc === 'string' ? exc : exc.excerpt || ''
-              if (text) {
-                fullContent += `${i + 1}. ${text}\n\n`
-              }
-            })
-          }
-
-          if (workData.subjects) {
-            fullContent += `🏷️ Темы: ${workData.subjects.slice(0, 5).join(', ')}\n\n`
-          }
-
-          if (workData.first_sentence) {
-            const sentence = typeof workData.first_sentence === 'string' 
-              ? workData.first_sentence 
-              : workData.first_sentence.value || ''
-            if (sentence) {
-              fullContent += `✨ Первое предложение:\n"${sentence}"\n\n`
-            }
-          }
-
-          if (!fullContent.trim()) {
-            fullContent = `К сожалению, полный текст книги "${book.title}" не доступен в Open Library.\n\nВы можете:\n• Найти книгу на Archive.org\n• Добавить собственные заметки и цитаты\n• Искать отрывки в других источниках`
-          }
-
-          setContent(fullContent)
         } else {
-          setContent(`Книга "${book.title}" не найдена в каталоге Open Library.\n\nВы можете добавить собственные заметки и цитаты к этой книге.`)
+          try {
+            const r = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(book.title)}&limit=1`)
+            const d = await r.json()
+            const doc = d.docs?.[0]
+            if (doc) {
+              const desc = doc.first_sentence?.join?.('\n\n') || ''
+              setText(desc || `${book.title}\n\nАвтор: ${book.author}\n\nПолный текст доступен на OpenLibrary.org`)
+            } else {
+              setText(`${book.title}\n\nАвтор: ${book.author}`)
+            }
+          } catch {
+            setText(`${book.title}\n\nАвтор: ${book.author}`)
+          }
         }
-      } catch (err) {
-        console.error('Error loading book:', err)
-        setContent(`Не удалось загрузить информацию о книге.\n\nПроверьте подключение к интернету.`)
-      } finally {
-        setLoading(false)
+      } catch {
+        setError('Ошибка загрузки')
       }
+      setLoading(false)
     }
+    load()
+    // Load bookmarks
+    const saved = localStorage.getItem(`reader_bm_${book.title}`)
+    if (saved) setBookmarks(JSON.parse(saved))
+    // Load last page
+    const savedPage = localStorage.getItem(`reader_pg_${book.title}`)
+    if (savedPage) setPage(parseInt(savedPage))
+  }, [book])
 
-    loadBook()
-  }, [book.title, book.author])
+  // Paginate
+  useEffect(() => {
+    if (!text) return
+    const charsPerPage = Math.floor((window.innerHeight - 140) / (fontSize * lineH)) * Math.floor(window.innerWidth / (fontSize * 0.55))
+    const p: string[] = []
+    for (let i = 0; i < text.length; i += charsPerPage) {
+      p.push(text.slice(i, i + charsPerPage))
+    }
+    setPages(p.length ? p : [text])
+    if (page >= p.length) setPage(Math.max(0, p.length - 1))
+  }, [text, fontSize, lineH, page])
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget
-    const scrollPercent = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100
-    setProgress(Math.min(100, Math.max(0, scrollPercent)))
+  // Save page
+  useEffect(() => {
+    if (pages.length > 0) localStorage.setItem(`reader_pg_${book.title}`, page.toString())
+  }, [page, book.title, pages.length])
+
+  const toggleBookmark = () => {
+    const bm = bookmarks.includes(page) ? bookmarks.filter(b => b !== page) : [...bookmarks, page]
+    setBookmarks(bm)
+    localStorage.setItem(`reader_bm_${book.title}`, JSON.stringify(bm))
   }
 
-  const handleCreateNote = () => {
-    onCreateNote({
-      title: `Заметка: ${book.title}`,
-      content: '',
-      bookTitle: book.title,
-      type: 'note'
-    })
-    onBack()
+  const handleTextSelect = () => {
+    const sel = window.getSelection()?.toString().trim()
+    if (sel && sel.length > 3) {
+      setSelectedText(sel)
+      setShowTextMenu(true)
+    }
   }
 
-  const handleCreateQuote = () => {
-    onCreateNote({
-      title: `Цитата: ${book.title}`,
-      content: '',
-      bookTitle: book.title,
-      type: 'quote'
-    })
-    onBack()
+  const goPage = (d: number) => setPage(p => Math.max(0, Math.min(pages.length - 1, p + d)))
+
+  const handleTouchStart = (e: React.TouchEvent) => { touchStart.current = e.touches[0].clientX }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStart.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 60) goPage(diff > 0 ? 1 : -1)
   }
 
-  const themes = {
-    dark: { bg: 'var(--bg-base)', text: 'var(--text-primary)', card: 'var(--bg-card)' },
-    light: { bg: '#f5f0e8', text: '#1a1a1a', card: '#ffffff' },
-    sepia: { bg: '#f4ecd8', text: '#5c4b37', card: '#fffef9' }
-  }
+  const progress = pages.length > 1 ? ((page + 1) / pages.length * 100) : 100
+  const theme = THEMES[themeIdx]
+  const font = FONTS[fontIdx]
 
-  const currentTheme = themes[theme]
+  const searchResults = searchQ ? pages.reduce<number[]>((acc, p, i) => {
+    if (p.toLowerCase().includes(searchQ.toLowerCase())) acc.push(i)
+    return acc
+  }, []) : []
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: currentTheme.bg,
-      zIndex: 1000,
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'background 0.3s'
-    }}>
-      {/* Progress bar */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '3px',
-        background: 'var(--border)',
-        zIndex: 10
-      }}>
-        <div style={{
-          height: '100%',
-          width: `${progress}%`,
-          background: 'var(--accent)',
-          transition: 'width 0.1s'
-        }} />
-      </div>
-
+    <div style={{ position: 'fixed', inset: 0, background: theme.bg, color: theme.color, zIndex: 200, display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div style={{
-        padding: '12px 16px',
-        paddingTop: 'calc(12px + env(safe-area-inset-top))',
-        borderBottom: `1px solid ${theme === 'dark' ? 'var(--border)' : '#ddd'}`,
-        background: currentTheme.card,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <button
-          onClick={onBack}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '12px',
-            background: theme === 'dark' ? 'var(--bg-card)' : '#f0f0f0',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: currentTheme.text
-          }}
-        >
-          <ArrowLeft size={20} />
+      <div style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', paddingTop: 'max(8px, env(safe-area-inset-top))', gap: 8, borderBottom: '1px solid rgba(128,128,128,0.15)' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4 }}><ArrowLeft size={20} /></button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</p>
+          <p style={{ margin: 0, fontSize: 11, opacity: 0.6 }}>{book.author}</p>
+        </div>
+        <button onClick={() => setShowSearch(!showSearch)} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4 }}><Search size={18} /></button>
+        <button onClick={toggleBookmark} style={{ background: 'none', border: 'none', color: bookmarks.includes(page) ? '#e8b84b' : theme.color, cursor: 'pointer', padding: 4 }}>
+          {bookmarks.includes(page) ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
         </button>
-
-        <div style={{ textAlign: 'center', flex: 1, padding: '0 10px' }}>
-          <h3 style={{ 
-            fontSize: '14px', 
-            fontWeight: '600', 
-            color: currentTheme.text,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
-            {book.title}
-          </h3>
-          <p style={{ fontSize: '12px', color: theme === 'dark' ? 'var(--text-muted)' : '#666' }}>
-            {book.author}
-          </p>
-        </div>
-
-        <div style={{ width: '40px' }} />
+        <button onClick={() => setShowBookmarks(!showBookmarks)} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4, fontSize: 12, opacity: 0.7 }}>
+          {bookmarks.length > 0 ? `🔖${bookmarks.length}` : ''}
+        </button>
+        <button onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer', padding: 4 }}><Settings size={18} /></button>
       </div>
 
-      {/* Toolbar */}
-      <div style={{
-        padding: '10px 16px',
-        borderBottom: `1px solid ${theme === 'dark' ? 'var(--border)' : '#ddd'}`,
-        background: currentTheme.card,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        {/* Font size */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={() => setFontSize(Math.max(14, fontSize - 2))}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: theme === 'dark' ? 'var(--bg-raised)' : '#f0f0f0',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: currentTheme.text
-            }}
-          >
-            <Minus size={16} />
-          </button>
-          <span style={{ fontSize: '14px', color: currentTheme.text, minWidth: '30px', textAlign: 'center' }}>
-            {fontSize}
-          </span>
-          <button
-            onClick={() => setFontSize(Math.min(28, fontSize + 2))}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: theme === 'dark' ? 'var(--bg-raised)' : '#f0f0f0',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: currentTheme.text
-            }}
-          >
-            <Plus size={16} />
-          </button>
+      {/* Search bar */}
+      {showSearch && (
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(128,128,128,0.15)', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Поиск в тексте..."
+            style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 14, outline: 'none' }} autoFocus />
+          {searchResults.length > 0 && <span style={{ fontSize: 12, opacity: 0.6 }}>{searchResults.length} стр.</span>}
+          <button onClick={() => { setShowSearch(false); setSearchQ('') }} style={{ background: 'none', border: 'none', color: theme.color, cursor: 'pointer' }}><X size={18} /></button>
         </div>
+      )}
 
-        {/* Theme switcher */}
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button
-            onClick={() => setTheme('dark')}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: theme === 'dark' ? 'var(--accent)' : 'var(--bg-raised)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: theme === 'dark' ? '#000' : 'var(--text-muted)'
-            }}
-          >
-            <Moon size={16} />
-          </button>
-          <button
-            onClick={() => setTheme('light')}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: theme === 'light' ? 'var(--accent)' : (theme === 'dark' ? 'var(--bg-raised)' : '#f0f0f0'),
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: theme === 'light' ? '#000' : (theme === 'dark' ? 'var(--text-muted)' : '#666')
-            }}
-          >
-            <Sun size={16} />
-          </button>
-          <button
-            onClick={() => setTheme('sepia')}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: theme === 'sepia' ? 'var(--accent)' : (theme === 'dark' ? 'var(--bg-raised)' : '#f0f0f0'),
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: theme === 'sepia' ? '#000' : (theme === 'dark' ? 'var(--text-muted)' : '#666')
-            }}
-          >
-            <BookOpen size={16} />
-          </button>
+      {/* Search results */}
+      {showSearch && searchResults.length > 0 && (
+        <div style={{ padding: '4px 12px', display: 'flex', gap: 4, flexWrap: 'wrap', borderBottom: '1px solid rgba(128,128,128,0.1)' }}>
+          {searchResults.slice(0, 20).map(p => (
+            <button key={p} onClick={() => setPage(p)} style={{ padding: '3px 8px', borderRadius: 4, border: 'none', background: page === p ? 'var(--accent)' : 'rgba(128,128,128,0.15)', color: page === p ? '#fff' : theme.color, fontSize: 11, cursor: 'pointer' }}>стр.{p + 1}</button>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* Bookmarks panel */}
+      {showBookmarks && bookmarks.length > 0 && (
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(128,128,128,0.1)', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: theme.color, opacity: 0.6, marginRight: 4 }}>Закладки:</span>
+          {bookmarks.sort((a, b) => a - b).map(b => (
+            <button key={b} onClick={() => setPage(b)} style={{ padding: '3px 8px', borderRadius: 4, border: 'none', background: page === b ? '#e8b84b' : 'rgba(128,128,128,0.15)', color: page === b ? '#000' : theme.color, fontSize: 11, cursor: 'pointer' }}>📖 {b + 1}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Settings */}
+      {showSettings && (
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(128,128,128,0.15)', background: 'rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Размер</span>
+            <button onClick={() => setFontSize(s => Math.max(12, s - 1))} style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 16, cursor: 'pointer' }}>A-</button>
+            <span style={{ fontSize: 14, minWidth: 30, textAlign: 'center' }}>{fontSize}</span>
+            <button onClick={() => setFontSize(s => Math.min(28, s + 1))} style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 16, cursor: 'pointer' }}>A+</button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Интервал</span>
+            <input type="range" min="1.2" max="2.4" step="0.1" value={lineH} onChange={e => setLineH(parseFloat(e.target.value))}
+              style={{ flex: 1, accentColor: '#e8b84b' }} />
+            <span style={{ fontSize: 12, minWidth: 24 }}>{lineH}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Шрифт</span>
+            {FONTS.map((f, i) => (
+              <button key={f.label} onClick={() => setFontIdx(i)}
+                style={{ padding: '5px 10px', borderRadius: 6, border: fontIdx === i ? '2px solid #e8b84b' : '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: theme.color, fontSize: 12, cursor: 'pointer', fontFamily: f.value }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, opacity: 0.6, width: 60 }}>Тема</span>
+            {THEMES.map((t, i) => (
+              <button key={i} onClick={() => setThemeIdx(i)}
+                style={{ width: 36, height: 36, borderRadius: 8, border: themeIdx === i ? '2px solid #e8b84b' : '1px solid rgba(128,128,128,0.2)', background: t.bg, color: t.color, fontSize: 16, cursor: 'pointer' }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
-      <div
-        onScroll={handleScroll}
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '24px 20px',
-          paddingBottom: '100px'
-        }}
-      >
+      <div ref={contentRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseUp={handleTextSelect}
+        style={{ flex: 1, overflowY: 'auto', padding: '20px 20px', fontFamily: font.value, fontSize, lineHeight: lineH }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+          <div style={{ textAlign: 'center', padding: 60 }}>
             <div className="spinner" style={{ margin: '0 auto 16px' }} />
-            Загрузка книги...
+            <p style={{ fontSize: 14, opacity: 0.6 }}>Загружаем книгу...</p>
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: 60 }}>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>📚</p>
+            <p style={{ fontSize: 14, opacity: 0.6 }}>{error}</p>
           </div>
         ) : (
-          <>
-            <div style={{
-              fontSize: `${fontSize}px`,
-              lineHeight: '1.8',
-              color: currentTheme.text,
-              fontFamily: 'Georgia, serif',
-              whiteSpace: 'pre-wrap'
-            }}>
-              {content}
-            </div>
-
-            {archiveUrl && (
-              <a
-                href={archiveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginTop: '24px',
-                  padding: '12px 20px',
-                  background: 'var(--accent)',
-                  color: '#000',
-                  borderRadius: '12px',
-                  textDecoration: 'none',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}
-              >
-                <ExternalLink size={16} />
-                Читать на Archive.org
-              </a>
-            )}
-          </>
+          <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {searchQ ? (
+              pages[page]?.split(new RegExp(`(${searchQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')).map((part, i) =>
+                part.toLowerCase() === searchQ.toLowerCase()
+                  ? <mark key={i} style={{ background: '#e8b84b', color: '#000', borderRadius: 2, padding: '0 2px' }}>{part}</mark>
+                  : part
+              )
+            ) : pages[page]}
+          </div>
         )}
       </div>
 
-      {/* Bottom actions */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: '16px',
-        paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
-        background: `linear-gradient(transparent, ${currentTheme.bg})`,
-        display: 'flex',
-        gap: '12px',
-        justifyContent: 'center'
-      }}>
-        <button
-          onClick={handleCreateNote}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '14px 24px',
-            borderRadius: '14px',
-            background: 'var(--accent)',
-            border: 'none',
-            color: '#000',
-            fontSize: '15px',
-            fontWeight: '600',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-          }}
-        >
-          <Plus size={18} />
-          Заметка
-        </button>
-        <button
-          onClick={handleCreateQuote}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '14px 24px',
-            borderRadius: '14px',
-            background: currentTheme.card,
-            border: `1px solid ${theme === 'dark' ? 'var(--border)' : '#ddd'}`,
-            color: currentTheme.text,
-            fontSize: '15px',
-            fontWeight: '600',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-          }}
-        >
-          <Heart size={18} />
-          Цитата
-        </button>
-      </div>
+      {/* Text selection menu */}
+      {showTextMenu && selectedText && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, padding: '8px 12px', borderRadius: 12, background: 'var(--bg-raised)', border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)', zIndex: 300, animation: 'fadeSlideUp 0.2s ease' }}>
+          <button onClick={() => { onCreateNote?.(book.title + ' — заметка', selectedText, 'note'); setShowTextMenu(false) }}
+            style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--accent)', border: 'none', color: '#fff', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Plus size={14} /> Заметка
+          </button>
+          <button onClick={() => { onCreateNote?.(book.title + ' — цитата', selectedText, 'quote'); setShowTextMenu(false) }}
+            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Heart size={14} /> Цитата
+          </button>
+          <button onClick={() => setShowTextMenu(false)} style={{ padding: '4px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
+        </div>
+      )}
+
+      {/* Bottom bar */}
+      {pages.length > 1 && !loading && (
+        <div style={{ padding: '8px 16px', paddingBottom: 'max(8px, env(safe-area-inset-bottom))', borderTop: '1px solid rgba(128,128,128,0.15)', background: theme.bg }}>
+          {/* Progress bar */}
+          <div style={{ height: 3, borderRadius: 2, background: 'rgba(128,128,128,0.2)', marginBottom: 8 }}>
+            <div style={{ height: '100%', borderRadius: 2, background: '#e8b84b', width: `${progress}%`, transition: 'width 0.3s ease' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button onClick={() => goPage(-1)} disabled={page === 0}
+              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: page === 0 ? 'rgba(128,128,128,0.3)' : theme.color, cursor: page === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <ChevronLeft size={16} /> Назад
+            </button>
+            <span style={{ fontSize: 12, opacity: 0.6 }}>{page + 1} / {pages.length} · {Math.round(progress)}%</span>
+            <button onClick={() => goPage(1)} disabled={page === pages.length - 1}
+              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.2)', background: 'rgba(128,128,128,0.1)', color: page === pages.length - 1 ? 'rgba(128,128,128,0.3)' : theme.color, cursor: page === pages.length - 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+              Далее <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

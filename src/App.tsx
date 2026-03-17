@@ -848,9 +848,8 @@ function AppInner() {
         <ReaderView
           book={readerBook}
           onBack={() => setReaderBook(null)}
-          onCreateNote={(note) => {
-            handleSaveNote({ ...note, id: Date.now().toString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any)
-            setReaderBook(null)
+          onCreateNote={(title, content, type) => {
+            handleSaveNote({ id: Date.now().toString(), title, content, type, tags: [], isPinned: false, isFavorite: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any)
           }}
         />
       )}
