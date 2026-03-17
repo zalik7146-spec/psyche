@@ -10,6 +10,7 @@ interface Props {
   onAddBook: () => void;
   onEditBook: (book: Book) => void;
   onNewNoteForBook: (bookId: string) => void;
+  onOpenCatalog?: () => void;
 }
 
 const STATUS_META: Record<BookStatus, { label: string; color: string; bg: string; icon: string }> = {
@@ -20,7 +21,7 @@ const STATUS_META: Record<BookStatus, { label: string; color: string; bg: string
   abandoned: { label: 'Брошено',   color: '#7a5a5a', bg: 'rgba(122,90,90,0.15)',   icon: '🚫' },
 };
 
-export default function Library({ books, notes, onAddBook, onEditBook, onNewNoteForBook }: Props) {
+export default function Library({ books, notes, onAddBook, onEditBook, onNewNoteForBook, onOpenCatalog }: Props) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<BookStatus | 'all'>('all');
 
@@ -64,6 +65,21 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
               {books.length} {books.length === 1 ? 'книга' : 'книг'}
             </p>
           </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {onOpenCatalog && (
+              <button
+                onClick={() => { vibe(8); onOpenCatalog(); }}
+                style={{
+                  height: 38, padding: '0 12px', borderRadius: '12px',
+                  background: 'var(--bg-card)', border: '1px solid var(--border)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'var(--accent)', fontSize: 13, gap: 4,
+                  fontWeight: 600,
+                }}
+              >
+                📚 Каталог
+              </button>
+            )}
           <button
             onClick={() => { vibe(8); onAddBook(); }}
             style={{
@@ -78,6 +94,7 @@ export default function Library({ books, notes, onAddBook, onEditBook, onNewNote
           >
             <Plus size={20} color="#0e0c09" strokeWidth={2.5} />
           </button>
+          </div>
         </div>
 
         {/* Search */}

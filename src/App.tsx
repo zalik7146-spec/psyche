@@ -16,6 +16,8 @@ import NotesList       from './components/NotesList';
 import NoteEditor      from './components/NoteEditor';
 import BottomNav       from './components/BottomNav';
 import Library         from './components/Library';
+import BookCatalog     from './components/BookCatalog';
+import ReaderView      from './components/ReaderView';
 import BookModal       from './components/BookModal';
 import StatsView       from './components/StatsView';
 import SettingsView    from './components/SettingsView';
@@ -104,6 +106,8 @@ function AppInner() {
 
   const [showWrapped, setShowWrapped] = useState(false);
   const [showChallenges, setShowChallenges] = useState(false);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [readerBook, setReaderBook] = useState<{ title: string; author: string; coverId?: string } | null>(null);
   const [showMessages, setShowMessages] = useState(false);
   const [messageRecipientId, setMessageRecipientId] = useState<string | undefined>(undefined);
   const [showFollowers, setShowFollowers] = useState(false);
@@ -821,6 +825,32 @@ function AppInner() {
           onClose={() => {
             setShowTemplates(false);
             handleNewNote();
+          }}
+        />
+      )}
+
+      {showCatalog && (
+        <BookCatalog
+          books={state.books}
+          onBack={() => setShowCatalog(false)}
+          onAddBook={(book: Book) => {
+            handleSaveBook(book)
+            setShowCatalog(false)
+          }}
+          onOpenReader={(book) => {
+            setShowCatalog(false)
+            setReaderBook(book)
+          }}
+        />
+      )}
+
+      {readerBook && (
+        <ReaderView
+          book={readerBook}
+          onBack={() => setReaderBook(null)}
+          onCreateNote={(note) => {
+            handleSaveNote({ ...note, id: Date.now().toString(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any)
+            setReaderBook(null)
           }}
         />
       )}
