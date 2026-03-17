@@ -833,7 +833,8 @@ function AppInner() {
       {showCatalog && (
         <BookCatalog
           onClose={() => setShowCatalog(false)}
-          onRead={(book: any) => {
+          existingBooks={state.books}
+          onOpenReader={(book: any) => {
             setShowCatalog(false)
             setReaderBook(book)
           }}

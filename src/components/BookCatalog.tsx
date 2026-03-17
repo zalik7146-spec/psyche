@@ -1,167 +1,278 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Search, X, BookOpen, Plus } from 'lucide-react'
+import { Book } from '../types'
 
-interface GutenbergBook {
-  id: number
+interface OLBook {
+  key: string
   title: string
-  authors: { name: string }[]
-  formats: Record<string, string>
-  download_count: number
-  subjects: string[]
-}
-
-interface CatalogBook {
-  id: string
-  title: string
-  author: string
-  cover: string
-  year: string
-  description: string
-  textUrl: string
-  source: 'gutenberg' | 'openlibrary'
-  downloads?: number
+  author_name?: string[]
+  cover_i?: number
+  first_publish_year?: number
+  subject?: string[]
+  ia?: string[]
+  has_fulltext?: boolean
 }
 
 interface Props {
   onClose: () => void
-  onRead: (book: CatalogBook) => void
-  onAddToLibrary: (book: any) => void
+  onAddToLibrary: (book: Partial<Book>) => void
+  onOpenReader: (book: { title: string; author: string; textUrl: string; coverId?: number }) => void
+  existingBooks: Book[]
 }
 
 const CATEGORIES = [
-  { id: 'psychology', label: '🧠 Психология', query: 'psychology mind' },
-  { id: 'philosophy', label: '💭 Философия', query: 'philosophy stoicism' },
-  { id: 'fiction', label: '📖 Классика', query: 'dostoevsky tolstoy chekhov' },
-  { id: 'science', label: '🔬 Наука', query: 'science evolution darwin' },
-  { id: 'history', label: '🏛️ История', query: 'history civilization' },
-  { id: 'poetry', label: '✍️ Поэзия', query: 'poetry poems' },
-  { id: 'medicine', label: '⚕️ Медицина', query: 'medicine health' },
-  { id: 'self', label: '🌱 Саморазвитие', query: 'self improvement success' },
+  { label: 'Психология', query: 'psychology mind', emoji: '🧠' },
+  { label: 'Философия', query: 'philosophy', emoji: '💭' },
+  { label: 'Классика', query: 'classic literature', emoji: '📖' },
+  { label: 'Наука', query: 'science', emoji: '🔬' },
+  { label: 'История', query: 'history', emoji: '🏛️' },
+  { label: 'Медицина', query: 'medicine health', emoji: '⚕️' },
+  { label: 'Саморазвитие', query: 'self development', emoji: '🌱' },
+  { label: 'Бизнес', query: 'business economics', emoji: '💼' },
 ]
 
-function mapGutenberg(book: GutenbergBook): CatalogBook {
-  const textUrl = book.formats['text/html'] || book.formats['text/plain; charset=utf-8'] || book.formats['text/plain'] || ''
-  const cover = book.formats['image/jpeg'] || ''
-  return {
-    id: `gutenberg_${book.id}`,
-    title: book.title,
-    author: book.authors.map(a => a.name).join(', '),
-    cover,
-    year: '',
-    description: book.subjects.slice(0, 3).join(', '),
-    textUrl,
-    source: 'gutenberg',
-    downloads: book.download_count,
-  }
-}
-
-export default function BookCatalog({ onClose, onRead, onAddToLibrary }: Props) {
+export default function BookCatalog({ onClose, onAddToLibrary, onOpenReader, existingBooks }: Props) {
   const [query, setQuery] = useState('')
-  const [books, setBooks] = useState<CatalogBook[]>([])
+  const [books, setBooks] = useState<OLBook[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [activeCategory, setActiveCategory] = useState('psychology')
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
-  const vibe = (ms = 8) => navigator.vibrate?.(ms)
+  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0])
 
-  const searchGutenberg = useCallback(async (q: string) => {
+  const search = useCallback(async (q: string) => {
+    if (!q.trim()) return
     setLoading(true)
     setError('')
+    setBooks([])
     try {
-      const res = await fetch(`https://gutendex.com/books/?search=${encodeURIComponent(q)}&mime_type=text&page_size=20`)
+      const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20&fields=key,title,author_name,cover_i,first_publish_year,subject,ia,has_fulltext`
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Ошибка загрузки')
       const data = await res.json()
-      const mapped = (data.results || []).map(mapGutenberg).filter((b: CatalogBook) => b.textUrl)
-      setBooks(mapped)
-      if (mapped.length === 0) setError('Книги не найдены. Попробуй другой запрос.')
-    } catch {
-      setError('Ошибка подключения к каталогу')
+      setBooks(data.docs || [])
+      if ((data.docs || []).length === 0) setError('Книги не найдены. Попробуйте другой запрос.')
+    } catch (e) {
+      setError('Не удалось загрузить книги. Проверьте подключение к интернету.')
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    const cat = CATEGORIES.find(c => c.id === activeCategory)
-    if (cat) searchGutenberg(cat.query)
-  }, [activeCategory, searchGutenberg])
+    search(activeCategory.query)
+  }, [activeCategory])
 
   useEffect(() => {
-    if (!query) return
-    const t = setTimeout(() => searchGutenberg(query), 600)
+    if (!query.trim()) return
+    const t = setTimeout(() => search(query), 600)
     return () => clearTimeout(t)
-  }, [query, searchGutenberg])
+  }, [query])
+
+  const getCover = (coverId?: number) =>
+    coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null
+
+  const getTextUrl = (book: OLBook): string | null => {
+    if (book.ia && book.ia.length > 0) {
+      return `https://archive.org/download/${book.ia[0]}/${book.ia[0]}.txt`
+    }
+    return null
+  }
+
+  const isInLibrary = (title: string) =>
+    existingBooks.some(b => b.title.toLowerCase() === title.toLowerCase())
+
+  const handleAdd = (book: OLBook) => {
+    onAddToLibrary({
+      title: book.title,
+      author: book.author_name?.[0] || 'Неизвестен',
+      coverEmoji: '📖',
+      color: '#b07d4a',
+      status: 'want',
+      tags: book.subject?.slice(0, 3) || [],
+    })
+  }
+
+  const handleRead = (book: OLBook) => {
+    const textUrl = getTextUrl(book)
+    if (!textUrl) {
+      alert('Полный текст этой книги недоступен. Попробуйте другую книгу.')
+      return
+    }
+    onOpenReader({
+      title: book.title,
+      author: book.author_name?.[0] || 'Неизвестен',
+      textUrl,
+      coverId: book.cover_i,
+    })
+  }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'var(--bg-base)', zIndex: 200, display: 'flex', flexDirection: 'column' }}>
+    <div style={{
+      position: 'fixed', inset: 0, background: 'var(--bg-base)',
+      display: 'flex', flexDirection: 'column', zIndex: 200,
+    }}>
       {/* Header */}
-      <div style={{ padding: '52px 16px 12px', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <button onClick={() => { vibe(); onClose() }} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 18, color: 'var(--text-primary)', flexShrink: 0 }}>←</button>
-          <h2 style={{ fontFamily: 'Lora,serif', fontSize: 22, color: 'var(--text-primary)', margin: 0, flex: 1 }}>📚 Каталог книг</h2>
+      <div style={{
+        padding: '16px 16px 0',
+        paddingTop: 'calc(16px + env(safe-area-inset-top))',
+        background: 'var(--bg-base)',
+        borderBottom: '1px solid var(--border)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <button onClick={onClose} style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'var(--bg-raised)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'var(--text-primary)',
+          }}>
+            <X size={18} />
+          </button>
+          <h2 style={{ fontFamily: 'Lora, serif', color: 'var(--text-primary)', fontSize: 20, fontWeight: 700 }}>
+            📚 Каталог книг
+          </h2>
         </div>
-        <input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="🔍 Поиск по названию или автору..."
-          style={{ width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', color: 'var(--text-primary)', fontSize: 15, outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
-        />
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+
+        {/* Search */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 12, padding: '10px 14px', marginBottom: 12,
+        }}>
+          <Search size={16} color="var(--text-muted)" />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Поиск книг на русском или английском..."
+            style={{
+              flex: 1, background: 'none', border: 'none', outline: 'none',
+              color: 'var(--text-primary)', fontSize: 15,
+            }}
+          />
+          {query && (
+            <button onClick={() => setQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Categories */}
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => (
-            <button key={cat.id} onClick={() => { vibe(); setQuery(''); setActiveCategory(cat.id) }} style={{ flexShrink: 0, padding: '7px 14px', borderRadius: 20, border: 'none', background: activeCategory === cat.id && !query ? 'var(--accent)' : 'var(--bg-raised)', color: activeCategory === cat.id && !query ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-              {cat.label}
+            <button
+              key={cat.label}
+              onClick={() => { setActiveCategory(cat); setQuery('') }}
+              style={{
+                flexShrink: 0, padding: '6px 12px', borderRadius: 20,
+                border: '1px solid var(--border)',
+                background: activeCategory.label === cat.label ? 'var(--accent)' : 'var(--bg-raised)',
+                color: activeCategory.label === cat.label ? '#fff' : 'var(--text-secondary)',
+                fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              {cat.emoji} {cat.label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
         {loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, gap: 16 }}>
-            <div style={{ width: 40, height: 40, border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Загружаем книги...</span>
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
+            <div>Загружаем книги...</div>
           </div>
         )}
+
         {error && !loading && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>😕</div>
-            <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{error}</div>
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>😔</div>
+            <div>{error}</div>
           </div>
         )}
-        {!loading && !error && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {books.map((book, i) => (
-              <div key={book.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', animation: `fadeSlideUp 0.4s ease both`, animationDelay: `${i * 0.04}s` }}>
-                {/* Cover */}
-                <div style={{ height: 140, background: book.cover ? `url(${book.cover}) center/cover no-repeat` : 'linear-gradient(135deg, var(--accent)33, var(--accent)66)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  {!book.cover && <span style={{ fontSize: 44 }}>📖</span>}
-                  {book.downloads && (
-                    <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.7)', borderRadius: 8, padding: '3px 8px', fontSize: 10, color: '#fff' }}>
-                      ↓ {book.downloads.toLocaleString()}
+
+        {!loading && !error && books.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {books.map(book => {
+              const cover = getCover(book.cover_i)
+              const hasText = !!(book.ia && book.ia.length > 0)
+              const inLib = isInLibrary(book.title)
+              return (
+                <div key={book.key} style={{
+                  background: 'var(--bg-card)', border: '1px solid var(--border)',
+                  borderRadius: 16, padding: 14, display: 'flex', gap: 12,
+                  animation: 'fadeSlideUp 0.3s ease',
+                }}>
+                  {/* Cover */}
+                  <div style={{
+                    width: 64, height: 88, borderRadius: 8, flexShrink: 0,
+                    background: cover ? 'transparent' : 'var(--bg-raised)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden', border: '1px solid var(--border)',
+                  }}>
+                    {cover ? (
+                      <img src={cover} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    ) : (
+                      <span style={{ fontSize: 28 }}>📖</span>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: 'Lora, serif', fontWeight: 700,
+                      color: 'var(--text-primary)', fontSize: 15,
+                      marginBottom: 4, lineHeight: 1.3,
+                      display: '-webkit-box', WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    }}>
+                      {book.title}
                     </div>
-                  )}
-                  <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--accent)', borderRadius: 8, padding: '3px 8px', fontSize: 10, color: '#fff', fontWeight: 600 }}>
-                    📖 Бесплатно
+                    <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 6 }}>
+                      {book.author_name?.[0] || 'Неизвестен'}
+                      {book.first_publish_year ? ` · ${book.first_publish_year}` : ''}
+                    </div>
+                    {hasText && (
+                      <div style={{
+                        display: 'inline-block', padding: '2px 8px',
+                        background: 'rgba(180,140,80,0.15)', borderRadius: 8,
+                        color: 'var(--accent)', fontSize: 11, marginBottom: 8,
+                      }}>
+                        📖 Полный текст
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {hasText && (
+                        <button
+                          onClick={() => handleRead(book)}
+                          style={{
+                            flex: 1, padding: '7px 0', borderRadius: 10,
+                            background: 'linear-gradient(135deg, var(--accent), #8a6a3a)',
+                            border: 'none', color: '#fff', fontSize: 13,
+                            fontWeight: 600, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                          }}
+                        >
+                          <BookOpen size={13} /> Читать
+                        </button>
+                      )}
+                      <button
+                        onClick={() => !inLib && handleAdd(book)}
+                        style={{
+                          flex: 1, padding: '7px 0', borderRadius: 10,
+                          background: inLib ? 'var(--bg-raised)' : 'var(--bg-raised)',
+                          border: '1px solid var(--border)',
+                          color: inLib ? 'var(--text-muted)' : 'var(--text-primary)',
+                          fontSize: 13, cursor: inLib ? 'default' : 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                        }}
+                      >
+                        {inLib ? '✓ В библиотеке' : <><Plus size={13} /> Добавить</>}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div style={{ padding: '10px 12px 12px' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora,serif', lineHeight: 1.3, marginBottom: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => { vibe(12); onRead(book) }} style={{ flex: 1, background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 0', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                      📖 Читать
-                    </button>
-                    <button onClick={() => {
-                      vibe(8)
-                      setAddedIds(prev => new Set([...prev, book.id]))
-                      onAddToLibrary({ title: book.title, author: book.author, coverUrl: book.cover, status: 'want', coverEmoji: '📖', color: '#b07d4a' })
-                    }} style={{ width: 36, background: addedIds.has(book.id) ? 'var(--bg-raised)' : 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 0', color: addedIds.has(book.id) ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 14, cursor: 'pointer' }}>
-                      {addedIds.has(book.id) ? '✓' : '+'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
