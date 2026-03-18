@@ -61,13 +61,13 @@ export default function OnboardingView({ user, onComplete }: Props) {
     vibe(12);
     setLoading(true);
     try {
-      await upsertProfile({
-        id: user.id,
+      await upsertProfile(user.id, {
         username: username || `user_${user.id.slice(0, 8)}`,
-        display_name: displayName || username,
+        displayName: displayName || username,
         bio: bio + (interests.length ? `\n\nИнтересы: ${interests.join(', ')}` : ''),
-        is_public: true,
-      } as Parameters<typeof upsertProfile>[0]);
+        isPublic: true,
+        interests,
+      });
     } catch { /* продолжаем */ }
     setLoading(false);
     onComplete(username);

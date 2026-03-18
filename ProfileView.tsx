@@ -3,7 +3,7 @@ import {
   Edit2, Check, X, BookOpen, FileText, Sparkles, Globe, Lock,
   Trash2, Settings, ChevronRight
 } from 'lucide-react';
-import type { User, SocialPost, SocialProfile, Book } from '../types';
+import type { User, SocialPost, SocialProfile, Book, Note } from '../types';
 import { getMyProfile, upsertProfile, getUserPosts, deletePost } from '../socialStore';
 
 const vibe = (ms = 8) => navigator.vibrate?.(ms);
@@ -79,11 +79,16 @@ const TOOLS = [
 ];
 
 export default function ProfileView({
-  user, books, onNavigate,
+  user, books, notes: _notes = [], onNavigate, onOpenWrapped, onOpenChallenges, onOpenMessages, onOpenFollowers,
 }: {
   user: User;
   books: Book[];
+  notes?: Note[];
   onNavigate?: (tab: string) => void;
+  onOpenWrapped?: () => void;
+  onOpenChallenges?: () => void;
+  onOpenMessages?: () => void;
+  onOpenFollowers?: (tab: 'followers' | 'following') => void;
 }) {
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -94,7 +99,7 @@ export default function ProfileView({
   const [editPublic, setEditPublic] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'tools' | 'stats'>('tools');
+  const [activeTab, setActiveTab] = useState<'posts' | 'stats'>('posts');
 
   // Avatar from localStorage
   const avatarKey = `psyche_avatar_${user.id}`;
@@ -103,7 +108,7 @@ export default function ProfileView({
   useEffect(() => {
     Promise.all([
       getMyProfile(user.id),
-      getUserPosts(user.id),
+      getUserPosts(user.id, user.id),
     ]).then(([p, ps]) => {
       if (p) {
         setProfile(p);
@@ -126,17 +131,12 @@ export default function ProfileView({
   const handleSave = async () => {
     if (!editUsername.trim() || !editName.trim()) return;
     setSaving(true); vibe(8);
-    const updated = await upsertProfile({
-      id: user.id,
+    const updated = await upsertProfile(user.id, {
       username: editUsername.trim().toLowerCase().replace(/\s+/g, '_'),
       displayName: editName.trim(),
       bio: editBio.trim(),
       isPublic: editPublic,
       avatar: avatarVal,
-      followersCount: profile?.followersCount || 0,
-      followingCount: profile?.followingCount || 0,
-      postsCount: posts.length,
-      createdAt: profile?.createdAt || new Date().toISOString(),
     });
     if (updated) setProfile(updated);
     setSaving(false);
@@ -146,7 +146,7 @@ export default function ProfileView({
   const handleDeletePost = async (postId: string) => {
     if (!confirm('Удалить публикацию?')) return;
     vibe(10);
-    await deletePost(postId);
+    await deletePost(postId, user.id);
     setPosts(prev => prev.filter(p => p.id !== postId));
   };
 
@@ -182,20 +182,35 @@ export default function ProfileView({
           <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
             Профиль
           </div>
-          <button
-            onClick={() => { vibe(6); onNavigate?.('settings'); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 14px', borderRadius: 12,
-              background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              cursor: 'pointer', color: 'var(--text-secondary)',
-              fontSize: 13, fontFamily: 'Inter, sans-serif',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <Settings size={15} color='var(--accent)' />
-            Настройки
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => { vibe(6); onOpenMessages?.(); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 12px', borderRadius: 12,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                cursor: 'pointer', color: 'var(--text-secondary)',
+                fontSize: 13, fontFamily: 'Inter, sans-serif',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              ✉️ Сообщения
+            </button>
+            <button
+              onClick={() => { vibe(6); onNavigate?.('settings'); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 12px', borderRadius: 12,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                cursor: 'pointer', color: 'var(--text-secondary)',
+                fontSize: 13, fontFamily: 'Inter, sans-serif',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Settings size={15} color='var(--accent)' />
+              Настройки
+            </button>
+          </div>
         </div>
 
         {/* Avatar + info */}
@@ -293,15 +308,49 @@ export default function ProfileView({
             borderTop: '1px solid var(--border)',
           }}>
             {[
-              { v: posts.length, l: 'постов' },
-              { v: profile?.followersCount || 0, l: 'читателей' },
-              { v: profile?.followingCount || 0, l: 'читает' },
-              { v: totalLikes, l: 'лайков' },
+              { v: posts.length, l: 'постов', onClick: undefined },
+              { v: profile?.followersCount || 0, l: 'читателей', onClick: () => onOpenFollowers?.('followers') },
+              { v: profile?.followingCount || 0, l: 'читает', onClick: () => onOpenFollowers?.('following') },
+              { v: totalLikes, l: 'лайков', onClick: undefined },
             ].map(s => (
-              <div key={s.l} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{s.v}</div>
+              <div key={s.l}
+                onClick={s.onClick}
+                style={{ textAlign: 'center', cursor: s.onClick ? 'pointer' : 'default', padding: '4px 0', borderRadius: 8 }}
+              >
+                <div style={{ fontSize: 18, fontWeight: 700, color: s.onClick ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{s.v}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Quick tools strip */}
+        {!editing && (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 0 2px', scrollbarWidth: 'none' }}>
+            {([
+              { id: 'anki', icon: '🃏', label: 'Anki', action: () => onNavigate?.('anki') },
+              { id: 'achievements', icon: '🏆', label: 'Достижения', action: () => onNavigate?.('achievements') },
+              { id: 'graph', icon: '🔗', label: 'Граф', action: () => onNavigate?.('graph') },
+              { id: 'share', icon: '📄', label: 'Конспекты', action: () => onNavigate?.('share') },
+              { id: 'wrapped', icon: '🎉', label: 'Итоги', action: () => onOpenWrapped?.() },
+              { id: 'challenges', icon: '🎯', label: 'Челленджи', action: () => onOpenChallenges?.() },
+            ] as const).map(t => (
+              <button
+                key={t.id}
+                onClick={() => { vibe(6); t.action() }}
+                style={{
+                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  padding: '8px 12px', borderRadius: 14,
+                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                }}
+                onPointerDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.94)' }}
+                onPointerUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+                onPointerLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+              >
+                <span style={{ fontSize: 22 }}>{t.icon}</span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 500, whiteSpace: 'nowrap' }}>{t.label}</span>
+              </button>
             ))}
           </div>
         )}
@@ -310,7 +359,6 @@ export default function ProfileView({
         {!editing && (
           <div style={{ display: 'flex', gap: 4, background: 'var(--bg-raised)', borderRadius: 12, padding: 3, marginTop: 10 }}>
             {([
-              { id: 'tools', label: '🛠 Инструменты' },
               { id: 'posts', label: '📝 Публикации' },
               { id: 'stats', label: '📊 Статистика' },
             ] as const).map(t => (
@@ -332,132 +380,6 @@ export default function ProfileView({
 
       {/* ── Content ─────────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 100px' }}>
-
-        {/* ── TOOLS tab ──────────────────────────────────────────────── */}
-        {!editing && activeTab === 'tools' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-            {/* 2×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {TOOLS.map((tool, i) => (
-                <button
-                  key={tool.id}
-                  onClick={() => { vibe(8); onNavigate?.(tool.id); }}
-                  style={{
-                    padding: '18px 14px', borderRadius: 18,
-                    background: tool.bg, border: `1px solid ${tool.border}`,
-                    cursor: 'pointer', textAlign: 'left', width: '100%',
-                    display: 'flex', flexDirection: 'column', gap: 8,
-                    animation: `fadeSlideUp 0.3s ease ${i * 0.06}s both`,
-                    WebkitTapHighlightColor: 'transparent',
-                  }}
-                  onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
-                  onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                  onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <div style={{ fontSize: 30 }}>{tool.icon}</div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                      {tool.label}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2, lineHeight: 1.4 }}>
-                      {tool.desc}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Library quick link */}
-            <button
-              onClick={() => { vibe(6); onNavigate?.('library'); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 16px', borderRadius: 16, cursor: 'pointer', width: '100%',
-                background: 'rgba(212,145,74,0.06)', border: '1px solid rgba(212,145,74,0.2)',
-                animation: 'fadeSlideUp 0.3s ease 0.24s both',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
-              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              <div style={{
-                width: 42, height: 42, borderRadius: 13,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <BookOpen size={20} color='var(--accent)'/>
-              </div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                  Библиотека
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
-                  {books.length} книг в коллекции
-                </div>
-              </div>
-              <ChevronRight size={16} color='var(--text-muted)'/>
-            </button>
-
-            {/* Сообщество */}
-            <button
-              onClick={() => { vibe(6); onNavigate?.('feed'); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 16px', borderRadius: 16, cursor: 'pointer', width: '100%',
-                background: 'rgba(106,158,138,0.06)', border: '1px solid rgba(106,158,138,0.2)',
-                animation: 'fadeSlideUp 0.3s ease 0.3s both',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
-              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              <div style={{
-                width: 42, height: 42, borderRadius: 13,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <span style={{ fontSize: 20 }}>🌐</span>
-              </div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                  Сообщество
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
-                  Читатели и психологи
-                </div>
-              </div>
-              <ChevronRight size={16} color='var(--text-muted)'/>
-            </button>
-
-            {/* Prompt to setup public profile */}
-            {!profile && (
-              <div style={{
-                background: 'var(--accent-muted)', borderRadius: 16, padding: '16px',
-                border: '1px solid var(--accent)', textAlign: 'center',
-                animation: 'fadeSlideUp 0.3s ease 0.36s both',
-              }}>
-                <div style={{ fontSize: 20, marginBottom: 8 }}>✦</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', fontFamily: 'Lora, serif', marginBottom: 6 }}>
-                  Настройте публичный профиль
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
-                  Выберите username и начните делиться инсайтами с сообществом
-                </div>
-                <button onClick={() => { vibe(8); setEditing(true); }}
-                  style={{
-                    padding: '8px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #d4a060, #8a5220)', color: '#fff',
-                    fontSize: 13, fontWeight: 700,
-                  }}>
-                  Настроить
-                </button>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ── POSTS tab ──────────────────────────────────────────────── */}
         {!editing && activeTab === 'posts' && (

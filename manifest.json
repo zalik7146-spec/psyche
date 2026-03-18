@@ -8,37 +8,15 @@
   "theme_color": "#1e1810",
   "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/apple-touch-icon.svg",
-      "sizes": "180x180",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "maskable" }
   ],
   "categories": ["productivity", "education", "lifestyle"],
   "lang": "ru",
   "dir": "ltr",
   "screenshots": [],
   "shortcuts": [
-    {
-      "name": "Новая запись",
-      "short_name": "Запись",
-      "description": "Создать новую заметку",
-      "url": "/?new=note",
-      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
-    },
-    {
-      "name": "Журнал дня",
-      "short_name": "Журнал",
-      "description": "Открыть дневник сегодняшнего дня",
-      "url": "/?tab=daily",
-      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
-    }
+    { "name": "Новая запись", "short_name": "Запись", "description": "Создать новую заметку", "url": "/?new=note", "icons": [{ "src": "/icon.svg", "sizes": "any" }] },
+    { "name": "Журнал дня", "short_name": "Журнал", "description": "Открыть дневник сегодняшнего дня", "url": "/?tab=daily", "icons": [{ "src": "/icon.svg", "sizes": "any" }] }
   ]
 }

@@ -36,8 +36,47 @@
 
     <title>Psyche — Дневник Разума</title>
 
-    <!-- Allow Supabase connections -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://openlibrary.org https://covers.openlibrary.org https://archive.org https://corsproxy.io https://www.googleapis.com https://gutendex.com https://www.gutenberg.org https://allorigins.win; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://covers.openlibrary.org https://books.google.com https://*.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval';" />
+    <!--
+      ИСПРАВЛЕНО:
+      1. connect-src: добавлен https://api.allorigins.win (был allorigins.win без api.)
+                      добавлен https://books.googleapis.com (Google Books API)
+                      добавлен https://www.googleapis.com (Google APIs)
+      2. img-src: добавлен https://*.googleapis.com (обложки Google Books)
+                  добавлен https://*.ggpht.com (CDN Google Books covers)
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' 'unsafe-inline' 'unsafe-eval';
+      connect-src 'self'
+        https://*.supabase.co
+        wss://*.supabase.co
+        https://openlibrary.org
+        https://covers.openlibrary.org
+        https://archive.org
+        https://corsproxy.io
+        https://api.allorigins.win
+        https://allorigins.win
+        https://www.googleapis.com
+        https://books.googleapis.com
+        https://gutendex.com
+        https://www.gutenberg.org
+        https://allorigins.win;
+      font-src 'self'
+        https://fonts.googleapis.com
+        https://fonts.gstatic.com
+        data:;
+      style-src 'self' 'unsafe-inline'
+        https://fonts.googleapis.com;
+      img-src 'self'
+        data:
+        blob:
+        https://covers.openlibrary.org
+        https://books.google.com
+        https://books.googleapis.com
+        https://*.googleapis.com
+        https://*.ggpht.com
+        https://*.supabase.co;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+    " />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -117,6 +156,13 @@
         var s = document.getElementById('splash');
         if (s) { s.classList.add('hide'); setTimeout(function(){ s.remove(); }, 500); }
       };
+
+      // Регистрируем Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').catch(function() {});
+        });
+      }
     </script>
   </body>
 </html>

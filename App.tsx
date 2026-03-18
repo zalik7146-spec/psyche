@@ -16,6 +16,8 @@ import NotesList       from './components/NotesList';
 import NoteEditor      from './components/NoteEditor';
 import BottomNav       from './components/BottomNav';
 import Library         from './components/Library';
+import BookCatalog     from './components/BookCatalog';
+import ReaderView      from './components/ReaderView';
 import BookModal       from './components/BookModal';
 import StatsView       from './components/StatsView';
 import SettingsView    from './components/SettingsView';
@@ -30,7 +32,11 @@ import FeedView        from './components/FeedView';
 import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
 import NotificationsView from './components/NotificationsView';
-import VoiceNote       from './components/VoiceNote';
+
+import YearWrapped     from './components/YearWrapped';
+import ChallengesView  from './components/ChallengesView';
+import MessagesView    from './components/MessagesView';
+import FollowersView   from './components/FollowersView';
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: string }> {
@@ -97,7 +103,15 @@ function AppInner() {
   const [syncing, setSyncing]         = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showVoiceNote, setShowVoiceNote] = useState(false);
+
+  const [showWrapped, setShowWrapped] = useState(false);
+  const [showChallenges, setShowChallenges] = useState(false);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [readerBook, setReaderBook] = useState<any>(null);
+  const [showMessages, setShowMessages] = useState(false);
+  const [messageRecipientId, setMessageRecipientId] = useState<string | undefined>(undefined);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [followersTab, setFollowersTab] = useState<'followers' | 'following'>('followers');
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const syncedRef = useRef(false);
   const tabOrder: TabId[] = ['notes', 'library', 'daily', 'cards', 'settings', 'stats', 'graph', 'achievements', 'anki', 'share', 'feed', 'profile'];
@@ -658,9 +672,10 @@ function AppInner() {
           <Library
             books={state.books}
             notes={state.notes}
-            onAddBook={() => setBookModal({ open: true })}
-            onEditBook={book => setBookModal({ open: true, book })}
-            onNewNoteForBook={bookId => handleNewNote(bookId)}
+            onSave={handleSaveBook}
+            onDelete={handleDeleteBook}
+            onOpenCatalog={() => setShowCatalog(true)}
+            onOpenReader={(book: any) => setReaderBook(book)}
           />
         )}
 
@@ -741,7 +756,12 @@ function AppInner() {
           <ProfileView
             user={auth.user}
             books={state.books}
+            notes={state.notes}
             onNavigate={(tab) => handleTabChange(tab as TabId)}
+            onOpenWrapped={() => setShowWrapped(true)}
+            onOpenChallenges={() => setShowChallenges(true)}
+            onOpenMessages={() => setShowMessages(true)}
+            onOpenFollowers={(tab) => { setFollowersTab(tab); setShowFollowers(true); }}
           />
         )}
 
@@ -772,7 +792,6 @@ function AppInner() {
         onChange={handleTabChange}
         unreadNotifs={unreadNotifs}
         onNotifications={() => { setUnreadNotifs(0); setShowNotifications(true); }}
-        onVoiceNote={() => setShowVoiceNote(true)}
       />
 
       {/* Modals */}
@@ -780,7 +799,7 @@ function AppInner() {
         <BookModal
           book={bookModal.book}
           onSave={handleSaveBook}
-          onDelete={handleDeleteBook}
+          onDelete={() => bookModal.book && handleDeleteBook(bookModal.book.id)}
           onClose={() => setBookModal({ open: false })}
         />
       )}
@@ -794,28 +813,7 @@ function AppInner() {
         </div>
       )}
 
-      {showVoiceNote && (
-        <VoiceNote
-          onSave={(text) => {
-            setShowVoiceNote(false);
-            setNewNoteBookId(undefined);
-            const note: Note = {
-              id: `note_${Date.now()}`,
-              type: 'note',
-              title: '🎙️ Голосовая заметка',
-              content: `<p>${text}</p>`,
-              tags: ['голосовая'],
-              isPinned: false,
-              isFavorite: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              linkedNoteIds: [],
-            };
-            handleSaveNote(note);
-          }}
-          onClose={() => setShowVoiceNote(false)}
-        />
-      )}
+
 
       {showTemplates && (
         <TemplatesModal
@@ -830,6 +828,69 @@ function AppInner() {
             handleNewNote();
           }}
         />
+      )}
+
+      {showCatalog && (
+        <BookCatalog
+          onClose={() => setShowCatalog(false)}
+          existingBooks={state.books}
+          onOpenReader={(book: any) => {
+            setShowCatalog(false)
+            setReaderBook(book)
+          }}
+          onAddToLibrary={(book: any) => {
+            handleSaveBook({ ...book, id: Date.now().toString(), tags: [], createdAt: new Date().toISOString() } as Book)
+          }}
+        />
+      )}
+
+      {readerBook && (
+        <ReaderView
+          book={{ id: readerBook.id || Date.now().toString(), title: readerBook.title, author: readerBook.author, textUrl: readerBook.textUrl, coverUrl: readerBook.cover || readerBook.coverUrl }}
+          onClose={() => setReaderBook(null)}
+          onCreateNote={(title: string, content: string, type: string) => {
+            handleSaveNote({ id: Date.now().toString(), title, content, type, tags: [], isPinned: false, isFavorite: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any)
+          }}
+        />
+      )}
+
+      {showWrapped && (
+        <YearWrapped
+          notes={state.notes}
+          books={state.books}
+          onClose={() => setShowWrapped(false)}
+        />
+      )}
+
+      {showChallenges && (
+        <ChallengesView
+          notes={state.notes}
+          books={state.books}
+          onClose={() => setShowChallenges(false)}
+        />
+      )}
+
+      {showMessages && auth.user && (
+        <MessagesView
+          userId={auth.user.id}
+          initialPartnerId={messageRecipientId}
+          onBack={() => { setShowMessages(false); setMessageRecipientId(undefined) }}
+        />
+      )}
+
+      {showFollowers && auth.user && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+          <FollowersView
+            userId={auth.user.id}
+            initialTab={followersTab}
+            onBack={() => setShowFollowers(false)}
+            onOpenMessages={(recipientId) => {
+              setShowFollowers(false);
+              setMessageRecipientId(recipientId);
+              setShowMessages(true);
+            }}
+          />
+        </div>
       )}
     </div>
   );

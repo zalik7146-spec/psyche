@@ -97,6 +97,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
 
   const [openMenu, setOpenMenu] = useState<MenuType>(null);
   const [dropRect, setDropRect] = useState<DropRect | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
 
   const typeBtnRef      = useRef<HTMLButtonElement>(null);
   const bookBtnRef      = useRef<HTMLButtonElement>(null);
@@ -565,6 +566,20 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               </button>
             )}
             <button
+              onClick={() => { try { navigator.vibrate?.(6); } catch {} setFocusMode(v => !v); }}
+              title="Фокус-режим"
+              style={{
+                width: 34, height: 34, borderRadius: 9,
+                background: focusMode ? 'var(--accent)' : 'var(--bg-raised)',
+                border: `1px solid ${focusMode ? 'var(--accent)' : 'var(--border)'}`,
+                color: focusMode ? '#fff' : 'var(--text-muted)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, flexShrink: 0, transition: 'all 0.15s',
+              }}
+            >
+              ⊙
+            </button>
+            <button
               onClick={handleSave}
               style={{
                 padding: '8px 14px', borderRadius: 11,
@@ -962,6 +977,54 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
           />
         )}
       </div>
+
+      {/* ── Focus Mode Overlay ───────────────────────────────────── */}
+      {focusMode && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'var(--bg-base)',
+          display: 'flex', flexDirection: 'column',
+          animation: 'fadeIn 0.2s ease-out',
+        }}>
+          {/* Focus header */}
+          <div style={{
+            paddingTop: 'calc(env(safe-area-inset-top,0px) + 16px)',
+            padding: 'calc(env(safe-area-inset-top,0px) + 16px) 20px 12px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>
+              {title || 'Без заголовка'}
+            </span>
+            <button
+              onClick={() => setFocusMode(false)}
+              style={{
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
+                color: 'var(--text-muted)', fontSize: 13, fontFamily: 'Inter,sans-serif',
+              }}
+            >
+              Выйти из фокуса
+            </button>
+          </div>
+
+          {/* Focus editor */}
+          <div style={{
+            flex: 1, overflowY: 'auto', padding: '20px 24px',
+            maxWidth: 680, margin: '0 auto', width: '100%',
+          }}>
+            <EditorContent editor={editor} />
+          </div>
+
+          {/* Word count */}
+          <div style={{
+            padding: '8px 24px calc(env(safe-area-inset-bottom,0px) + 16px)',
+            textAlign: 'center', fontSize: 12, color: 'var(--text-muted)',
+            fontFamily: 'Inter,sans-serif',
+          }}>
+            {editor ? countWords(editor.getHTML()) : 0} слов
+          </div>
+        </div>
+      )}
     </>
   );
 }

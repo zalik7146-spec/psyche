@@ -18,6 +18,7 @@ export interface Book {
   totalPages?: number;
   currentPage?: number;
   tags?: string[];
+  coverUrl?: string;
 }
 
 export type NoteType = 'note' | 'quote' | 'insight' | 'question' | 'summary' | 'idea' | 'task';
@@ -141,7 +142,10 @@ export interface SocialProfile {
   followersCount: number;
   followingCount: number;
   postsCount: number;
-  createdAt: string;
+  website?: string;
+  location?: string;
+  specialization?: string;
+  createdAt?: string;
 }
 
 export type PostType = 'note' | 'quote' | 'insight' | 'summary' | 'flashcard' | 'book_review';
