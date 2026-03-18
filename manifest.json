@@ -16,7 +16,7 @@
   "dir": "ltr",
   "screenshots": [],
   "shortcuts": [
-    { "name": "Новая запись", "short_name": "Запись", "description": "Создать новую заметку", "url": "/?new=note", "icons": [{ "src": "/icon.svg", "sizes": "any" }] },
-    { "name": "Журнал дня", "short_name": "Журнал", "description": "Открыть дневник сегодняшнего дня", "url": "/?tab=daily", "icons": [{ "src": "/icon.svg", "sizes": "any" }] }
+    { "name": "Новая запись", "short_name": "Запись", "url": "/?new=note", "icons": [{ "src": "/icon.svg", "sizes": "any" }] },
+    { "name": "Журнал дня",   "short_name": "Журнал",  "url": "/?tab=daily", "icons": [{ "src": "/icon.svg", "sizes": "any" }] }
   ]
 }
