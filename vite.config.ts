@@ -9,6 +9,19 @@ const __dirname = path.dirname(__filename);
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      '/api/gutenberg': {
+        target: 'https://www.gutenberg.org',
+        changeOrigin: true,
+        secure: true,
+        rewrite: path => {
+          const id = path.match(/^\/api\/gutenberg\/(\d+)$/)?.[1];
+          return id ? `/cache/epub/${id}/pg${id}.txt` : '/404';
+        },
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

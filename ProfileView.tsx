@@ -99,7 +99,7 @@ export default function ProfileView({
   const [editPublic, setEditPublic] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'stats'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'tools' | 'stats'>('tools');
 
   // Avatar from localStorage
   const avatarKey = `psyche_avatar_${user.id}`;
@@ -324,41 +324,11 @@ export default function ProfileView({
           </div>
         )}
 
-        {/* Quick tools strip */}
-        {!editing && (
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '10px 0 2px', scrollbarWidth: 'none' }}>
-            {([
-              { id: 'anki', icon: '🃏', label: 'Anki', action: () => onNavigate?.('anki') },
-              { id: 'achievements', icon: '🏆', label: 'Достижения', action: () => onNavigate?.('achievements') },
-              { id: 'graph', icon: '🔗', label: 'Граф', action: () => onNavigate?.('graph') },
-              { id: 'share', icon: '📄', label: 'Конспекты', action: () => onNavigate?.('share') },
-              { id: 'wrapped', icon: '🎉', label: 'Итоги', action: () => onOpenWrapped?.() },
-              { id: 'challenges', icon: '🎯', label: 'Челленджи', action: () => onOpenChallenges?.() },
-            ] as const).map(t => (
-              <button
-                key={t.id}
-                onClick={() => { vibe(6); t.action() }}
-                style={{
-                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  padding: '8px 12px', borderRadius: 14,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-                }}
-                onPointerDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.94)' }}
-                onPointerUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
-                onPointerLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
-              >
-                <span style={{ fontSize: 22 }}>{t.icon}</span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 500, whiteSpace: 'nowrap' }}>{t.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Tabs */}
         {!editing && (
           <div style={{ display: 'flex', gap: 4, background: 'var(--bg-raised)', borderRadius: 12, padding: 3, marginTop: 10 }}>
             {([
+              { id: 'tools', label: '🛠 Инструменты' },
               { id: 'posts', label: '📝 Публикации' },
               { id: 'stats', label: '📊 Статистика' },
             ] as const).map(t => (
@@ -380,6 +350,185 @@ export default function ProfileView({
 
       {/* ── Content ─────────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 100px' }}>
+
+        {/* ── TOOLS tab ──────────────────────────────────────────────── */}
+        {!editing && activeTab === 'tools' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+            {/* 2×2 grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {TOOLS.map((tool, i) => (
+                <button
+                  key={tool.id}
+                  onClick={() => { vibe(8); onNavigate?.(tool.id); }}
+                  style={{
+                    padding: '18px 14px', borderRadius: 18,
+                    background: tool.bg, border: `1px solid ${tool.border}`,
+                    cursor: 'pointer', textAlign: 'left', width: '100%',
+                    display: 'flex', flexDirection: 'column', gap: 8,
+                    animation: `fadeSlideUp 0.3s ease ${i * 0.06}s both`,
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                  onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
+                  onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                >
+                  <div style={{ fontSize: 30 }}>{tool.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                      {tool.label}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2, lineHeight: 1.4 }}>
+                      {tool.desc}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Wrapped + Challenges row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button
+                onClick={() => { vibe(8); onOpenWrapped?.(); }}
+                style={{
+                  padding: '16px 14px', borderRadius: 18,
+                  background: 'linear-gradient(135deg, rgba(232,201,122,0.18), rgba(180,140,60,0.08))',
+                  border: '1px solid rgba(232,201,122,0.3)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+                onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
+                onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <div style={{ fontSize: 28 }}>🎉</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                    Итоги года
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
+                    Wrapped {new Date().getFullYear()}
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { vibe(8); onOpenChallenges?.(); }}
+                style={{
+                  padding: '16px 14px', borderRadius: 18,
+                  background: 'linear-gradient(135deg, rgba(232,122,122,0.18), rgba(180,60,60,0.08))',
+                  border: '1px solid rgba(232,122,122,0.3)',
+                  cursor: 'pointer', textAlign: 'left', width: '100%',
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+                onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
+                onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <div style={{ fontSize: 28 }}>🏆</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                    Челленджи
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
+                    Цели и бейджи
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Library quick link */}
+            <button
+              onClick={() => { vibe(6); onNavigate?.('library'); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 16px', borderRadius: 16, cursor: 'pointer', width: '100%',
+                background: 'rgba(212,145,74,0.06)', border: '1px solid rgba(212,145,74,0.2)',
+                animation: 'fadeSlideUp 0.3s ease 0.24s both',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              <div style={{
+                width: 42, height: 42, borderRadius: 13,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <BookOpen size={20} color='var(--accent)'/>
+              </div>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                  Библиотека
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
+                  {books.length} книг в коллекции
+                </div>
+              </div>
+              <ChevronRight size={16} color='var(--text-muted)'/>
+            </button>
+
+            {/* Сообщество */}
+            <button
+              onClick={() => { vibe(6); onNavigate?.('feed'); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 16px', borderRadius: 16, cursor: 'pointer', width: '100%',
+                background: 'rgba(106,158,138,0.06)', border: '1px solid rgba(106,158,138,0.2)',
+                animation: 'fadeSlideUp 0.3s ease 0.3s both',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              <div style={{
+                width: 42, height: 42, borderRadius: 13,
+                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <span style={{ fontSize: 20 }}>🌐</span>
+              </div>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
+                  Сообщество
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
+                  Читатели и психологи
+                </div>
+              </div>
+              <ChevronRight size={16} color='var(--text-muted)'/>
+            </button>
+
+            {/* Prompt to setup public profile */}
+            {!profile && (
+              <div style={{
+                background: 'var(--accent-muted)', borderRadius: 16, padding: '16px',
+                border: '1px solid var(--accent)', textAlign: 'center',
+                animation: 'fadeSlideUp 0.3s ease 0.36s both',
+              }}>
+                <div style={{ fontSize: 20, marginBottom: 8 }}>✦</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', fontFamily: 'Lora, serif', marginBottom: 6 }}>
+                  Настройте публичный профиль
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
+                  Выберите username и начните делиться инсайтами с сообществом
+                </div>
+                <button onClick={() => { vibe(8); setEditing(true); }}
+                  style={{
+                    padding: '8px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #d4a060, #8a5220)', color: '#fff',
+                    fontSize: 13, fontWeight: 700,
+                  }}>
+                  Настроить
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── POSTS tab ──────────────────────────────────────────────── */}
         {!editing && activeTab === 'posts' && (
