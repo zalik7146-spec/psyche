@@ -30,7 +30,7 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
     return matchStatus && matchSearch
   })
 
-  const doneCount = books.filter(b => b.status === ('done' as any)).length
+  const doneCount = books.filter(b => b.status === 'finished').length
   const progress = Math.min(100, Math.round((doneCount / goal) * 100))
 
   return (
@@ -66,7 +66,7 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
 
         {/* Filters */}
         <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 2 }}>
-          {[['all', '📚 Все'], ['reading', '📖 Читаю'], ['done', '✅ Прочитано'], ['want', '🔖 Хочу'], ['paused', '⏸ Пауза']].map(([id, label]) => (
+          {[['all', '📚 Все'], ['reading', '📖 Читаю'], ['finished', '✅ Прочитано'], ['want', '🔖 Хочу'], ['paused', '⏸ Пауза']].map(([id, label]) => (
             <button key={id} onClick={() => { vibe(); setFilter(id) }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', background: filter === id ? 'var(--accent)' : 'var(--bg-raised)', color: filter === id ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
               {label}
             </button>
@@ -122,7 +122,7 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
       {showModal && (
         <BookModal
           book={editBook}
-          onSave={(b) => { onSave(b as Book); setShowModal(false) }}
+          onSave={(b) => { onSave({ ...b, id: editBook?.id } as Book); setShowModal(false) }}
           onDelete={editBook ? () => { onDelete(editBook.id); setShowModal(false) } : undefined}
           onClose={() => setShowModal(false)}
         />
@@ -149,11 +149,9 @@ function BookCard({ book, notes, index, onEdit, onRead, vibe }: any) {
         <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: '3px 8px', fontSize: 11, color: '#fff' }}>
           {noteCount} заметок
         </div>
-        {book.status === 'reading' && (
-          <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-            📖 Читать
-          </button>
-        )}
+        <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+          📖 Читать
+        </button>
       </div>
       <div style={{ padding: '10px 12px 12px' }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3, fontFamily: 'Lora,serif', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</div>
@@ -193,11 +191,9 @@ function BookListItem({ book, notes, index, onEdit, onRead, vibe }: any) {
           {book.rating && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat(book.rating)}</span>}
         </div>
       </div>
-      {book.status === 'reading' && (
-        <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-          📖
-        </button>
-      )}
+      <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+        📖
+      </button>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 // Psyche PWA Service Worker
-const CACHE_NAME = 'psyche-v1';
+const CACHE_NAME = 'psyche-v2';
 const STATIC_ASSETS = ['/'];
 
 self.addEventListener('install', (event) => {
@@ -24,8 +24,10 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip Supabase API requests
-  if (event.request.url.includes('supabase.co')) return;
+  // Only same-origin app files: book texts and catalog APIs must reach the network,
+  // otherwise a failed request is answered with the cached index.html.
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
   event.respondWith(
     fetch(event.request)
@@ -42,7 +44,7 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         // Fallback to cache when offline
         return caches.match(event.request).then((cached) => {
-          return cached || caches.match('/');
+          return cached || (event.request.mode === 'navigate' ? caches.match('/') : Response.error());
         });
       })
   );

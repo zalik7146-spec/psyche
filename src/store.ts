@@ -212,7 +212,7 @@ export function saveState(state: AppState, userId: string) {
 // ─── Creators ────────────────────────────────────────────────────────
 export function createBook(data: Partial<Book>): Book {
   return {
-    id: uuidv4(),
+    id: data.id || uuidv4(),
     title: data.title || 'Без названия',
     author: data.author || '',
     genre: data.genre,

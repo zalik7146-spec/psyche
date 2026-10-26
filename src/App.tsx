@@ -254,9 +254,10 @@ function AppInner() {
 
   const handleSaveBook = (data: Partial<Book>) => {
     const userId = auth.user?.id || 'guest';
-    if (bookModal.book) {
-      const updated = { ...bookModal.book, ...data };
-      update(s => ({ ...s, books: s.books.map(b => b.id === bookModal.book!.id ? updated : b) }));
+    const existing = data.id ? state.books.find(book => book.id === data.id) : undefined;
+    if (existing) {
+      const updated = { ...existing, ...data };
+      update(s => ({ ...s, books: s.books.map(book => book.id === existing.id ? updated : book) }));
       cloudSaveBook(updated, userId);
     } else {
       const book = createBook(data);
@@ -264,6 +265,17 @@ function AppInner() {
       cloudSaveBook(book, userId);
     }
     setBookModal({ open: false });
+  };
+
+  const handleReaderProgress = (bookId: string, page: number, totalPages: number) => {
+    const current = state.books.find(book => book.id === bookId);
+    if (!current || totalPages < 1) return;
+    const bookPageCount = current.totalPages || totalPages;
+    const currentPage = Math.max(1, Math.min(bookPageCount, Math.round((page / totalPages) * bookPageCount)));
+    if (current.currentPage === currentPage && current.totalPages === bookPageCount && current.status === 'reading') return;
+    const updated = { ...current, currentPage, totalPages: bookPageCount, status: current.status === 'finished' ? 'finished' as const : 'reading' as const };
+    update(s => ({ ...s, books: s.books.map(book => book.id === bookId ? updated : book) }));
+    void cloudSaveBook(updated, auth.user?.id || 'guest');
   };
 
   const handleDeleteBook = (bookId: string) => {
@@ -834,22 +846,52 @@ function AppInner() {
         <BookCatalog
           onClose={() => setShowCatalog(false)}
           existingBooks={state.books}
-          onOpenReader={(book: any) => {
+          onOpenReader={book => {
             setShowCatalog(false)
-            setReaderBook(book)
+            const existing = state.books.find(saved => saved.id === book.id || saved.title.localeCompare(book.title, undefined, { sensitivity: 'accent' }) === 0);
+            const readerBook = { ...book, id: existing?.id || book.id };
+            if (!existing) {
+              handleSaveBook({
+                id: book.id,
+                title: book.title,
+                author: book.author,
+                coverUrl: book.coverUrl,
+                coverEmoji: '📚',
+                color: '#3d2a1a',
+                status: 'reading',
+                currentPage: 0,
+                tags: [],
+              });
+            }
+            setReaderBook(readerBook)
           }}
-          onAddToLibrary={(book: any) => {
-            handleSaveBook({ ...book, id: Date.now().toString(), tags: [], createdAt: new Date().toISOString() } as Book)
+          onAddToLibrary={book => {
+            handleSaveBook({ ...book, tags: book.tags || [] })
           }}
         />
       )}
 
       {readerBook && (
         <ReaderView
-          book={{ id: readerBook.id || Date.now().toString(), title: readerBook.title, author: readerBook.author, textUrl: readerBook.textUrl, coverUrl: readerBook.cover || readerBook.coverUrl }}
+          book={{ id: readerBook.id || Date.now().toString(), title: readerBook.title, author: readerBook.author, textUrl: readerBook.textUrl, coverUrl: readerBook.cover || readerBook.coverUrl, source: readerBook.source }}
           onClose={() => setReaderBook(null)}
-          onCreateNote={(title: string, content: string, type: string) => {
-            handleSaveNote({ id: Date.now().toString(), title, content, type, tags: [], isPinned: false, isFavorite: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as any)
+          onReturnToCatalog={() => { setReaderBook(null); setShowCatalog(true) }}
+          onProgress={(page: number, totalPages: number) => handleReaderProgress(readerBook.id, page, totalPages)}
+          onCreateNote={(title: string, content: string, type: string, page?: number) => {
+            const libraryBook = state.books.find(book => book.id === readerBook.id);
+            const safeContent = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            const now = new Date().toISOString();
+            handleSaveNote({
+              id: Date.now().toString(),
+              bookId: libraryBook?.id,
+              title: type === 'quote' ? `Цитата: ${title}` : `Заметка: ${title}`,
+              content: `<p>${safeContent}</p>`,
+              quote: type === 'quote' ? content : undefined,
+              type: type === 'quote' ? 'quote' : 'note',
+              page,
+              tags: [], isPinned: false, isFavorite: false,
+              createdAt: now, updatedAt: now,
+            });
           }}
         />
       )}
