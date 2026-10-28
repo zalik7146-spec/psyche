@@ -254,6 +254,8 @@ drop policy if exists "Users can manage own follows"              on public.soci
 drop policy if exists "Users can manage own saves"                on public.social_saves;
 drop policy if exists "Users can view own notifications"          on public.notifications;
 drop policy if exists "Users can update own notifications"        on public.notifications;
+drop policy if exists "System can insert notifications"           on public.notifications;
+drop policy if exists "Users can send notifications as themselves" on public.notifications;
 
 -- Создаём политики для социальных таблиц
 create policy "Public profiles are viewable by everyone"
@@ -303,8 +305,11 @@ create policy "Users can view own notifications"
   on public.notifications for select using (auth.uid() = user_id);
 create policy "Users can update own notifications"
   on public.notifications for update using (auth.uid() = user_id);
-create policy "System can insert notifications"
-  on public.notifications for insert with check (true);
+-- Только от своего имени: иначе любой мог бы слать уведомления любому пользователю.
+-- Триггеры с security definer обходят RLS и по-прежнему могут создавать уведомления.
+create policy "Users can send notifications as themselves"
+  on public.notifications for insert
+  with check (auth.uid() = from_user_id and from_user_id <> user_id);
 
 -- ── Индексы для социальных таблиц ───────────────────────────────
 
