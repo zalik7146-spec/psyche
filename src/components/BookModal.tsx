@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react'
-import { X, Search, BookOpen, Star, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { X, Star, Trash2 } from 'lucide-react'
 import { Book, BookStatus } from '../types'
 
 interface Props {
@@ -29,86 +29,7 @@ export default function BookModal({ book, onSave, onDelete, onClose }: Props) {
   const [totalPages, setTotalPages] = useState(book?.totalPages?.toString() || '')
   const [currentPage, setCurrentPage] = useState(book?.currentPage?.toString() || '')
   const [description, setDescription] = useState(book?.description || '')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [searching, setSearching] = useState(false)
-  const [searchError, setSearchError] = useState('')
   const [coverUrl, setCoverUrl] = useState(book?.coverUrl || '')
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const searchBooks = useCallback(async (q: string) => {
-    if (!q.trim()) { setSearchResults([]); return }
-    setSearching(true)
-    setSearchError('')
-    try {
-      const [googleRes, olRes] = await Promise.allSettled([
-        fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=6&printType=books`).then(r => r.json()),
-        fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=4`).then(r => r.json())
-      ])
-
-      const results: any[] = []
-
-      if (googleRes.status === 'fulfilled' && googleRes.value?.items) {
-        googleRes.value.items.forEach((item: any) => {
-          const info = item.volumeInfo || {}
-          let cover = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || ''
-          if (cover) cover = cover.replace('http://', 'https://')
-          results.push({
-            id: item.id,
-            title: info.title || '',
-            author: (info.authors || []).join(', '),
-            cover,
-            pages: info.pageCount,
-            genre: (info.categories || [])[0] || '',
-            description: info.description || ''
-          })
-        })
-      }
-
-      if (olRes.status === 'fulfilled' && olRes.value?.docs) {
-        olRes.value.docs.slice(0, 4).forEach((doc: any) => {
-          const exists = results.some(r =>
-            r.title.toLowerCase().includes((doc.title || '').toLowerCase().substring(0, 8))
-          )
-          if (!exists) {
-            results.push({
-              id: doc.key,
-              title: doc.title || '',
-              author: (doc.author_name || []).join(', '),
-              cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
-              pages: doc.number_of_pages_median,
-              genre: (doc.subject || [])[0] || '',
-              description: ''
-            })
-          }
-        })
-      }
-
-      setSearchResults(results)
-      if (results.length === 0) setSearchError('Ничего не найдено')
-    } catch {
-      setSearchError('Ошибка поиска')
-    }
-    setSearching(false)
-  }, [])
-
-  const handleSearchInput = (q: string) => {
-    setSearchQuery(q)
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => searchBooks(q), 600)
-  }
-
-  const handleSelectBook = (result: any) => {
-    vibe(10)
-    setTitle(result.title)
-    setAuthor(result.author)
-    if (result.genre) setGenre(result.genre)
-    if (result.pages) setTotalPages(result.pages.toString())
-    if (result.description) setDescription(result.description)
-    if (result.cover) setCoverUrl(result.cover)
-    setSearchQuery('')
-    setSearchResults([])
-  }
 
   const handleSave = () => {
     if (!title.trim()) return
@@ -165,86 +86,6 @@ export default function BookModal({ book, onSave, onDelete, onClose }: Props) {
         </div>
 
         <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Google Books Search */}
-          <div>
-            <div style={{ fontSize: 11, letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 8 }}>
-              🔍 ПОИСК В КАТАЛОГЕ
-            </div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--bg-card)', border: '1px solid var(--border)',
-              borderRadius: 0, padding: '0 12px'
-            }}>
-              <Search size={15} color='var(--text-muted)' />
-              <input
-                value={searchQuery}
-                onChange={e => handleSearchInput(e.target.value)}
-                placeholder='Найти книгу — автозаполнение...'
-                style={{
-                  flex: 1, padding: '11px 0', background: 'transparent',
-                  border: 'none', outline: 'none', fontSize: 14,
-                  color: 'var(--text-primary)'
-                }}
-              />
-              {searching && (
-                <div style={{
-                  width: 14, height: 14, border: '2px solid var(--accent)',
-                  borderTopColor: 'transparent', borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite'
-                }} />
-              )}
-            </div>
-
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div style={{
-                marginTop: 8, background: 'var(--bg-card)',
-                border: '1px solid var(--border)', borderRadius: 0,
-                overflow: 'hidden', maxHeight: 280, overflowY: 'auto'
-              }}>
-                {searchResults.map((result, i) => (
-                  <button key={result.id || i} onClick={() => handleSelectBook(result)} style={{
-                    width: '100%', padding: '10px 12px',
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    background: 'transparent', border: 'none',
-                    borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                    textAlign: 'left'
-                  }}>
-                    <div style={{
-                      width: 40, height: 56, borderRadius: 0, flexShrink: 0,
-                      background: 'var(--bg-raised)', overflow: 'hidden',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      {result.cover ? (
-                        <img src={result.cover} alt={result.title}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                        />
-                      ) : (
-                        <BookOpen size={16} color='var(--text-muted)' />
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 14, fontWeight: 600, color: 'var(--text-primary)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                      }}>{result.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                        {result.author}
-                        {result.pages ? ` · ${result.pages} стр.` : ''}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            {searchError && (
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, paddingLeft: 4 }}>
-                {searchError}
-              </div>
-            )}
-          </div>
-
           {/* Cover preview */}
           {coverUrl && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

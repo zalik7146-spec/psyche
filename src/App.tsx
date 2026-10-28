@@ -16,7 +16,6 @@ import NotesList       from './components/NotesList';
 import NoteEditor      from './components/NoteEditor';
 import BottomNav       from './components/BottomNav';
 import Library         from './components/Library';
-import BookCatalog     from './components/BookCatalog';
 import ReaderView      from './components/ReaderView';
 import BookModal       from './components/BookModal';
 import StatsView       from './components/StatsView';
@@ -30,6 +29,7 @@ import AnkiView        from './components/AnkiView';
 import PublicShareView from './components/PublicShareView';
 import FeedView        from './components/FeedView';
 import JournalView     from './components/JournalView';
+import { deleteBookText } from './bookFiles';
 import type { ComposeDraft } from './components/FeedView';
 import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
@@ -108,7 +108,6 @@ function AppInner() {
 
   const [showWrapped, setShowWrapped] = useState(false);
   const [showChallenges, setShowChallenges] = useState(false);
-  const [showCatalog, setShowCatalog] = useState(false);
   const [readerBook, setReaderBook] = useState<any>(null);
   const [showMessages, setShowMessages] = useState(false);
   const [messageRecipientId, setMessageRecipientId] = useState<string | undefined>(undefined);
@@ -283,6 +282,7 @@ function AppInner() {
   };
 
   const handleDeleteBook = (bookId: string) => {
+    void deleteBookText(bookId);
     update(s => ({ ...s, books: s.books.filter(b => b.id !== bookId) }));
     cloudDeleteBook(bookId);
     setBookModal({ open: false });
@@ -703,7 +703,6 @@ function AppInner() {
             notes={state.notes}
             onSave={handleSaveBook}
             onDelete={handleDeleteBook}
-            onOpenCatalog={() => setShowCatalog(true)}
             onOpenReader={(book: any) => setReaderBook(book)}
           />
         )}
@@ -865,40 +864,10 @@ function AppInner() {
         />
       )}
 
-      {showCatalog && (
-        <BookCatalog
-          onClose={() => setShowCatalog(false)}
-          existingBooks={state.books}
-          onOpenReader={book => {
-            setShowCatalog(false)
-            const existing = state.books.find(saved => saved.id === book.id || saved.title.localeCompare(book.title, undefined, { sensitivity: 'accent' }) === 0);
-            const readerBook = { ...book, id: existing?.id || book.id };
-            if (!existing) {
-              handleSaveBook({
-                id: book.id,
-                title: book.title,
-                author: book.author,
-                coverUrl: book.coverUrl,
-                coverEmoji: '📚',
-                color: '#3d2a1a',
-                status: 'reading',
-                currentPage: 0,
-                tags: [],
-              });
-            }
-            setReaderBook(readerBook)
-          }}
-          onAddToLibrary={book => {
-            handleSaveBook({ ...book, tags: book.tags || [] })
-          }}
-        />
-      )}
-
       {readerBook && (
         <ReaderView
           book={{ id: readerBook.id || Date.now().toString(), title: readerBook.title, author: readerBook.author, textUrl: readerBook.textUrl, coverUrl: readerBook.cover || readerBook.coverUrl, source: readerBook.source }}
           onClose={() => setReaderBook(null)}
-          onReturnToCatalog={() => { setReaderBook(null); setShowCatalog(true) }}
           onShareToAgora={(text: string) => {
             setComposeDraft({ content: text, bookTitle: readerBook.title, bookAuthor: readerBook.author });
             setReaderBook(null);

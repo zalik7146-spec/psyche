@@ -23,7 +23,8 @@ src/
   cloudStore.ts      синхронизация заметок и книг с Supabase
   socialStore.ts     лента, подписки, уведомления, сообщения
   supabase.ts        клиент Supabase и типы таблиц
-  booksApi.ts        поиск книг: Google Books, Open Library, Gutendex
+  bookFiles.ts       свои книги: разбор TXT, FB2, EPUB и хранение текста на устройстве
+  stoicLibrary.ts    Стоическая библиотека: тексты Project Gutenberg
 public/              иконки, manifest.json, service worker (sw.js)
 api/                 серверная функция Vercel: тексты книг с Project Gutenberg
 netlify/functions/   то же для Netlify

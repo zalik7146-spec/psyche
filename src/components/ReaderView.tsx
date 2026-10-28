@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowLeft, Bookmark, BookOpen } from 'lucide-react'
-import { searchBooks, withTimeout } from '../booksApi'
+import { BOOK_FILE_ACCEPT, getBookText, parseBookFile, saveBookText } from '../bookFiles'
+import { stoicTextFor } from '../stoicLibrary'
 
 interface ReaderBook {
   id: string
@@ -15,7 +16,6 @@ interface Props {
   book: ReaderBook
   onClose: () => void
   onCreateNote: (title: string, content: string, type: string, page?: number) => void
-  onReturnToCatalog?: () => void
   onProgress?: (page: number, totalPages: number) => void
   onShareToAgora?: (text: string) => void
 }
@@ -80,24 +80,25 @@ function paginateText(text: string) {
   return pages
 }
 
-async function fetchBookText(url: string, signal: AbortSignal) {
-  const requestSignal = withTimeout(signal, 15_000)
+// Текст Project Gutenberg через собственный маршрут /api/gutenberg/<id>
+async function fetchGutenbergText(id: string, signal: AbortSignal) {
+  const timeout = new AbortController()
+  const timer = window.setTimeout(() => timeout.abort(), 20_000)
+  const stop = () => timeout.abort()
+  signal.addEventListener('abort', stop)
   try {
-    const response = await fetch(url, { signal: requestSignal })
+    const response = await fetch(`/api/gutenberg/${id}`, { signal: timeout.signal })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    // Without the serverless function the SPA rewrite answers /api/* with index.html.
-    if (response.headers.get('content-type')?.includes('text/html') && url.startsWith('/api/')) throw new Error('API_UNAVAILABLE')
+    // Без серверной функции SPA-правило отвечает на /api/* страницей index.html
+    if (response.headers.get('content-type')?.includes('text/html')) throw new Error('API_UNAVAILABLE')
     return await response.text()
-  } catch (directError) {
-    if (signal.aborted || url.startsWith('/api/')) throw directError
-    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-    const response = await fetch(proxy, { signal: requestSignal })
-    if (!response.ok) throw directError
-    return response.text()
+  } finally {
+    window.clearTimeout(timer)
+    signal.removeEventListener('abort', stop)
   }
 }
 
-export default function ReaderView({ book, onClose, onCreateNote, onReturnToCatalog, onProgress, onShareToAgora }: Props) {
+export default function ReaderView({ book, onClose, onCreateNote, onProgress, onShareToAgora }: Props) {
   const [pages, setPages] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -114,6 +115,7 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
   const [pageAnim, setPageAnim] = useState<'left' | 'right' | null>(null)
   const [localFileName, setLocalFileName] = useState('')
   const [loadAttempt, setLoadAttempt] = useState(0)
+  const [noText, setNoText] = useState(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -170,8 +172,8 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
     try { localStorage.setItem(`reader_preferences_${book.id}`, JSON.stringify({ theme, fontSize, lineHeight, fontIndex })) } catch { /* Preferences are optional. */ }
   }, [book.id, theme, fontSize, lineHeight, fontIndex])
 
-  // Fetch a direct text file when the catalog provides one. For library books,
-  // look up a legal public-domain edition by title and author in Gutendex.
+  // Откуда берём текст: сначала файл, сохранённый на этом устройстве,
+  // потом «Стоическая библиотека» (и старые книги из каталога с номером Gutenberg).
   useEffect(() => {
     const controller = new AbortController()
     const load = async () => {
@@ -180,33 +182,18 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
       setPages([])
       try {
         let text = ''
-        const urls = new Set<string>()
-        if (book.textUrl) {
-          const publicId = book.textUrl.match(/(?:cache\/epub|files)\/(\d+)/)?.[1]
-          if (publicId) urls.add(`/api/gutenberg/${publicId}`)
-          urls.add(book.textUrl)
-        }
-        const gutenbergId = book.id.match(/^gutenberg_(\d+)$/)?.[1]
-        if (gutenbergId) {
-          urls.add(`/api/gutenberg/${gutenbergId}`)
-        }
-        if (urls.size === 0) {
-          const result = await searchBooks(book.title, controller.signal)
-          if (result.failedSources.length === 3) throw new Error('CATALOG_UNAVAILABLE')
-          const normalized = book.title.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
-          const match = result.books.find(candidate => candidate.textUrl && candidate.title.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim() === normalized)
-          if (match?.gutenbergId) urls.add(`/api/gutenberg/${match.gutenbergId}`)
-          if (match?.textUrl) urls.add(match.textUrl)
-        }
-
-        for (const url of urls) {
-          try {
-            const raw = await fetchBookText(url, controller.signal)
-            const cleaned = prepareBookText(raw)
-            if (cleaned.length > 100) { text = cleaned; break }
-          } catch {
-            if (controller.signal.aborted) return
-          }
+        const stored = await getBookText(book.id)
+        if (controller.signal.aborted) return
+        if (stored) {
+          text = stored.text
+          setLocalFileName(stored.fileName)
+        } else {
+          const gutenbergId = book.id.match(/^gutenberg_(\d+)$/)?.[1]
+            || book.textUrl?.match(/(?:cache\/epub|files)\/(\d+)/)?.[1]
+            || stoicTextFor(book.title)?.gutenbergId.toString()
+          if (!gutenbergId) throw new Error('NO_TEXT')
+          const cleaned = prepareBookText(await fetchGutenbergText(gutenbergId, controller.signal))
+          if (cleaned.length > 100) text = cleaned
         }
         if (controller.signal.aborted) return
         if (text.length <= 100) throw new Error('BOOK_TEXT_UNAVAILABLE')
@@ -215,10 +202,12 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
         try { setCurrentPage(Math.max(0, Math.min(pageArr.length - 1, Number(localStorage.getItem(storageKey)) || 0))) } catch { setCurrentPage(0) }
       } catch (loadError) {
         if (controller.signal.aborted) return
-        setError(loadError instanceof Error && loadError.message === 'BOOK_TEXT_UNAVAILABLE'
-          ? 'Не удалось найти открытый полный текст этой книги. В каталоге можно искать книги Project Gutenberg и читать их в приложении.'
-          : loadError instanceof Error && loadError.message === 'CATALOG_UNAVAILABLE'
-            ? 'Не удалось подключиться к каталогам. Проверьте сеть и повторите попытку.'
+        const code = loadError instanceof Error ? loadError.message : ''
+        setNoText(code === 'NO_TEXT')
+        setError(code === 'NO_TEXT'
+          ? 'У этой книги пока нет текста. Загрузите файл TXT, FB2 или EPUB — он сохранится на этом устройстве.'
+          : code === 'BOOK_TEXT_UNAVAILABLE'
+            ? 'Текст оказался пустым. Попробуйте ещё раз или загрузите свой файл.'
             : 'Не удалось загрузить текст. Проверьте подключение и попробуйте ещё раз.')
       } finally {
         if (!controller.signal.aborted) setLoading(false)
@@ -298,18 +287,21 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
   const importTextFile = async (file?: File) => {
     if (!file) return
     try {
-      const text = prepareBookText(await file.text())
+      const text = prepareBookText((await parseBookFile(file)).text)
       if (text.length < 30) {
-        setError('В файле не найден читаемый текст. Выберите TXT-файл в кодировке UTF-8.')
+        setError('В файле не найден читаемый текст. Подойдут TXT, FB2 и EPUB без защиты.')
         return
       }
+      // Сохраняем текст на устройстве, чтобы книга открывалась и потом
+      try { await saveBookText(book.id, { text, fileName: file.name, addedAt: new Date().toISOString() }) } catch { /* читать можно и без сохранения */ }
       setLocalFileName(file.name)
       setPages(paginateText(text))
       setCurrentPage(0)
       setError('')
+      setNoText(false)
       setLoading(false)
     } catch {
-      setError('Не удалось прочитать файл. Выберите TXT-файл в кодировке UTF-8.')
+      setError('Не удалось прочитать файл. Подойдут TXT, FB2 и EPUB без защиты.')
     }
   }
 
@@ -401,12 +393,11 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
         )}
         {error && !loading && (
           <div style={{ padding: '40px 4px', display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--font-ui)' }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22 }}>Текст не загрузился</span>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22 }}>{noText ? 'Текста пока нет' : 'Текст не загрузился'}</span>
             <span style={{ fontSize: 15, lineHeight: 1.5, color: colors.muted }}>{error}</span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-              <button onClick={() => { setLoading(true); setLoadAttempt(value => value + 1) }} style={{ ...outlineBtn, border: `1px solid ${colors.text}`, background: colors.text, color: colors.bg }}>Повторить</button>
-              <button onClick={() => fileInputRef.current?.click()} style={outlineBtn}>Открыть TXT-файл</button>
-              {onReturnToCatalog && <button onClick={onReturnToCatalog} style={outlineBtn}>Найти в каталоге</button>}
+              <button onClick={() => fileInputRef.current?.click()} style={{ ...outlineBtn, border: `1px solid ${colors.text}`, background: colors.text, color: colors.bg }}>Загрузить файл</button>
+              {!noText && <button onClick={() => { setLoading(true); setLoadAttempt(value => value + 1) }} style={outlineBtn}>Повторить</button>}
             </div>
           </div>
         )}
@@ -417,7 +408,7 @@ export default function ReaderView({ book, onClose, onCreateNote, onReturnToCata
         )}
       </div>
 
-      <input ref={fileInputRef} type="file" accept=".txt,text/plain" hidden onChange={event => { void importTextFile(event.currentTarget.files?.[0]); event.currentTarget.value = '' }} />
+      <input ref={fileInputRef} type="file" accept={BOOK_FILE_ACCEPT} hidden onChange={event => { void importTextFile(event.currentTarget.files?.[0]); event.currentTarget.value = '' }} />
 
       {/* Выделение: чернильная панель */}
       {showSelMenu && selection && (

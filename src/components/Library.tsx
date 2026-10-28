@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Search, Plus, LayoutGrid, List, X } from 'lucide-react'
+import { v4 as uuidv4 } from 'uuid'
 import { Book } from '../types'
 import BookModal from './BookModal'
+import { BOOK_FILE_ACCEPT, parseBookFile, saveBookText } from '../bookFiles'
+import { STOIC_LIBRARY, stoicTextFor, type StoicText } from '../stoicLibrary'
 
 interface Props {
   books: Book[]
   notes: any[]
   onSave: (book: Book) => void
   onDelete: (id: string) => void
-  onOpenCatalog: () => void
   onOpenReader: (book: any) => void
 }
 
@@ -63,7 +65,7 @@ function ProgressLine({ value }: { value: number }) {
   )
 }
 
-export default function Library({ books, notes, onSave, onDelete, onOpenCatalog, onOpenReader }: Props) {
+export default function Library({ books, notes, onSave, onDelete, onOpenReader }: Props) {
   const [filter, setFilter] = useState<string>('all')
   const [view, setView] = useState<'grid' | 'list'>('list')
   const [showModal, setShowModal] = useState(false)
@@ -73,7 +75,38 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
   const [showGoal, setShowGoal] = useState(false)
   const [goal, setGoal] = useState(() => parseInt(localStorage.getItem('reading_goal') || '12'))
   const [goalInput, setGoalInput] = useState(goal.toString())
+  const [showStoic, setShowStoic] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
   const vibe = (ms = 8) => navigator.vibrate?.(ms)
+
+  // Своя книга: разбираем файл, сохраняем текст на устройстве и сразу открываем
+  const uploadBook = async (file?: File) => {
+    if (!file) return
+    setUploading(true); setUploadError('')
+    try {
+      const parsed = await parseBookFile(file)
+      if (parsed.text.length < 30) throw new Error('EMPTY')
+      const book = { id: uuidv4(), title: parsed.title || 'Без названия', author: parsed.author || '', status: 'reading', currentPage: 0, tags: [] } as unknown as Book
+      await saveBookText(book.id, { text: parsed.text, fileName: file.name, addedAt: new Date().toISOString() })
+      onSave(book)
+      vibe(12)
+      onOpenReader(book)
+    } catch {
+      setUploadError('Не получилось прочитать файл. Подойдут TXT, FB2 и EPUB без защиты от копирования.')
+    }
+    setUploading(false)
+  }
+
+  const shelfBookFor = (item: StoicText) => books.find(b => stoicTextFor(b.title)?.gutenbergId === item.gutenbergId)
+  const takeStoic = (item: StoicText, readNow: boolean) => {
+    vibe(10)
+    const existing = shelfBookFor(item)
+    const book = existing || ({ id: uuidv4(), title: item.title, author: item.author, status: readNow ? 'reading' : 'want', currentPage: 0, tags: [] } as unknown as Book)
+    if (!existing) onSave(book)
+    if (readNow) { setShowStoic(false); onOpenReader(book) }
+  }
 
   const filtered = books.filter(b => {
     const matchStatus = filter === 'all' || b.status === filter
@@ -163,9 +196,14 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
           <div style={{ padding: '40px 8px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
             <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)' }}>{search ? 'Ничего не нашлось' : 'Полка пуста'}</span>
             <span style={{ fontFamily: 'var(--font-typed)', fontSize: 15, color: 'var(--text-muted)' }}>
-              {search ? `По «${search}» книг нет.` : 'Найдите книгу в каталоге — тексты Project Gutenberg читаются прямо здесь.'}
+              {search ? `По «${search}» книг нет.` : 'Загрузите свою книгу (TXT, FB2, EPUB) или возьмите текст из Стоической библиотеки.'}
             </span>
-            {!search && <button onClick={() => { vibe(); onOpenCatalog() }} style={{ ...inkButton, height: 40, marginTop: 6 }}>Открыть каталог</button>}
+            {!search && (
+              <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                <button onClick={() => { vibe(); fileRef.current?.click() }} style={{ ...inkButton, height: 40 }}>Загрузить книгу</button>
+                <button onClick={() => { vibe(); setShowStoic(true) }} style={{ ...inkButton, height: 40, background: 'none', color: 'var(--text-primary)', border: '1px solid var(--border-mid)' }}>Стоическая библиотека</button>
+              </span>
+            )}
           </div>
         ) : rest.length > 0 && (
           <section style={{ display: 'flex', flexDirection: 'column' }}>
@@ -209,11 +247,19 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
         )}
 
         {filtered.length > 0 && (
-          <button onClick={() => { vibe(); onOpenCatalog() }}
-            style={{ alignSelf: 'stretch', height: 48, margin: '4px 8px 0', background: 'none', border: '1px dashed var(--border-mid)', cursor: 'pointer', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-            Найти книгу в каталоге
-          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, margin: '4px 8px 0' }}>
+            <button onClick={() => { vibe(); fileRef.current?.click() }} disabled={uploading}
+              style={{ height: 48, background: 'none', border: '1px dashed var(--border-mid)', cursor: 'pointer', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+              {uploading ? 'Читаю файл…' : 'Загрузить книгу'}
+            </button>
+            <button onClick={() => { vibe(); setShowStoic(true) }}
+              style={{ height: 48, background: 'none', border: '1px dashed var(--border-mid)', cursor: 'pointer', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+              Стоическая библиотека
+            </button>
+          </div>
         )}
+        {uploadError && <p role="alert" style={{ margin: '0 8px', fontSize: 13, color: 'var(--red)' }}>{uploadError}</p>}
+        <input ref={fileRef} type="file" accept={BOOK_FILE_ACCEPT} hidden onChange={e => { void uploadBook(e.currentTarget.files?.[0]); e.currentTarget.value = '' }} />
       </div>
 
       {showGoal && (
@@ -227,6 +273,42 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
               style={{ ...inkButton, height: 48, fontSize: 15 }}>
               Сохранить
             </button>
+          </div>
+        </div>
+      )}
+
+      {showStoic && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', animation: 'fadeIn var(--dur-quick) var(--ease-calm)' }} onClick={() => setShowStoic(false)}>
+          <div role="dialog" aria-label="Стоическая библиотека" className="view-feed" onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 430, maxHeight: '86vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '18px 8px 10px 20px', borderBottom: '1px solid var(--border)' }}>
+              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: 'var(--text-primary)' }}>Стоическая библиотека</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.45 }}>Тексты из общественного достояния, английские переводы с Project Gutenberg</span>
+              </span>
+              <button aria-label="Закрыть" onClick={() => setShowStoic(false)} style={iconBtn}><X size={19} strokeWidth={1.5} /></button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '0 20px calc(16px + env(safe-area-inset-bottom))' }}>
+              {STOIC_LIBRARY.map(item => {
+                const onShelf = !!shelfBookFor(item)
+                return (
+                  <div key={item.gutenbergId} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: '1px solid var(--border)' }}>
+                    <BookCover book={{ title: item.title, author: item.author }} width={44} height={62} />
+                    <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span style={{ fontFamily: 'var(--font-serif)', fontSize: 17, lineHeight: 1.25, color: 'var(--text-primary)' }}>{item.title}</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.author} · {item.note}</span>
+                      <span style={{ display: 'flex', gap: 14, marginTop: 6 }}>
+                        <button onClick={() => takeStoic(item, true)} style={{ ...inkButton, height: 32, padding: '0 12px' }}>Читать</button>
+                        <button onClick={() => takeStoic(item, false)} disabled={onShelf}
+                          style={{ height: 32, padding: 0, background: 'none', border: 'none', cursor: onShelf ? 'default' : 'pointer', fontSize: 13, color: onShelf ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: onShelf ? 'none' : 'underline', textUnderlineOffset: 4 }}>
+                          {onShelf ? 'На полке' : 'На полку'}
+                        </button>
+                      </span>
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}
