@@ -339,7 +339,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
                   width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
                   background: isInLibrary(book)
                     ? 'var(--bg-raised)'
-                    : 'linear-gradient(135deg, var(--accent), #8a6a3a)',
+                    : 'var(--accent)',
                   border: '1px solid var(--border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: isInLibrary(book) ? 'default' : 'pointer',

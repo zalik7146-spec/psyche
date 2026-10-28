@@ -190,13 +190,13 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 onClick={() => { setMode('review'); vibe(12); }}
                 style={{
                   width: '100%', padding: '16px',
-                  background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
+                  background: 'var(--accent)',
                   border: 'none', borderRadius: 2, cursor: 'pointer',
                   color: 'var(--on-accent)', fontSize: '16px', fontWeight: 600,
                   fontFamily: 'Inter,sans-serif',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
                   marginBottom: '20px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                  boxShadow: 'var(--shadow-lg)',
                   animation: 'scaleInBounce 0.4s ease',
                 }}
               >
@@ -403,7 +403,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
               style={{
                 width: '100%', padding: '16px',
                 background: front.trim() && back.trim()
-                  ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
+                  ? 'var(--accent)'
                   : 'var(--bg-raised)',
                 border: 'none', borderRadius: 2, cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
                 color: front.trim() && back.trim() ? '#fff' : 'var(--text-muted)',
@@ -491,7 +491,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                     alignItems: 'center', justifyContent: 'center',
                     textAlign: 'center', cursor: 'pointer',
                     marginBottom: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                    boxShadow: 'var(--shadow-lg)',
                     animation: enterAnim ? 'fadeSlideUp 0.35s ease' : 'none',
                     transition: 'transform 0.1s',
                   }}

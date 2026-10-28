@@ -232,7 +232,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
             disabled={step === 0 && (!!usernameError || !username)}
             style={{
               width: '100%', padding: '16px',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
+              background: 'var(--accent)',
               border: 'none', borderRadius: 2, color: 'var(--on-accent)',
               fontSize: 16, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -248,7 +248,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
             disabled={loading}
             style={{
               width: '100%', padding: '16px',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
+              background: 'var(--accent)',
               border: 'none', borderRadius: 2, color: 'var(--on-accent)',
               fontSize: 16, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

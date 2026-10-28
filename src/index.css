@@ -15,6 +15,10 @@
   --ease-calm:        cubic-bezier(0.2, 0, 0, 1);
   --dur-screen:       300ms;
   --dur-quick:        200ms;
+  /* Имена из старой палитры: на них ещё ссылаются компоненты */
+  --accent-warm:      var(--accent-soft);
+  --accent-dark:      var(--accent-soft);
+  --accent-muted:     var(--accent-glow);
 }
 
 /* ══════════════════════════════════════════════

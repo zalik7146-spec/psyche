@@ -15,12 +15,12 @@ interface Story {
 }
 
 const BG_COLORS = [
-  'linear-gradient(135deg, #2d1f0e, #4a3520)',
-  'linear-gradient(135deg, #0e1f2d, #1a3548)',
-  'linear-gradient(135deg, #1f0e2d, #3a1f4a)',
-  'linear-gradient(135deg, #0e2d1a, #1a4a2a)',
-  'linear-gradient(135deg, #2d1a0e, #4a2d1a)',
-  'linear-gradient(135deg, #1a1a2d, #2d2d4a)',
+  '#1B1A17',
+  '#2A2723',
+  '#3A3631',
+  '#1E232B',
+  '#23271F',
+  '#2B1F1C',
 ];
 
 const EMOJIS = ['💭', '✨', '📖', '🧠', '💡', '🌙', '⭐', '🔥', '🌊', '🎯', '🪶', '🌿'];
@@ -32,7 +32,7 @@ function Avatar({ profile, size = 36 }: { profile?: SocialProfile | null; size?:
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
+      background: av && av.startsWith('data:') ? 'none' : 'var(--accent)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.4, fontWeight: 600, color: 'var(--on-accent)', flexShrink: 0,
       overflow: 'hidden', border: '2px solid var(--border)',
@@ -122,7 +122,7 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
         }}>
           <Avatar profile={story.profile} size={36} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-accent)' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#E9E3D6' }}>
               {story.profile?.displayName || story.profile?.username || 'Читатель'}
             </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>
@@ -131,12 +131,12 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
           </div>
           {story.userId === userId && (
             <button onClick={() => { vibe(8); onDelete(story.id); onClose(); }}
-              style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 2, padding: '6px 10px', color: 'var(--on-accent)', cursor: 'pointer', fontSize: 12 }}>
+              style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 2, padding: '6px 10px', color: '#E9E3D6', cursor: 'pointer', fontSize: 12 }}>
               Удалить
             </button>
           )}
           <button onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--on-accent)', cursor: 'pointer', padding: 4 }}>
+            style={{ background: 'none', border: 'none', color: '#E9E3D6', cursor: 'pointer', padding: 4 }}>
             <X size={22} />
           </button>
         </div>
@@ -148,7 +148,7 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
         }}>
           <div style={{ fontSize: 64, marginBottom: 24 }}>{story.emoji}</div>
           <p style={{
-            fontSize: 22, color: 'var(--on-accent)', fontFamily: 'var(--font-serif)',
+            fontSize: 22, color: '#E9E3D6', fontFamily: 'var(--font-serif)',
             textAlign: 'center', lineHeight: 1.5, fontWeight: 500,
           }}>{story.text}</p>
         </div>
@@ -216,7 +216,7 @@ function CreateStorySheet({ onClose, onCreate }: {
           }}>
             <span style={{ fontSize: 40 }}>{emoji}</span>
             <p style={{
-              fontSize: 16, color: 'var(--on-accent)', fontFamily: 'var(--font-serif)',
+              fontSize: 16, color: '#E9E3D6', fontFamily: 'var(--font-serif)',
               textAlign: 'center', lineHeight: 1.5, margin: 0,
               opacity: text ? 1 : 0.4,
             }}>{text || 'Ваша мысль...'}</p>
@@ -275,8 +275,8 @@ function CreateStorySheet({ onClose, onCreate }: {
           <button onClick={handleCreate} disabled={!text.trim()}
             style={{
               width: '100%', padding: '14px', borderRadius: 2,
-              background: text.trim() ? 'linear-gradient(135deg, var(--accent), var(--accent))' : 'var(--bg-raised)',
-              border: 'none', color: text.trim() ? '#fff' : 'var(--text-muted)',
+              background: text.trim() ? 'var(--accent)' : 'var(--bg-raised)',
+              border: 'none', color: text.trim() ? 'var(--on-accent)' : 'var(--text-muted)',
               fontSize: 15, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'not-allowed',
               fontFamily: 'Inter, sans-serif',
             }}>

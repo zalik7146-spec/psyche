@@ -587,7 +587,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
                 color: 'var(--on-accent)', fontWeight: 600, fontSize: 13,
                 fontFamily: 'Inter,sans-serif', cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                boxShadow: '0 2px 12px color-mix(in srgb, var(--accent) 35%, transparent)',
+                boxShadow: 'var(--shadow-lg)',
               }}
             >
               Готово

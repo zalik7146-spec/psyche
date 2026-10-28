@@ -60,56 +60,56 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
       label: `Итоги ${year}`,
       value: yearNotes.length,
       sub: 'записей сделано за год',
-      bg: 'linear-gradient(135deg, #2a1f14 0%, #3d2b1a 100%)',
-      color: 'var(--accent)',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
     {
       emoji: '📚',
       label: 'Прочитано книг',
       value: yearBooks.length,
       sub: `книг добавлено в библиотеку в ${year}`,
-      bg: 'linear-gradient(135deg, #1a2a1f 0%, #1a3d2b 100%)',
-      color: 'var(--green)',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
     {
       emoji: '✍️',
       label: 'Слов написано',
       value: totalWords.toLocaleString('ru'),
       sub: 'слов в твоих записях — это целая книга!',
-      bg: 'linear-gradient(135deg, #1f1a2a 0%, #2b1a3d 100%)',
-      color: '#c97ae8',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
     {
       emoji: '💡',
       label: 'Инсайтов поймано',
       value: insights,
       sub: `инсайтов + ${quotes} цитат сохранено`,
-      bg: 'linear-gradient(135deg, #2a2a14 0%, #3d3d1a 100%)',
-      color: '#e8e87a',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
     {
       emoji: '🔥',
       label: 'Лучший стрик',
       value: `${streak} дней`,
       sub: 'максимальная серия записей подряд',
-      bg: 'linear-gradient(135deg, #2a1414 0%, #3d1a1a 100%)',
-      color: 'var(--red)',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
     {
       emoji: '🏆',
       label: 'Топ книга',
       value: topBook ? `${topBook.coverEmoji} ${topBook.title}` : '—',
       sub: topBook ? `${notes.filter(n => n.bookId === topBook.id).length} записей к этой книге` : 'Добавь первую книгу!',
-      bg: 'linear-gradient(135deg, #1a1f2a 0%, #1a2b3d 100%)',
-      color: '#7ab8e8',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
     {
       emoji: '🏷️',
       label: 'Главный тег',
       value: topTag ? `#${topTag[0]}` : '—',
       sub: topTag ? `использован ${topTag[1]} раз` : 'Добавь теги к записям!',
-      bg: 'linear-gradient(135deg, #1a2a2a 0%, #1a3d3d 100%)',
-      color: '#7ae8e8',
+      bg: '#1B1A17',
+      color: '#E9E3D6',
     },
   ];
 
@@ -164,7 +164,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           width: 36, height: 36, borderRadius: '50%',
           background: 'rgba(255,255,255,0.1)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--on-accent)', cursor: 'pointer', zIndex: 10,
+          color: '#E9E3D6', cursor: 'pointer', zIndex: 10,
         }}>
           <X size={18} />
         </button>
@@ -203,7 +203,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           </p>
           <p style={{
             fontSize: typeof slide.value === 'string' && slide.value.length > 10 ? 28 : 64,
-            fontWeight: 600, color: 'var(--on-accent)',
+            fontWeight: 600, color: '#E9E3D6',
             fontFamily: 'var(--font-serif)', textAlign: 'center',
             lineHeight: 1.1, marginBottom: 16,
             textShadow: `0 0 40px color-mix(in srgb, ${slide.color} 38%, transparent)`,
@@ -228,7 +228,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
             width: 48, height: 48, borderRadius: '50%',
             background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--on-accent)', cursor: 'pointer', opacity: idx === 0 ? 0.3 : 1,
+            color: '#E9E3D6', cursor: 'pointer', opacity: idx === 0 ? 0.3 : 1,
           }}>
             <ChevronLeft size={24} />
           </button>
@@ -246,7 +246,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
             width: 48, height: 48, borderRadius: '50%',
             background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--on-accent)', cursor: 'pointer', opacity: idx === slides.length - 1 ? 0.3 : 1,
+            color: '#E9E3D6', cursor: 'pointer', opacity: idx === slides.length - 1 ? 0.3 : 1,
           }}>
             <ChevronRight size={24} />
           </button>

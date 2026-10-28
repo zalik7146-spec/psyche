@@ -241,7 +241,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
               <div
                 key={insightKey}
                 style={{
-                  background: 'linear-gradient(145deg, var(--bg-raised) 0%, var(--bg-card) 100%)',
+                  background: 'var(--bg-raised)',
                   border: '1px solid var(--border-mid)',
                   borderRadius: 2,
                   padding: '20px',
@@ -437,7 +437,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                           width: '100%',
                           height: `${Math.max(day.count / maxActivity * 60, day.count > 0 ? 8 : 3)}px`,
                           background: day.count > 0
-                            ? `linear-gradient(180deg, var(--accent) 0%, var(--accent-soft) 100%)`
+                            ? `var(--accent)`
                             : 'var(--bg-raised)',
                           borderRadius: '5px 5px 3px 3px',
                           transition: 'height 0.7s cubic-bezier(0.34,1.1,0.64,1)',
@@ -537,7 +537,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                         <div style={{ height: '6px', background: 'var(--bg-raised)', borderRadius: '99px', overflow: 'hidden' }}>
                           <div style={{
                             width: `${pct}%`, height: '100%',
-                            background: 'linear-gradient(90deg, var(--accent-soft), var(--accent))',
+                            background: 'var(--accent-soft)',
                             borderRadius: '99px',
                             transition: 'width 0.9s cubic-bezier(0.34,1.1,0.64,1)',
                           }} />

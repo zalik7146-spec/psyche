@@ -228,7 +228,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
               </button>
               <button onClick={startRecording} style={{
                 flex: 2, padding: '14px', borderRadius: 2,
-                background: 'linear-gradient(135deg, var(--red), var(--red))',
+                background: 'var(--red)',
                 border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
@@ -240,7 +240,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
           {mode === 'recording' && (
             <button onClick={stopRecording} style={{
               flex: 1, padding: '14px', borderRadius: 2,
-              background: 'linear-gradient(135deg, var(--red), var(--red))',
+              background: 'var(--red)',
               border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
@@ -268,7 +268,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
               </button>
               <button onClick={handleSave} style={{
                 flex: 1, padding: '14px', borderRadius: 2,
-                background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
+                background: 'var(--accent)',
                 border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>

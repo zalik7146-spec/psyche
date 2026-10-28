@@ -387,11 +387,11 @@ export default function AuthScreen({ onAuth }: Props) {
           {/* Иконка */}
           <div style={{
             width: 80, height: 80, borderRadius: 2,
-            background: 'linear-gradient(135deg, rgba(196,129,60,0.15), rgba(196,129,60,0.08))',
-            border: '1px solid rgba(196,129,60,0.3)',
+            background: 'var(--bg-card)',
+            border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: '24px',
-            boxShadow: '0 8px 32px rgba(196,129,60,0.15)',
+            boxShadow: 'var(--shadow-lg)',
           }}>
             <Mail size={36} style={{ color: 'var(--accent)' }} strokeWidth={1.5} />
           </div>
@@ -491,7 +491,7 @@ export default function AuthScreen({ onAuth }: Props) {
               style={{
                 width: '100%', padding: '16px',
                 borderRadius: 2, border: 'none',
-                background: loading ? 'var(--bg-active)' : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
+                background: loading ? 'var(--bg-active)' : 'var(--accent)',
                 color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
                 fontWeight: 600, fontSize: '15px', fontFamily: 'Inter, sans-serif',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -548,10 +548,10 @@ export default function AuthScreen({ onAuth }: Props) {
         }}>
           <div className="fade-in" style={{
             width: 64, height: 64, borderRadius: 2,
-            background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-active))',
+            background: 'var(--bg-raised)',
             border: '1px solid var(--border-mid)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: 'var(--shadow-lg)',
           }}>
             <Feather size={30} style={{ color: 'var(--accent)' }} strokeWidth={1.5} />
           </div>
@@ -729,7 +729,7 @@ export default function AuthScreen({ onAuth }: Props) {
             style={{
               width: '100%', padding: '14px',
               borderRadius: 2, border: 'none',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
+              background: 'var(--accent)',
               color: 'var(--bg-base)', fontWeight: 600, fontSize: '15px',
               fontFamily: 'Inter, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -909,7 +909,7 @@ export default function AuthScreen({ onAuth }: Props) {
             borderRadius: 2, border: 'none',
             background: loading
               ? 'var(--bg-active)'
-              : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
+              : 'var(--accent)',
             color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
             fontWeight: 600, fontSize: '15px', fontFamily: 'Inter, sans-serif',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',

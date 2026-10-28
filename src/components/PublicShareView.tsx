@@ -322,7 +322,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         <button onClick={() => { vibe(8); setShowExportSheet(true); }}
           style={{
             width: '100%', padding: '18px 20px',
-            background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-card))',
+            background: 'var(--bg-raised)',
             border: '1px solid var(--border)',
             borderRadius: 2, cursor: 'pointer', textAlign: 'left',
             display: 'flex', alignItems: 'center', gap: 16,
@@ -453,7 +453,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               </div>
               <button onClick={() => { vibe(8); setMode('create'); }} style={{
                 padding: '11px 24px', borderRadius: 2,
-                background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
+                background: 'var(--accent)',
                 border: 'none', color: 'var(--on-accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
               }}>Создать конспект</button>
@@ -744,7 +744,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           style={{
             width: '100%', padding: '17px', borderRadius: 2, border: 'none',
             background: selBook && title.trim()
-              ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
+              ? 'var(--accent)'
               : 'var(--bg-raised)',
             color: selBook && title.trim() ? '#fff' : 'var(--text-muted)',
             fontSize: 16, fontWeight: 600,

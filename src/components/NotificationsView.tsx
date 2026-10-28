@@ -21,10 +21,10 @@ interface Props {
 }
 
 const TYPE_CONFIG = {
-  like:         { icon: <Heart size={16} fill="currentColor" />, color: 'var(--red)', label: 'лайкнул(а) вашу запись' },
-  comment:      { icon: <MessageCircle size={16} />, color: '#3498db', label: 'прокомментировал(а)' },
-  follow:       { icon: <UserPlus size={16} />, color: '#2ecc71', label: 'подписался(лась) на вас' },
-  daily_review: { icon: <BookOpen size={16} />, color: 'var(--accent)', label: 'Daily Review' },
+  like:         { icon: <Heart size={11} strokeWidth={1.75} />, color: 'var(--text-primary)', label: 'поставил(а) оттиск вашему листу' },
+  comment:      { icon: <MessageCircle size={11} strokeWidth={1.75} />, color: 'var(--text-primary)', label: 'оставил(а) пометку на полях' },
+  follow:       { icon: <UserPlus size={11} strokeWidth={1.75} />, color: 'var(--text-primary)', label: 'теперь читает вас' },
+  daily_review: { icon: <BookOpen size={11} strokeWidth={1.75} />, color: 'var(--text-primary)', label: 'Из прошлого' },
 };
 
 function timeAgo(iso: string): string {
@@ -138,8 +138,8 @@ export default function NotificationsView({ user, onBack }: Props) {
           <ArrowLeft size={18} />
         </button>
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', margin: 0 }}>
-            Уведомления
+          <h2 style={{ fontSize: 26, fontWeight: 400, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', margin: 0 }}>
+            Отклики
           </h2>
           {unreadCount > 0 && (
             <p style={{ fontSize: 12, color: 'var(--accent)', margin: 0 }}>{unreadCount} непрочитанных</p>
@@ -169,13 +169,12 @@ export default function NotificationsView({ user, onBack }: Props) {
         )}
 
         {isEmpty && (
-          <div style={{ padding: 40, textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🔔</div>
-            <p style={{ fontSize: 16, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', fontWeight: 600, marginBottom: 8 }}>
+          <div style={{ padding: '40px 24px' }}>
+            <p style={{ fontSize: 22, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', fontWeight: 400, margin: '0 0 8px' }}>
               Пока тихо
             </p>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-              Когда кто-то лайкнет или прокомментирует вашу запись — уведомление появится здесь
+            <p className="font-typed" style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+              Когда кто-то поставит оттиск, оставит пометку на полях или начнёт вас читать, это появится здесь.
             </p>
           </div>
         )}
@@ -195,7 +194,7 @@ export default function NotificationsView({ user, onBack }: Props) {
                 gap: 12, padding: '12px 16px', border: 'none', cursor: 'pointer',
                 background: n.isRead ? 'transparent' : 'var(--accent-muted)',
                 borderBottom: '1px solid var(--border)',
-                animation: `fadeSlideUp 0.3s ease ${idx * 0.05}s both`,
+                animation: `calmFade var(--dur-screen) var(--ease-calm) ${Math.min(idx * 0.04, 0.24)}s both`,
                 textAlign: 'left',
               }}
             >
@@ -203,10 +202,10 @@ export default function NotificationsView({ user, onBack }: Props) {
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%',
-                  background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
+                  background: 'var(--bg-card)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, fontWeight: 600, color: 'var(--on-accent)', overflow: 'hidden',
-                  border: '2px solid var(--border)',
+                  fontSize: 18, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', overflow: 'hidden',
+                  border: '1px solid var(--text-primary)',
                 }}>
                   {av
                     ? av.startsWith('data:')
@@ -223,7 +222,7 @@ export default function NotificationsView({ user, onBack }: Props) {
                 }}>
                   <div style={{
                     width: 16, height: 16, borderRadius: '50%',
-                    background: `color-mix(in srgb, ${conf.color} 13%, transparent)`,
+                    background: 'var(--bg-card)', border: '1px solid var(--border-mid)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: conf.color,
                   }}>
@@ -274,7 +273,7 @@ export default function NotificationsView({ user, onBack }: Props) {
           </div>
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0, fontFamily: 'Inter, sans-serif' }}>
-              Daily Review
+              Из прошлого
             </p>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
               Каждый день вы будете получать случайную запись из прошлого

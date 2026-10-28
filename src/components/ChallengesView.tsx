@@ -241,7 +241,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
           <div style={{
             height: '100%', borderRadius: 3,
             width: `${completed.length / challenges.length * 100}%`,
-            background: 'linear-gradient(90deg, var(--accent), var(--accent-dark))',
+            background: 'var(--accent)',
             transition: 'width 0.5s ease',
           }} />
         </div>

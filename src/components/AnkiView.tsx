@@ -23,7 +23,7 @@ const RATING_CONFIG: Record<Rating, { label: string; color: string; icon: string
   1: { label: 'Снова',    color: 'var(--red)', icon: '✕', desc: 'Не помню совсем' },
   2: { label: 'Сложно',   color: 'var(--accent)', icon: '~', desc: 'С трудом' },
   3: { label: 'Хорошо',   color: 'var(--text-secondary)', icon: '✓', desc: 'Вспомнил' },
-  4: { label: 'Легко',    color: '#78c8a0', icon: '⚡', desc: 'Моментально' },
+  4: { label: 'Легко',    color: 'var(--green)', icon: '✓✓', desc: 'Моментально' },
 };
 
 export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }: Props) {
@@ -146,7 +146,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
       <div style={{ height: 4, borderRadius: 99, background: 'var(--bg-raised)' }}>
         <div style={{
           height: '100%', borderRadius: 99,
-          background: 'linear-gradient(90deg, var(--accent), var(--accent-warm))',
+          background: 'var(--accent)',
           width: `${(currentIdx / sessionCards.length) * 100}%`,
           transition: 'width 0.4s cubic-bezier(0.4,0,0.2,1)',
         }} />
@@ -192,16 +192,16 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         <div style={{
           borderRadius: 2, overflow: 'hidden',
           background: dueCards.length > 0
-            ? 'linear-gradient(135deg, var(--accent) 0%, var(--accent-warm) 100%)'
+            ? 'var(--accent)'
             : 'var(--bg-raised)',
           border: '1px solid var(--border-mid)',
           animation: 'fadeSlideUp 0.4s ease',
         }}>
           <div style={{ padding: '24px 24px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div style={{ fontSize: 32 }}>{dueCards.length > 0 ? '🧠' : '✅'}</div>
+              
               <div>
-                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600,
+                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 400,
                   color: dueCards.length > 0 ? '#fff' : 'var(--text-primary)' }}>
                   {dueCards.length > 0 ? `${dueCards.length} к повторению` : 'Всё повторено!'}
                 </div>
@@ -230,7 +230,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           animation: 'fadeSlideUp 0.4s ease 0.05s both' }}>
           {[
             { label: 'Всего', value: flashcards.length, icon: <BookOpen size={16} />, color: 'var(--accent)' },
-            { label: 'Скоро', value: futureCards.length, icon: <Clock size={16} />, color: '#a090c0' },
+            { label: 'Скоро', value: futureCards.length, icon: <Clock size={16} />, color: 'var(--text-secondary)' },
             { label: 'Сегодня', value: dueCards.length, icon: <Target size={16} />, color: 'var(--text-secondary)' },
           ].map(s => (
             <div key={s.label} style={{ borderRadius: 2, padding: '14px 12px',
@@ -291,7 +291,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             </div>
             <button onClick={() => { vibe(8); setMode('create'); }} style={{
               padding: '13px 28px', borderRadius: 2,
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
+              background: 'var(--accent)',
               border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
             }}>
@@ -395,10 +395,10 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               <div style={{
                 height: '100%', borderRadius: 99,
                 background: accuracy >= 80
-                  ? 'linear-gradient(90deg, var(--text-secondary), #78c8a0)'
+                  ? 'var(--text-secondary)'
                   : accuracy >= 60
-                  ? 'linear-gradient(90deg, var(--accent), var(--accent-warm))'
-                  : 'linear-gradient(90deg, var(--accent), var(--red))',
+                  ? 'var(--accent)'
+                  : 'var(--accent)',
                 width: `${accuracy}%`,
                 transition: 'width 1s ease',
               }} />
@@ -417,7 +417,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             {dueCards.length > 0 && (
               <button onClick={() => startSession(dueCards)} style={{
                 flex: 1, padding: '14px', borderRadius: 2,
-                background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
+                background: 'var(--accent)',
                 border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
               }}>
@@ -491,7 +491,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             >
               {/* Accent top */}
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                background: 'linear-gradient(90deg, var(--accent), var(--accent-warm))' }} />
+                background: 'var(--accent)' }} />
 
               {/* Front */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -574,7 +574,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             <button onClick={handleFlip} style={{
               marginTop: 16, width: '100%', padding: '16px',
               borderRadius: 2, border: 'none',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
+              background: 'var(--accent)',
               color: 'var(--on-accent)', fontSize: 16, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -748,7 +748,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           style={{
             width: '100%', padding: '16px', borderRadius: 2, border: 'none',
             background: front.trim() && back.trim()
-              ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
+              ? 'var(--accent)'
               : 'var(--bg-raised)',
             color: front.trim() && back.trim() ? '#fff' : 'var(--text-muted)',
             fontSize: 16, fontWeight: 600, cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
