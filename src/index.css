@@ -380,7 +380,7 @@ body {
   width: 100%;
   background: var(--input-bg);
   border: 1px solid var(--border-mid);
-  border-radius: 14px;
+  border-radius: 2px;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
@@ -438,7 +438,7 @@ body {
   justify-content: center;
   min-width: 30px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: 2px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
@@ -530,7 +530,7 @@ body {
 .tiptap-editor code {
   background: var(--bg-active);
   color: var(--gold);
-  border-radius: 5px;
+  border-radius: 2px;
   padding: 1px 6px;
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 0.87em;
@@ -538,7 +538,7 @@ body {
 
 .tiptap-editor pre {
   background: var(--bg-active);
-  border-radius: 10px;
+  border-radius: 2px;
   padding: 14px 16px;
   margin: 0.8em 0;
   overflow-x: auto;
@@ -759,7 +759,7 @@ mark.search-hl {
   z-index: 9999;
   background: var(--bg-raised);
   border: 1px solid var(--border-mid);
-  border-radius: 14px;
+  border-radius: 2px;
   box-shadow: var(--shadow-lg);
   padding: 6px;
   animation: scaleIn 0.15s ease-out both;
@@ -771,8 +771,8 @@ mark.search-hl {
 ══════════════════════════════════════════════ */
 .note-title {
   font-family: var(--font-serif);
-  font-size: 0.98rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 400;
   color: var(--text-primary);
   line-height: 1.35;
   margin: 0 0 4px;
@@ -816,7 +816,7 @@ mark.search-hl {
   position: absolute;
   background: var(--bg-raised);
   border: 1px solid var(--border-mid);
-  border-radius: 14px;
+  border-radius: 2px;
   padding: 10px;
   box-shadow: var(--shadow-lg);
   z-index: 200;

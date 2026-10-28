@@ -125,7 +125,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
           <button
             onClick={() => { setMode('create'); vibe(); }}
             style={{
-              width: 36, height: 36, borderRadius: '10px',
+              width: 36, height: 36, borderRadius: 2,
               background: 'var(--accent)', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: 'var(--on-accent)',
@@ -167,7 +167,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 { label: 'Выучено', value: flashcards.filter(c => c.repetitions >= 3).length, icon: <Star size={16} />, color: '#6a9a4a' },
               ].map(s => (
                 <div key={s.label} style={{
-                  background: 'var(--bg-card)', borderRadius: '14px',
+                  background: 'var(--bg-card)', borderRadius: 2,
                   padding: '14px 12px', textAlign: 'center',
                   border: '1px solid var(--border)',
                 }}>
@@ -191,7 +191,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 style={{
                   width: '100%', padding: '16px',
                   background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-                  border: 'none', borderRadius: '16px', cursor: 'pointer',
+                  border: 'none', borderRadius: 2, cursor: 'pointer',
                   color: 'var(--on-accent)', fontSize: '16px', fontWeight: 600,
                   fontFamily: 'Inter,sans-serif',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
@@ -228,7 +228,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                     <div
                       key={card.id}
                       style={{
-                        background: 'var(--bg-card)', borderRadius: '14px',
+                        background: 'var(--bg-card)', borderRadius: 2,
                         padding: '14px 16px',
                         border: `1px solid ${isDue ? 'var(--accent)' : 'var(--border)'}`,
                         animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
@@ -305,7 +305,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
         {mode === 'create' && (
           <div style={{ padding: '20px' }}>
             <div style={{
-              background: 'var(--bg-card)', borderRadius: '16px',
+              background: 'var(--bg-card)', borderRadius: 2,
               padding: '20px', border: '1px solid var(--border)',
               marginBottom: '16px', animation: 'fadeSlideUp 0.3s ease',
             }}>
@@ -323,7 +323,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 rows={3}
                 style={{
                   width: '100%', background: 'var(--bg-raised)',
-                  border: '1px solid var(--border)', borderRadius: '10px',
+                  border: '1px solid var(--border)', borderRadius: 2,
                   padding: '12px 14px', color: 'var(--text-primary)',
                   fontSize: '15px', fontFamily: 'Inter,sans-serif',
                   resize: 'none', outline: 'none', lineHeight: '1.5',
@@ -333,7 +333,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
             </div>
 
             <div style={{
-              background: 'var(--bg-card)', borderRadius: '16px',
+              background: 'var(--bg-card)', borderRadius: 2,
               padding: '20px', border: '1px solid var(--border)',
               marginBottom: '16px',
             }}>
@@ -351,7 +351,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 rows={4}
                 style={{
                   width: '100%', background: 'var(--bg-raised)',
-                  border: '1px solid var(--border)', borderRadius: '10px',
+                  border: '1px solid var(--border)', borderRadius: 2,
                   padding: '12px 14px', color: 'var(--text-primary)',
                   fontSize: '15px', fontFamily: 'Inter,sans-serif',
                   resize: 'none', outline: 'none', lineHeight: '1.5',
@@ -362,7 +362,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
 
             {/* Link to note */}
             <div style={{
-              background: 'var(--bg-card)', borderRadius: '16px',
+              background: 'var(--bg-card)', borderRadius: 2,
               padding: '16px 20px', border: '1px solid var(--border)',
               marginBottom: '16px',
             }}>
@@ -379,7 +379,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                   onChange={e => setNoteId(e.target.value)}
                   style={{
                     width: '100%', background: 'var(--bg-raised)',
-                    border: '1px solid var(--border)', borderRadius: '10px',
+                    border: '1px solid var(--border)', borderRadius: 2,
                     padding: '10px 36px 10px 14px', color: noteId ? 'var(--text-primary)' : 'var(--text-muted)',
                     fontSize: '14px', fontFamily: 'Inter,sans-serif',
                     appearance: 'none', outline: 'none', cursor: 'pointer',
@@ -405,7 +405,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 background: front.trim() && back.trim()
                   ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
                   : 'var(--bg-raised)',
-                border: 'none', borderRadius: '14px', cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
+                border: 'none', borderRadius: 2, cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
                 color: front.trim() && back.trim() ? '#fff' : 'var(--text-muted)',
                 fontSize: '16px', fontWeight: 600, fontFamily: 'Inter,sans-serif',
                 transition: 'all 0.2s',
@@ -443,7 +443,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                   style={{
                     padding: '14px 32px',
                     background: 'var(--accent)', border: 'none',
-                    borderRadius: '14px', color: 'var(--on-accent)',
+                    borderRadius: 2, color: 'var(--on-accent)',
                     fontSize: '15px', fontWeight: 600,
                     fontFamily: 'Inter,sans-serif', cursor: 'pointer',
                   }}
@@ -483,7 +483,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 <div
                   onClick={() => { setShowAnswer(true); vibe(6); }}
                   style={{
-                    minHeight: '260px', borderRadius: '20px',
+                    minHeight: '260px', borderRadius: 2,
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-mid)',
                     padding: '32px 24px',
@@ -556,7 +556,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                           padding: '14px 8px',
                           background: 'var(--bg-card)',
                           border: `1px solid color-mix(in srgb, ${r.color} 25%, transparent)`,
-                          borderRadius: '14px', cursor: 'pointer',
+                          borderRadius: 2, cursor: 'pointer',
                           display: 'flex', flexDirection: 'column',
                           alignItems: 'center', gap: '6px',
                         }}
@@ -577,7 +577,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                     style={{
                       width: '100%', padding: '16px',
                       background: 'var(--accent)', border: 'none',
-                      borderRadius: '14px', cursor: 'pointer',
+                      borderRadius: 2, cursor: 'pointer',
                       color: 'var(--on-accent)', fontSize: '16px', fontWeight: 600,
                       fontFamily: 'Inter,sans-serif',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -597,7 +597,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                     disabled={reviewIdx === 0}
                     style={{
                       background: 'var(--bg-card)', border: '1px solid var(--border)',
-                      borderRadius: '10px', padding: '10px 16px',
+                      borderRadius: 2, padding: '10px 16px',
                       color: reviewIdx === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
                       cursor: reviewIdx === 0 ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', gap: '6px',
@@ -611,7 +611,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                     disabled={reviewIdx >= reviewCards.length - 1}
                     style={{
                       background: 'var(--bg-card)', border: '1px solid var(--border)',
-                      borderRadius: '10px', padding: '10px 16px',
+                      borderRadius: 2, padding: '10px 16px',
                       color: reviewIdx >= reviewCards.length - 1 ? 'var(--text-muted)' : 'var(--text-primary)',
                       cursor: reviewIdx >= reviewCards.length - 1 ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', gap: '6px',

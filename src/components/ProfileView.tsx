@@ -187,7 +187,7 @@ export default function ProfileView({
               onClick={() => { vibe(6); onOpenMessages?.(); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 12px', borderRadius: 12,
+                padding: '7px 12px', borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 cursor: 'pointer', color: 'var(--text-secondary)',
                 fontSize: 13, fontFamily: 'Inter, sans-serif',
@@ -200,7 +200,7 @@ export default function ProfileView({
               onClick={() => { vibe(6); onNavigate?.('settings'); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 12px', borderRadius: 12,
+                padding: '7px 12px', borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 cursor: 'pointer', color: 'var(--text-secondary)',
                 fontSize: 13, fontFamily: 'Inter, sans-serif',
@@ -222,21 +222,21 @@ export default function ProfileView({
                 <input value={editName} onChange={e => setEditName(e.target.value)}
                   placeholder='Имя' style={{
                     background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                    borderRadius: 10, padding: '8px 12px', fontSize: 15, fontWeight: 700,
+                    borderRadius: 2, padding: '8px 12px', fontSize: 15, fontWeight: 700,
                     color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', outline: 'none',
                     width: '100%', boxSizing: 'border-box',
                   }}/>
                 <input value={editUsername} onChange={e => setEditUsername(e.target.value)}
                   placeholder='username' style={{
                     background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                    borderRadius: 10, padding: '8px 12px', fontSize: 13,
+                    borderRadius: 2, padding: '8px 12px', fontSize: 13,
                     color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', outline: 'none',
                     width: '100%', boxSizing: 'border-box',
                   }}/>
                 <textarea value={editBio} onChange={e => setEditBio(e.target.value)}
                   placeholder='Расскажите о себе...' rows={2} style={{
                     background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                    borderRadius: 10, padding: '8px 12px', fontSize: 13,
+                    borderRadius: 2, padding: '8px 12px', fontSize: 13,
                     color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif',
                     outline: 'none', resize: 'none', lineHeight: 1.5,
                     width: '100%', boxSizing: 'border-box',
@@ -245,7 +245,7 @@ export default function ProfileView({
                   <button onClick={() => { setEditPublic(p => !p); vibe(6); }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-                      borderRadius: 10, border: '1px solid var(--border)', cursor: 'pointer',
+                      borderRadius: 2, border: '1px solid var(--border)', cursor: 'pointer',
                       background: editPublic ? 'var(--accent-muted)' : 'var(--bg-raised)',
                       color: editPublic ? 'var(--accent)' : 'var(--text-muted)', fontSize: 12,
                       fontFamily: 'Inter, sans-serif',
@@ -255,13 +255,13 @@ export default function ProfileView({
                   </button>
                   <div style={{ flex: 1 }}/>
                   <button onClick={() => setEditing(false)}
-                    style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 10px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                    style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 2, padding: '6px 10px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                     <X size={16}/>
                   </button>
                   <button onClick={handleSave} disabled={saving}
                     style={{
                       background: 'linear-gradient(135deg, var(--accent), var(--accent))', border: 'none',
-                      borderRadius: 10, padding: '6px 14px', cursor: 'pointer', color: 'var(--on-accent)',
+                      borderRadius: 2, padding: '6px 14px', cursor: 'pointer', color: 'var(--on-accent)',
                       fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
                     }}>
                     <Check size={14}/> {saving ? '...' : 'Готово'}
@@ -289,7 +289,7 @@ export default function ProfileView({
                 <button onClick={() => { vibe(6); setEditing(true); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px',
-                    borderRadius: 10, border: '1px solid var(--border)', cursor: 'pointer',
+                    borderRadius: 2, border: '1px solid var(--border)', cursor: 'pointer',
                     background: 'var(--bg-raised)', color: 'var(--text-secondary)',
                     fontSize: 12, fontFamily: 'Inter, sans-serif',
                   }}>
@@ -315,7 +315,7 @@ export default function ProfileView({
             ].map(s => (
               <div key={s.l}
                 onClick={s.onClick}
-                style={{ textAlign: 'center', cursor: s.onClick ? 'pointer' : 'default', padding: '4px 0', borderRadius: 8 }}
+                style={{ textAlign: 'center', cursor: s.onClick ? 'pointer' : 'default', padding: '4px 0', borderRadius: 2 }}
               >
                 <div style={{ fontSize: 18, fontWeight: 700, color: s.onClick ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{s.v}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
@@ -326,7 +326,7 @@ export default function ProfileView({
 
         {/* Tabs */}
         {!editing && (
-          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-raised)', borderRadius: 12, padding: 3, marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-raised)', borderRadius: 2, padding: 3, marginTop: 10 }}>
             {([
               { id: 'tools', label: '🛠 Инструменты' },
               { id: 'posts', label: '📝 Публикации' },
@@ -334,7 +334,7 @@ export default function ProfileView({
             ] as const).map(t => (
               <button key={t.id} onClick={() => { vibe(6); setActiveTab(t.id); }}
                 style={{
-                  flex: 1, padding: '7px 4px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                  flex: 1, padding: '7px 4px', borderRadius: 2, border: 'none', cursor: 'pointer',
                   background: activeTab === t.id ? 'var(--bg-card)' : 'transparent',
                   color: activeTab === t.id ? 'var(--text-primary)' : 'var(--text-muted)',
                   fontSize: 11, fontWeight: activeTab === t.id ? 700 : 400,
@@ -362,7 +362,7 @@ export default function ProfileView({
                   key={tool.id}
                   onClick={() => { vibe(8); onNavigate?.(tool.id); }}
                   style={{
-                    padding: '18px 14px', borderRadius: 18,
+                    padding: '18px 14px', borderRadius: 2,
                     background: tool.bg, border: `1px solid ${tool.border}`,
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                     display: 'flex', flexDirection: 'column', gap: 8,
@@ -391,7 +391,7 @@ export default function ProfileView({
               <button
                 onClick={() => { vibe(8); onOpenWrapped?.(); }}
                 style={{
-                  padding: '16px 14px', borderRadius: 18,
+                  padding: '16px 14px', borderRadius: 2,
                   background: 'linear-gradient(135deg, rgba(232,201,122,0.18), rgba(180,140,60,0.08))',
                   border: '1px solid rgba(232,201,122,0.3)',
                   cursor: 'pointer', textAlign: 'left', width: '100%',
@@ -416,7 +416,7 @@ export default function ProfileView({
               <button
                 onClick={() => { vibe(8); onOpenChallenges?.(); }}
                 style={{
-                  padding: '16px 14px', borderRadius: 18,
+                  padding: '16px 14px', borderRadius: 2,
                   background: 'linear-gradient(135deg, rgba(232,122,122,0.18), rgba(180,60,60,0.08))',
                   border: '1px solid rgba(232,122,122,0.3)',
                   cursor: 'pointer', textAlign: 'left', width: '100%',
@@ -444,7 +444,7 @@ export default function ProfileView({
               onClick={() => { vibe(6); onNavigate?.('library'); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 16px', borderRadius: 16, cursor: 'pointer', width: '100%',
+                padding: '14px 16px', borderRadius: 2, cursor: 'pointer', width: '100%',
                 background: 'rgba(212,145,74,0.06)', border: '1px solid rgba(212,145,74,0.2)',
                 animation: 'fadeSlideUp 0.3s ease 0.24s both',
                 WebkitTapHighlightColor: 'transparent',
@@ -454,7 +454,7 @@ export default function ProfileView({
               onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               <div style={{
-                width: 42, height: 42, borderRadius: 13,
+                width: 42, height: 42, borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
@@ -476,7 +476,7 @@ export default function ProfileView({
               onClick={() => { vibe(6); onNavigate?.('feed'); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 16px', borderRadius: 16, cursor: 'pointer', width: '100%',
+                padding: '14px 16px', borderRadius: 2, cursor: 'pointer', width: '100%',
                 background: 'rgba(106,158,138,0.06)', border: '1px solid rgba(106,158,138,0.2)',
                 animation: 'fadeSlideUp 0.3s ease 0.3s both',
                 WebkitTapHighlightColor: 'transparent',
@@ -486,7 +486,7 @@ export default function ProfileView({
               onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
               <div style={{
-                width: 42, height: 42, borderRadius: 13,
+                width: 42, height: 42, borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
@@ -506,7 +506,7 @@ export default function ProfileView({
             {/* Prompt to setup public profile */}
             {!profile && (
               <div style={{
-                background: 'var(--accent-muted)', borderRadius: 16, padding: '16px',
+                background: 'var(--accent-muted)', borderRadius: 2, padding: '16px',
                 border: '1px solid var(--accent)', textAlign: 'center',
                 animation: 'fadeSlideUp 0.3s ease 0.36s both',
               }}>
@@ -519,7 +519,7 @@ export default function ProfileView({
                 </div>
                 <button onClick={() => { vibe(8); setEditing(true); }}
                   style={{
-                    padding: '8px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                    padding: '8px 20px', borderRadius: 2, border: 'none', cursor: 'pointer',
                     background: 'linear-gradient(135deg, var(--accent), var(--accent))', color: 'var(--on-accent)',
                     fontSize: 13, fontWeight: 700,
                   }}>
@@ -546,7 +546,7 @@ export default function ProfileView({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {posts.map((post, i) => (
                 <div key={post.id} style={{
-                  background: 'var(--bg-card)', borderRadius: 14,
+                  background: 'var(--bg-card)', borderRadius: 2,
                   border: '1px solid var(--border)', overflow: 'hidden',
                   animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
                 }}>
@@ -594,7 +594,7 @@ export default function ProfileView({
         {!editing && activeTab === 'stats' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, animation: 'fadeSlideUp 0.4s ease both' }}>
             {/* Library stats */}
-            <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '16px', border: '1px solid var(--border)' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: 2, padding: '16px', border: '1px solid var(--border)' }}>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>БИБЛИОТЕКА</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {[
@@ -603,7 +603,7 @@ export default function ProfileView({
                   { icon: <Sparkles size={18}/>, v: books.filter(b => b.status === 'finished').length, l: 'прочитано' },
                 ].map(s => (
                   <div key={s.l} style={{
-                    background: 'var(--bg-raised)', borderRadius: 12, padding: '12px 8px',
+                    background: 'var(--bg-raised)', borderRadius: 2, padding: '12px 8px',
                     textAlign: 'center', border: '1px solid var(--border)',
                   }}>
                     <div style={{ color: 'var(--accent)', marginBottom: 6 }}>{s.icon}</div>
@@ -615,7 +615,7 @@ export default function ProfileView({
             </div>
 
             {/* Social stats */}
-            <div style={{ background: 'var(--bg-card)', borderRadius: 16, padding: '16px', border: '1px solid var(--border)' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: 2, padding: '16px', border: '1px solid var(--border)' }}>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>АКТИВНОСТЬ</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[

@@ -193,7 +193,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
           background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: 14, padding: '0 14px'
+          borderRadius: 2, padding: '0 14px'
         }}>
           <Search size={16} color='var(--text-muted)' />
           <input
@@ -236,7 +236,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
               {featured.map(f => (
                 <button key={f.q} onClick={() => handleSearch(f.q)} style={{
-                  padding: '8px 14px', borderRadius: 20,
+                  padding: '8px 14px', borderRadius: 2,
                   background: 'var(--bg-raised)', border: '1px solid var(--border)',
                   color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer',
                   transition: 'all 0.2s'
@@ -247,7 +247,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
             </div>
             <div style={{
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              borderRadius: 16, padding: 20, textAlign: 'center'
+              borderRadius: 2, padding: 20, textAlign: 'center'
             }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>📖</div>
               <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>
@@ -264,7 +264,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
         {error && (
           <div style={{
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
-            borderRadius: 16, padding: 20, textAlign: 'center',
+            borderRadius: 2, padding: 20, textAlign: 'center',
             color: 'var(--text-muted)', fontSize: 14
           }}>
             {error}
@@ -275,14 +275,14 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
         {results.map((book, i) => (
           <div key={book.id} style={{
             background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 16, marginBottom: 12, overflow: 'hidden',
+            borderRadius: 2, marginBottom: 12, overflow: 'hidden',
             animation: 'fadeSlideUp 0.3s ease both',
             animationDelay: `${i * 0.05}s`
           }}>
             <div style={{ display: 'flex', gap: 12, padding: 14 }}>
               {/* Cover */}
               <div style={{
-                width: 64, height: 90, borderRadius: 8, flexShrink: 0,
+                width: 64, height: 90, borderRadius: 2, flexShrink: 0,
                 background: 'var(--bg-raised)', overflow: 'hidden',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 border: '1px solid var(--border)'
@@ -313,19 +313,19 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {book.year && (
                     <span style={{
-                      fontSize: 11, padding: '2px 8px', borderRadius: 10,
+                      fontSize: 11, padding: '2px 8px', borderRadius: 2,
                       background: 'var(--bg-raised)', color: 'var(--text-muted)'
                     }}>{book.year}</span>
                   )}
                   {book.pages && (
                     <span style={{
-                      fontSize: 11, padding: '2px 8px', borderRadius: 10,
+                      fontSize: 11, padding: '2px 8px', borderRadius: 2,
                       background: 'var(--bg-raised)', color: 'var(--text-muted)'
                     }}>{book.pages} стр.</span>
                   )}
                   {book.genre && (
                     <span style={{
-                      fontSize: 11, padding: '2px 8px', borderRadius: 10,
+                      fontSize: 11, padding: '2px 8px', borderRadius: 2,
                       background: 'var(--bg-raised)', color: 'var(--accent)'
                     }}>{book.genre.substring(0, 20)}</span>
                   )}

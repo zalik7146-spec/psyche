@@ -136,7 +136,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             Выберите книгу
           </span>
           <button onClick={() => setShowBookSheet(false)} style={{
-            width: 30, height: 30, borderRadius: 8,
+            width: 30, height: 30, borderRadius: 2,
             background: 'var(--bg-raised)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: 'var(--text-muted)',
@@ -166,7 +166,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                 textAlign: 'left',
               }}>
                 <div style={{
-                  width: 48, height: 48, borderRadius: 14, background: b.color,
+                  width: 48, height: 48, borderRadius: 2, background: b.color,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 24, flexShrink: 0,
                   border: isSelected ? '2px solid var(--accent)' : '2px solid transparent',
@@ -230,7 +230,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             Экспорт книги в PDF
           </span>
           <button onClick={() => setShowExportSheet(false)} style={{
-            width: 30, height: 30, borderRadius: 8, background: 'var(--bg-raised)', border: 'none',
+            width: 30, height: 30, borderRadius: 2, background: 'var(--bg-raised)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: 'var(--text-muted)',
           }}><X size={15} /></button>
@@ -253,7 +253,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                   display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left',
                 }}>
                 <div style={{
-                  width: 48, height: 48, borderRadius: 14, background: book.color,
+                  width: 48, height: 48, borderRadius: 2, background: book.color,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 24, flexShrink: 0,
                 }}>{book.coverEmoji}</div>
@@ -267,7 +267,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                   </div>
                 </div>
                 <div style={{
-                  padding: '6px 10px', borderRadius: 8,
+                  padding: '6px 10px', borderRadius: 2,
                   background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
                   color: 'var(--accent)', fontSize: 11, fontFamily: 'Inter, sans-serif', fontWeight: 600,
                   display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
@@ -295,7 +295,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         borderBottom: '1px solid var(--border)', flexShrink: 0,
       }}>
         <button onClick={() => { vibe(6); onBack(); }} style={{
-          width: 38, height: 38, borderRadius: 12,
+          width: 38, height: 38, borderRadius: 2,
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
@@ -309,7 +309,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           </div>
         </div>
         <button onClick={() => { vibe(6); setMode('create'); }} style={{
-          marginLeft: 'auto', width: 38, height: 38, borderRadius: 12,
+          marginLeft: 'auto', width: 38, height: 38, borderRadius: 2,
           background: 'var(--accent)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--on-accent)', cursor: 'pointer',
@@ -324,12 +324,12 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             width: '100%', padding: '18px 20px',
             background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-card))',
             border: '1px solid var(--border)',
-            borderRadius: 20, cursor: 'pointer', textAlign: 'left',
+            borderRadius: 2, cursor: 'pointer', textAlign: 'left',
             display: 'flex', alignItems: 'center', gap: 16,
             animation: 'fadeSlideUp 0.35s ease',
           }}>
           <div style={{
-            width: 52, height: 52, borderRadius: 16,
+            width: 52, height: 52, borderRadius: 2,
             background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
@@ -363,14 +363,14 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                 const book = books.find(b => b.id === c.bookId);
                 return (
                   <div key={c.id} style={{
-                    borderRadius: 18, background: 'var(--bg-raised)',
+                    borderRadius: 2, background: 'var(--bg-raised)',
                     border: '1px solid var(--border)', overflow: 'hidden',
                     animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
                   }}>
                     <div style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
                         <div style={{
-                          width: 44, height: 44, borderRadius: 12,
+                          width: 44, height: 44, borderRadius: 2,
                           background: book?.color || 'var(--bg-active)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 22, flexShrink: 0,
@@ -409,7 +409,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
 
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => handleCopy(c.shareCode)} style={{
-                          flex: 1, padding: '10px', borderRadius: 12,
+                          flex: 1, padding: '10px', borderRadius: 2,
                           background: copied === c.shareCode ? 'rgba(106,158,138,0.15)' : 'var(--bg-active)',
                           border: `1px solid ${copied === c.shareCode ? 'color-mix(in srgb, var(--text-secondary) 27%, transparent)' : 'var(--border)'}`,
                           color: copied === c.shareCode ? 'var(--text-secondary)' : 'var(--text-secondary)',
@@ -421,13 +421,13 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                           {copied === c.shareCode ? 'Скопировано!' : 'Ссылка'}
                         </button>
                         <button onClick={() => { vibe(6); setViewing(c); setMode('view'); }} style={{
-                          padding: '10px 14px', borderRadius: 12,
+                          padding: '10px 14px', borderRadius: 2,
                           background: 'var(--bg-active)', border: '1px solid var(--border)',
                           color: 'var(--text-secondary)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}><Eye size={15} /></button>
                         <button onClick={() => handleDelete(c.id)} style={{
-                          padding: '10px 14px', borderRadius: 12,
+                          padding: '10px 14px', borderRadius: 2,
                           background: 'rgba(224,112,112,0.1)', border: '1px solid rgba(224,112,112,0.2)',
                           color: 'var(--red)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -441,7 +441,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           ) : (
             <div style={{
               textAlign: 'center', padding: '36px 20px',
-              background: 'var(--bg-raised)', borderRadius: 20,
+              background: 'var(--bg-raised)', borderRadius: 2,
               border: '1px dashed var(--border)',
             }}>
               <div style={{ fontSize: 44, marginBottom: 12 }}>🌐</div>
@@ -452,7 +452,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                 Создайте публичный конспект — поделитесь своими мыслями
               </div>
               <button onClick={() => { vibe(8); setMode('create'); }} style={{
-                padding: '11px 24px', borderRadius: 12,
+                padding: '11px 24px', borderRadius: 2,
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
                 border: 'none', color: 'var(--on-accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
@@ -476,7 +476,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           borderBottom: '1px solid var(--border)', flexShrink: 0,
         }}>
           <button onClick={() => { vibe(6); setMode('home'); setViewing(null); }} style={{
-            width: 38, height: 38, borderRadius: 12,
+            width: 38, height: 38, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--text-secondary)', cursor: 'pointer',
@@ -489,7 +489,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{book?.title}</div>
           </div>
           <button onClick={() => handleCopy(viewing.shareCode)} style={{
-            width: 38, height: 38, borderRadius: 12,
+            width: 38, height: 38, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: copied === viewing.shareCode ? 'var(--text-secondary)' : 'var(--text-secondary)', cursor: 'pointer',
@@ -500,7 +500,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{
-            padding: '12px 16px', borderRadius: 14,
+            padding: '12px 16px', borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
@@ -509,19 +509,19 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               {window.location.origin}?share={viewing.shareCode}
             </div>
             <button onClick={() => handleCopy(viewing.shareCode)} style={{
-              padding: '6px 12px', borderRadius: 8, background: 'var(--accent)', border: 'none',
+              padding: '6px 12px', borderRadius: 2, background: 'var(--accent)', border: 'none',
               color: 'var(--on-accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
             }}>{copied === viewing.shareCode ? '✓' : 'Копировать'}</button>
           </div>
 
           {conspNotes.length > 0 ? conspNotes.map((note, i) => (
             <div key={note.id} style={{
-              borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)', padding: '16px',
+              borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)', padding: '16px',
               animation: `fadeSlideUp 0.3s ease ${i * 0.04}s both`,
             }}>
               {note.quote && (
                 <div style={{
-                  padding: '10px 12px', borderRadius: 10, marginBottom: 10,
+                  padding: '10px 12px', borderRadius: 2, marginBottom: 10,
                   background: 'rgba(212,145,74,0.08)', borderLeft: '3px solid var(--accent)',
                   fontSize: 14, fontFamily: 'var(--font-serif)', color: 'var(--text-secondary)',
                   lineHeight: 1.6, fontStyle: 'italic',
@@ -570,7 +570,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         borderBottom: '1px solid var(--border)', flexShrink: 0,
       }}>
         <button onClick={() => { vibe(6); setMode('home'); }} style={{
-          width: 38, height: 38, borderRadius: 12,
+          width: 38, height: 38, borderRadius: 2,
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
@@ -590,13 +590,13 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           <button onClick={() => { vibe(6); setShowBookSheet(true); }} style={{
             width: '100%', padding: selectedBookObj ? '12px 16px' : '18px 16px',
             background: 'var(--bg-raised)', border: `1px solid ${selBook ? 'var(--accent-dim)' : 'var(--border)'}`,
-            borderRadius: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
+            borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
             textAlign: 'left',
           }}>
             {selectedBookObj ? (
               <>
                 <div style={{
-                  width: 44, height: 44, borderRadius: 12, background: selectedBookObj.color,
+                  width: 44, height: 44, borderRadius: 2, background: selectedBookObj.color,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 22, flexShrink: 0,
                 }}>{selectedBookObj.coverEmoji}</div>
@@ -612,7 +612,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             ) : (
               <>
                 <div style={{
-                  width: 44, height: 44, borderRadius: 12, background: 'var(--bg-active)',
+                  width: 44, height: 44, borderRadius: 2, background: 'var(--bg-active)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}>
                   <BookOpen size={20} color="var(--text-muted)" />
@@ -631,7 +631,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             Мысли *
           </div>
-          <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <input value={title} onChange={e => setTitle(e.target.value)}
               placeholder="Мои главные мысли из книги..."
               style={{
@@ -647,7 +647,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             Описание
           </div>
-          <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
             <textarea value={desc} onChange={e => setDesc(e.target.value)}
               placeholder="Краткое описание конспекта..."
               style={{
@@ -661,7 +661,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
 
         {/* Visibility toggle */}
         <div style={{
-          borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)',
           padding: '14px 16px', animation: 'fadeSlideUp 0.35s ease 0.12s both',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -677,7 +677,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               </div>
             </div>
             <button onClick={() => { vibe(6); setIsPublic(!isPublic); }} style={{
-              width: 50, height: 28, borderRadius: 14,
+              width: 50, height: 28, borderRadius: 2,
               background: isPublic ? 'var(--text-secondary)' : 'var(--bg-active)',
               border: '1px solid var(--border)', cursor: 'pointer', position: 'relative',
               transition: 'background 0.2s ease', flexShrink: 0,
@@ -708,7 +708,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                 {selNotes.length === availNotes.length ? 'Сбросить' : 'Выбрать все'}
               </button>
             </div>
-            <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+            <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
               {availNotes.map((note, i) => (
                 <button key={note.id} onClick={() => { vibe(6); toggleNote(note.id); }}
                   style={{
@@ -717,7 +717,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                     display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left',
                   }}>
                   <div style={{
-                    width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                    width: 22, height: 22, borderRadius: 2, flexShrink: 0,
                     background: selNotes.includes(note.id) ? 'var(--accent)' : 'var(--bg-active)',
                     border: `1px solid ${selNotes.includes(note.id) ? 'var(--accent)' : 'var(--border)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -742,7 +742,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         {/* Create button */}
         <button onClick={handleCreate} disabled={!selBook || !title.trim()}
           style={{
-            width: '100%', padding: '17px', borderRadius: 16, border: 'none',
+            width: '100%', padding: '17px', borderRadius: 2, border: 'none',
             background: selBook && title.trim()
               ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
               : 'var(--bg-raised)',

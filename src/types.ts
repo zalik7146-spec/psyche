@@ -106,7 +106,7 @@ export interface AppState {
   lineHeight: 'tight' | 'normal' | 'relaxed';
 }
 
-export type TabId = 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings' | 'graph' | 'achievements' | 'anki' | 'share' | 'feed' | 'profile';
+export type TabId = 'journal' | 'notes' | 'library' | 'new' | 'template' | 'daily' | 'cards' | 'stats' | 'settings' | 'graph' | 'achievements' | 'anki' | 'share' | 'feed' | 'profile';
 
 // ── Public Share ───────────────────────────────────────────────────────────
 export interface SharedConspect {

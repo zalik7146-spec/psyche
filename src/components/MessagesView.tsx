@@ -400,7 +400,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
           }}>
             <button onClick={onBack} style={{
               background: 'var(--bg-raised)', border: 'none',
-              borderRadius: 12, padding: 10, cursor: 'pointer',
+              borderRadius: 2, padding: 10, cursor: 'pointer',
               color: 'var(--text-primary)', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
             }}>
@@ -415,7 +415,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
 
           {/* Search */}
           <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-raised)', borderRadius: 14, padding: '10px 14px', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-raised)', borderRadius: 2, padding: '10px 14px', border: '1px solid var(--border)' }}>
               <Search size={16} color="var(--text-muted)" />
               <input
                 value={search}
@@ -491,7 +491,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                           {c.lastMsg}
                         </span>
                         {c.unread > 0 && (
-                          <span style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '2px 7px', flexShrink: 0 }}>
+                          <span style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 2, fontSize: 11, fontWeight: 700, padding: '2px 7px', flexShrink: 0 }}>
                             {c.unread}
                           </span>
                         )}
@@ -543,7 +543,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
           }}>
             <button onClick={backToList} style={{
               background: 'var(--bg-raised)', border: 'none',
-              borderRadius: 12, padding: 10, cursor: 'pointer',
+              borderRadius: 2, padding: 10, cursor: 'pointer',
               color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <ArrowLeft size={20} />
@@ -561,7 +561,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               }}
               style={{
                 background: 'var(--bg-raised)', border: 'none',
-                borderRadius: 12, padding: 10, cursor: 'pointer',
+                borderRadius: 2, padding: 10, cursor: 'pointer',
                 color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
@@ -577,7 +577,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                 <div style={{ textAlign: 'center', margin: '12px 0 8px', position: 'relative' }}>
                   <span style={{
                     background: 'var(--bg-raised)', color: 'var(--text-muted)',
-                    fontSize: 12, padding: '4px 12px', borderRadius: 20,
+                    fontSize: 12, padding: '4px 12px', borderRadius: 2,
                     border: '1px solid var(--border)',
                   }}>{g.date}</span>
                 </div>
@@ -611,16 +611,16 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                             autoFocus
                             style={{
                               background: 'var(--bg-raised)', border: '1px solid var(--accent)',
-                              borderRadius: 12, padding: '8px 12px',
+                              borderRadius: 2, padding: '8px 12px',
                               color: 'var(--text-primary)', fontSize: 15,
                               fontFamily: 'Inter,sans-serif', outline: 'none',
                             }}
                           />
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setEditingId(null)} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13 }}>
+                            <button onClick={() => setEditingId(null)} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 2, padding: '4px 10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13 }}>
                               Отмена
                             </button>
-                            <button onClick={saveEdit} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600 }}>
+                            <button onClick={saveEdit} style={{ background: 'var(--accent)', border: 'none', borderRadius: 2, padding: '4px 10px', cursor: 'pointer', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600 }}>
                               Сохранить
                             </button>
                           </div>
@@ -667,7 +667,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                                 marginBottom: 6,
                                 background: 'var(--bg-card)',
                                 border: '1px solid var(--border)',
-                                borderRadius: 14,
+                                borderRadius: 2,
                                 overflow: 'hidden',
                                 zIndex: 101,
                                 boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
@@ -715,7 +715,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               {EMOJIS.map(e => (
                 <button key={e} onClick={() => setText(t => t+e)} style={{
                   background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  borderRadius: 10, padding: 8, fontSize: 20, cursor: 'pointer',
+                  borderRadius: 2, padding: 8, fontSize: 20, cursor: 'pointer',
                   transition: 'transform 0.15s',
                 }}>
                   {e}
@@ -741,7 +741,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
           }}>
             <button onClick={() => setShowEmoji(s => !s)} style={{
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              borderRadius: 12, padding: 10, cursor: 'pointer',
+              borderRadius: 2, padding: 10, cursor: 'pointer',
               color: showEmoji ? 'var(--accent)' : 'var(--text-muted)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'color 0.2s',
@@ -759,7 +759,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                 flex: 1,
                 background: 'var(--bg-raised)',
                 border: '1px solid var(--border)',
-                borderRadius: 22,
+                borderRadius: 2,
                 padding: '10px 16px',
                 color: 'var(--text-primary)',
                 fontSize: 15,

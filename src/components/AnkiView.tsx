@@ -161,7 +161,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
       <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '1px solid var(--border)' }}>
         <button onClick={() => { vibe(6); onBack(); }} style={{
-          width: 38, height: 38, borderRadius: 12,
+          width: 38, height: 38, borderRadius: 2,
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
@@ -176,7 +176,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           </div>
         </div>
         <button onClick={() => { vibe(6); setMode('create'); }} style={{
-          marginLeft: 'auto', width: 38, height: 38, borderRadius: 12,
+          marginLeft: 'auto', width: 38, height: 38, borderRadius: 2,
           background: 'var(--accent)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--on-accent)', cursor: 'pointer',
@@ -190,7 +190,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
 
         {/* Due now hero */}
         <div style={{
-          borderRadius: 20, overflow: 'hidden',
+          borderRadius: 2, overflow: 'hidden',
           background: dueCards.length > 0
             ? 'linear-gradient(135deg, var(--accent) 0%, var(--accent-warm) 100%)'
             : 'var(--bg-raised)',
@@ -213,7 +213,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             </div>
             {dueCards.length > 0 && (
               <button onClick={() => startSession(dueCards)} style={{
-                width: '100%', padding: '14px', borderRadius: 14,
+                width: '100%', padding: '14px', borderRadius: 2,
                 background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
                 color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif', backdropFilter: 'blur(8px)',
@@ -233,7 +233,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             { label: 'Скоро', value: futureCards.length, icon: <Clock size={16} />, color: '#a090c0' },
             { label: 'Сегодня', value: dueCards.length, icon: <Target size={16} />, color: 'var(--text-secondary)' },
           ].map(s => (
-            <div key={s.label} style={{ borderRadius: 16, padding: '14px 12px',
+            <div key={s.label} style={{ borderRadius: 2, padding: '14px 12px',
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
               <div style={{ color: s.color, marginBottom: 6 }}>{s.icon}</div>
@@ -246,7 +246,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         {/* All cards browse */}
         {flashcards.length > 0 && (
           <button onClick={() => { vibe(6); setMode('browse'); }} style={{
-            width: '100%', padding: '14px 20px', borderRadius: 16,
+            width: '100%', padding: '14px 20px', borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             color: 'var(--text-primary)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -264,7 +264,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         {/* Study all */}
         {flashcards.length > 0 && dueCards.length === 0 && (
           <button onClick={() => startSession(flashcards)} style={{
-            width: '100%', padding: '14px 20px', borderRadius: 16,
+            width: '100%', padding: '14px 20px', borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             color: 'var(--text-secondary)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -290,7 +290,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               Создайте первую карточку или сделайте карточку из любой записи — кнопка 🃏 в редакторе
             </div>
             <button onClick={() => { vibe(8); setMode('create'); }} style={{
-              padding: '13px 28px', borderRadius: 14,
+              padding: '13px 28px', borderRadius: 2,
               background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
               border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
@@ -311,7 +311,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               {futureCards.slice(0, 5).map(card => {
                 const days = Math.ceil((new Date(card.nextReview).getTime() - Date.now()) / 86400000);
                 return (
-                  <div key={card.id} style={{ padding: '12px 16px', borderRadius: 14,
+                  <div key={card.id} style={{ padding: '12px 16px', borderRadius: 2,
                     background: 'var(--bg-raised)', border: '1px solid var(--border)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif',
@@ -339,7 +339,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'center', gap: 12,
           borderBottom: '1px solid var(--border)' }}>
           <button onClick={() => { vibe(6); setMode('home'); }} style={{
-            width: 38, height: 38, borderRadius: 12,
+            width: 38, height: 38, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--text-secondary)', cursor: 'pointer',
@@ -374,7 +374,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               { label: 'Сложно', value: sessionStats.hard, color: 'var(--accent)', icon: '~' },
               { label: 'Снова', value: sessionStats.again, color: 'var(--red)', icon: '✕' },
             ].map(s => (
-              <div key={s.label} style={{ borderRadius: 16, padding: '16px 12px',
+              <div key={s.label} style={{ borderRadius: 2, padding: '16px 12px',
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
                 <div style={{ fontSize: 20, color: s.color, marginBottom: 4 }}>{s.icon}</div>
@@ -407,7 +407,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
 
           <div style={{ display: 'flex', gap: 12, width: '100%' }}>
             <button onClick={() => { vibe(8); setMode('home'); }} style={{
-              flex: 1, padding: '14px', borderRadius: 14,
+              flex: 1, padding: '14px', borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               color: 'var(--text-primary)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
@@ -416,7 +416,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             </button>
             {dueCards.length > 0 && (
               <button onClick={() => startSession(dueCards)} style={{
-                flex: 1, padding: '14px', borderRadius: 14,
+                flex: 1, padding: '14px', borderRadius: 2,
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
                 border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
@@ -435,7 +435,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         <div style={{ padding: '16px 20px 8px', display: 'flex', alignItems: 'center', gap: 12,
           borderBottom: '1px solid var(--border)' }}>
           <button onClick={() => { vibe(6); setMode('home'); setSessionDone(false); }} style={{
-            width: 38, height: 38, borderRadius: 12,
+            width: 38, height: 38, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--text-secondary)', cursor: 'pointer',
@@ -471,7 +471,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             <div
               onClick={!showAnswer ? handleFlip : undefined}
               style={{
-                flex: 1, borderRadius: 24,
+                flex: 1, borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
                 display: 'flex', flexDirection: 'column',
                 padding: '28px 24px',
@@ -553,7 +553,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                 const cfg = RATING_CONFIG[r];
                 return (
                   <button key={r} onClick={() => handleRate(r)} style={{
-                    padding: '12px 8px', borderRadius: 14,
+                    padding: '12px 8px', borderRadius: 2,
                     background: 'var(--bg-raised)', border: `1px solid color-mix(in srgb, ${cfg.color} 20%, transparent)`,
                     color: cfg.color, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
@@ -573,7 +573,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           {!showAnswer && (
             <button onClick={handleFlip} style={{
               marginTop: 16, width: '100%', padding: '16px',
-              borderRadius: 16, border: 'none',
+              borderRadius: 2, border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
               color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
@@ -593,7 +593,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
       <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '1px solid var(--border)' }}>
         <button onClick={() => { vibe(6); setMode('home'); }} style={{
-          width: 38, height: 38, borderRadius: 12,
+          width: 38, height: 38, borderRadius: 2,
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
@@ -603,7 +603,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
           color: 'var(--text-primary)' }}>Все карточки</div>
         <button onClick={() => { vibe(6); setMode('create'); }} style={{
-          marginLeft: 'auto', width: 38, height: 38, borderRadius: 12,
+          marginLeft: 'auto', width: 38, height: 38, borderRadius: 2,
           background: 'var(--accent)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--on-accent)', cursor: 'pointer',
@@ -616,7 +616,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           const isDue = new Date(card.nextReview) <= new Date();
           return (
             <div key={card.id} style={{
-              padding: '14px 16px', borderRadius: 16,
+              padding: '14px 16px', borderRadius: 2,
               background: 'var(--bg-raised)', border: `1px solid ${isDue ? 'var(--accent)' : 'var(--border)'}`,
               animation: `fadeSlideUp 0.3s ease ${i * 0.04}s both`,
               display: 'flex', alignItems: 'flex-start', gap: 12,
@@ -634,7 +634,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                 )}
               </div>
               <button onClick={() => { vibe(10); onDelete(card.id); }} style={{
-                width: 32, height: 32, borderRadius: 10,
+                width: 32, height: 32, borderRadius: 2,
                 background: 'var(--bg-active)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0,
@@ -654,7 +654,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
       <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '1px solid var(--border)' }}>
         <button onClick={() => { vibe(6); setMode('home'); }} style={{
-          width: 38, height: 38, borderRadius: 12,
+          width: 38, height: 38, borderRadius: 2,
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
@@ -666,7 +666,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)',
+        <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)',
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--accent)', fontFamily: 'Inter, sans-serif',
@@ -684,7 +684,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           />
         </div>
 
-        <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)',
+        <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)',
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.05s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif',
@@ -702,7 +702,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           />
         </div>
 
-        <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)',
+        <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)',
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.1s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
@@ -724,7 +724,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           </select>
         </div>
 
-        <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)',
+        <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)',
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.15s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
@@ -746,7 +746,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           onClick={handleCreate}
           disabled={!front.trim() || !back.trim()}
           style={{
-            width: '100%', padding: '16px', borderRadius: 16, border: 'none',
+            width: '100%', padding: '16px', borderRadius: 2, border: 'none',
             background: front.trim() && back.trim()
               ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
               : 'var(--bg-raised)',

@@ -152,7 +152,7 @@ export default function SettingsView({
           <button
             onClick={() => { vibe(6); setShowTrash(false); }}
             style={{
-              width: 36, height: 36, borderRadius: 12,
+              width: 36, height: 36, borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               color: 'var(--text-muted)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -170,7 +170,7 @@ export default function SettingsView({
             <button
               onClick={() => { vibe(15); if (window.confirm('Очистить корзину? Это нельзя отменить.')) onEmptyTrash(); }}
               style={{
-                padding: '6px 12px', borderRadius: 10,
+                padding: '6px 12px', borderRadius: 2,
                 background: 'rgba(180,50,50,0.15)', border: '1px solid rgba(180,50,50,0.3)',
                 color: 'var(--red)', cursor: 'pointer', fontSize: 12,
                 fontFamily: 'Inter, sans-serif', fontWeight: 600,
@@ -197,7 +197,7 @@ export default function SettingsView({
                 key={note.id}
                 style={{
                   background: 'var(--bg-card)', border: 'var(--card-border)',
-                  borderRadius: 14, padding: '12px 14px',
+                  borderRadius: 2, padding: '12px 14px',
                   animation: `card-enter 0.32s cubic-bezier(0.22,1,0.36,1) both`,
                   animationDelay: `${i * 0.04}s`,
                 }}
@@ -220,7 +220,7 @@ export default function SettingsView({
                   <button
                     onClick={() => { vibe(10); onRestoreNote(note.id); }}
                     style={{
-                      flex: 1, padding: '8px', borderRadius: 10,
+                      flex: 1, padding: '8px', borderRadius: 2,
                       background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
                       color: 'var(--accent)', cursor: 'pointer', fontSize: 12,
                       fontFamily: 'Inter, sans-serif', fontWeight: 600,
@@ -232,7 +232,7 @@ export default function SettingsView({
                   <button
                     onClick={() => { vibe(15); if (window.confirm('Удалить навсегда?')) onPermanentDelete(note.id); }}
                     style={{
-                      padding: '8px 14px', borderRadius: 10,
+                      padding: '8px 14px', borderRadius: 2,
                       background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
                       color: 'var(--red)', cursor: 'pointer', fontSize: 12,
                       fontFamily: 'Inter, sans-serif', fontWeight: 600,
@@ -290,7 +290,7 @@ export default function SettingsView({
           <button
             onClick={() => setShowAvatarPicker(false)}
             style={{
-              width: 28, height: 28, borderRadius: 8,
+              width: 28, height: 28, borderRadius: 2,
               background: 'var(--bg-raised)', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: 'var(--text-muted)',
@@ -303,7 +303,7 @@ export default function SettingsView({
           <button
             onClick={() => fileRef.current?.click()}
             style={{
-              width: '100%', padding: '12px', borderRadius: 14,
+              width: '100%', padding: '12px', borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
               display: 'flex', alignItems: 'center', gap: 10,
               cursor: 'pointer', color: 'var(--text-secondary)',
@@ -336,7 +336,7 @@ export default function SettingsView({
               onClick={() => handleSelectEmoji(emoji)}
               style={{
                 width: '100%', aspectRatio: '1',
-                borderRadius: 12, fontSize: 22,
+                borderRadius: 2, fontSize: 22,
                 background: avatar === emoji ? 'var(--bg-active)' : 'var(--bg-raised)',
                 border: `2px solid ${avatar === emoji ? 'var(--accent)' : 'transparent'}`,
                 cursor: 'pointer',
@@ -367,7 +367,7 @@ export default function SettingsView({
           <button
             onClick={() => { vibe(6); onBack?.(); }}
             style={{
-              width: 36, height: 36, borderRadius: 12,
+              width: 36, height: 36, borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               color: 'var(--text-muted)', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -395,7 +395,7 @@ export default function SettingsView({
             <button
               onClick={() => { vibe(8); setShowAvatarPicker(true); }}
               style={{
-                width: 64, height: 64, borderRadius: 20,
+                width: 64, height: 64, borderRadius: 2,
                 background: isPhotoAvatar ? 'none' : 'linear-gradient(135deg, var(--bg-active), var(--bg-raised))',
                 border: '2px solid var(--border-mid)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -408,13 +408,13 @@ export default function SettingsView({
             >
               {isPhotoAvatar ? (
                 <img src={avatar} alt="avatar"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 18 }} />
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 2 }} />
               ) : (
                 <span>{avatar}</span>
               )}
               {/* Edit overlay */}
               <div style={{
-                position: 'absolute', inset: 0, borderRadius: 18,
+                position: 'absolute', inset: 0, borderRadius: 2,
                 background: 'rgba(0,0,0,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 opacity: 0,
@@ -443,7 +443,7 @@ export default function SettingsView({
             <button
               onClick={() => { vibe(8); setShowAvatarPicker(true); }}
               style={{
-                padding: '6px 10px', borderRadius: 10,
+                padding: '6px 10px', borderRadius: 2,
                 background: 'var(--bg-card)', border: '1px solid var(--border)',
                 color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11,
                 fontFamily: 'Inter, sans-serif',
@@ -474,7 +474,7 @@ export default function SettingsView({
             ].map((s, i) => (
               <div key={i} style={{
                 background: 'var(--bg-card)', border: 'var(--card-border)',
-                borderRadius: 12, padding: '10px 8px', textAlign: 'center',
+                borderRadius: 2, padding: '10px 8px', textAlign: 'center',
                 animation: `card-enter 0.32s cubic-bezier(0.22,1,0.36,1) both`,
                 animationDelay: `${0.05 + i * 0.03}s`,
               }}>
@@ -496,7 +496,7 @@ export default function SettingsView({
             onClick={() => { vibe(8); onNavigate?.('profile'); }}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 16px', borderRadius: 16, cursor: 'pointer',
+              padding: '14px 16px', borderRadius: 2, cursor: 'pointer',
               background: 'rgba(212,145,74,0.08)', border: '1px solid rgba(212,145,74,0.25)',
               WebkitTapHighlightColor: 'transparent',
             }}
@@ -505,7 +505,7 @@ export default function SettingsView({
             onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
             <div style={{
-              width: 42, height: 42, borderRadius: 13,
+              width: 42, height: 42, borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               fontSize: 20,
@@ -533,7 +533,7 @@ export default function SettingsView({
                 key={t.id}
                 onClick={() => { vibe(8); onTheme(t.id); }}
                 style={{
-                  padding: '14px 8px', borderRadius: 14, cursor: 'pointer',
+                  padding: '14px 8px', borderRadius: 2, cursor: 'pointer',
                   background: t.bg,
                   border: `2px solid ${state.theme === t.id ? 'var(--accent)' : 'rgba(128,100,60,0.3)'}`,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
@@ -558,10 +558,10 @@ export default function SettingsView({
           <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Облачное хранилище
           </p>
-          <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
-                width: 40, height: 40, borderRadius: 12,
+                width: 40, height: 40, borderRadius: 2,
                 background: 'rgba(100,180,120,0.15)', border: '1px solid rgba(100,180,120,0.3)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
@@ -579,7 +579,7 @@ export default function SettingsView({
                 onClick={handleManualSync}
                 disabled={syncStatus === 'syncing'}
                 style={{
-                  padding: '7px 12px', borderRadius: 10,
+                  padding: '7px 12px', borderRadius: 2,
                   background: syncStatus === 'done' ? 'rgba(100,180,120,0.15)'
                     : syncStatus === 'error' ? 'rgba(180,80,80,0.15)' : 'var(--bg-raised)',
                   border: `1px solid ${syncStatus === 'done' ? 'rgba(100,180,120,0.4)'
@@ -608,7 +608,7 @@ export default function SettingsView({
           <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Аккаунт
           </p>
-          <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--bg-card)', border: 'var(--card-border)', borderRadius: 2, overflow: 'hidden' }}>
 
             {/* Change password */}
             <button
@@ -621,7 +621,7 @@ export default function SettingsView({
               }}
             >
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
+                width: 36, height: 36, borderRadius: 2,
                 background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 color: 'var(--accent)',
@@ -650,7 +650,7 @@ export default function SettingsView({
               }}
             >
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
+                width: 36, height: 36, borderRadius: 2,
                 background: 'rgba(180,100,50,0.12)', border: '1px solid rgba(180,100,50,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 color: 'var(--accent)',
@@ -686,7 +686,7 @@ export default function SettingsView({
               }}
             >
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
+                width: 36, height: 36, borderRadius: 2,
                 background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 color: 'var(--red)',
@@ -714,7 +714,7 @@ export default function SettingsView({
           <button
             onClick={() => { vibe(15); onClearData(); }}
             style={{
-              width: '100%', padding: '13px 16px', borderRadius: 14,
+              width: '100%', padding: '13px 16px', borderRadius: 2,
               background: 'rgba(180,50,50,0.08)', border: '1px solid rgba(180,50,50,0.2)',
               color: 'var(--red)', cursor: 'pointer', fontSize: 14,
               fontFamily: 'Inter, sans-serif', fontWeight: 500,

@@ -110,7 +110,7 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
   const showDelete = swipeX <= -THRESHOLD;
 
   return (
-    <div style={{ position: 'relative', marginBottom: 9, overflow: 'hidden', borderRadius: 16 }}>
+    <div style={{ position: 'relative', marginBottom: 9, overflow: 'hidden', borderRadius: 2 }}>
       {/* Delete bg */}
       <button
         onClick={handleDelete}
@@ -118,7 +118,7 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
           position: 'absolute', right: 0, top: 0, bottom: 0,
           width: 110, background: 'rgba(180,50,50,0.88)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: 16, gap: 6, border: 'none', cursor: 'pointer',
+          borderRadius: 2, gap: 6, border: 'none', cursor: 'pointer',
           opacity: showDelete ? 1 : 0,
           transform: showDelete ? 'scale(1)' : 'scale(0.9)',
           transition: 'opacity 0.18s, transform 0.18s',
@@ -159,11 +159,11 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
       onClick={() => { vibe(8); if (!showDelete) onOpen(); }}
       style={{
         display: 'block', width: '100%', textAlign: 'left',
-        padding: '14px 15px', borderRadius: '16px',
+        padding: '14px 16px', borderRadius: 0,
         background: 'var(--bg-card)',
         border: 'var(--card-border)',
         cursor: 'pointer',
-        animation: 'card-enter 0.35s cubic-bezier(0.22,1,0.36,1) both',
+        animation: 'calmFade var(--dur-screen) var(--ease-calm) both',
         animationDelay: `${Math.min(idx * 0.045, 0.35)}s`,
         position: 'relative',
       }}
@@ -172,7 +172,6 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
 
       {/* Top row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '9px', marginBottom: '7px' }}>
-        <span style={{ fontSize: '17px', flexShrink: 0, lineHeight: 1, marginTop: 1 }}>{meta.icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="note-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {note.title || 'Без заголовка'}
@@ -187,9 +186,8 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
       {/* Quote */}
       {note.quote && (
         <div style={{
-          borderLeft: `3px solid ${note.quoteColor || 'var(--accent)'}`,
-          padding: '5px 11px', marginBottom: '7px',
-          background: 'var(--bg-raised)', borderRadius: '0 8px 8px 0',
+          borderLeft: '1px solid var(--text-primary)',
+          padding: '2px 12px', marginBottom: '8px',
         }}>
           <p style={{
             margin: 0, fontSize: '12px', color: 'var(--text-secondary)',
@@ -202,7 +200,7 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
 
       {/* Preview */}
       {preview && (
-        <p className="note-preview" style={{ margin: '0 0 9px' }}>{preview}</p>
+        <p className="note-preview font-typed" style={{ margin: '0 0 9px', fontSize: 14, lineHeight: 1.55 }}>{preview}</p>
       )}
 
       {/* Bottom */}
@@ -211,12 +209,7 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
           {format(new Date(note.updatedAt), 'd MMM', { locale: ru })}
         </span>
         {note.wordCount ? <span className="note-meta">· {note.wordCount} сл.</span> : null}
-        <span style={{
-          fontSize: 11, color: meta.color,
-          fontFamily: 'Inter, sans-serif',
-          background: `color-mix(in srgb, ${meta.color} 9%, transparent)`,
-          borderRadius: 99, padding: '1px 7px',
-        }}>{meta.label}</span>
+        <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>· {meta.label}</span>
       </div>
     </button>
   );
@@ -296,7 +289,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
           <div>
-            <h1 className="font-serif" style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            <h1 className="font-serif" style={{ fontSize: 28, fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
               Записи
             </h1>
             <p style={{ margin: '1px 0 0', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -307,8 +300,8 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
             <button
               onClick={() => { vibe(6); setShowFavOnly(v => !v); }}
               style={{
-                width: 36, height: 36, borderRadius: '11px',
-                background: showFavOnly ? 'rgba(196,129,60,0.15)' : 'var(--bg-raised)',
+                width: 44, height: 44, borderRadius: 0,
+                background: showFavOnly ? 'var(--accent-glow)' : 'none',
                 border: `1px solid ${showFavOnly ? 'var(--accent)' : 'var(--border)'}`,
                 color: showFavOnly ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -320,8 +313,8 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
             <button
               onClick={() => { vibe(6); setShowFilters(v => !v); }}
               style={{
-                width: 36, height: 36, borderRadius: '11px',
-                background: hasFilters ? 'var(--accent-glow)' : 'var(--bg-raised)',
+                width: 44, height: 44, borderRadius: 0,
+                background: hasFilters ? 'var(--accent-glow)' : 'none',
                 border: `1px solid ${hasFilters ? 'var(--accent-dim)' : 'var(--border)'}`,
                 color: hasFilters ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -371,7 +364,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
                 <button key={t}
                   onClick={() => { vibe(5); setFilterType(t); }}
                   style={{
-                    padding: '4px 10px', borderRadius: '99px', whiteSpace: 'nowrap',
+                    padding: '4px 10px', borderRadius: 0, whiteSpace: 'nowrap',
                     background: filterType === t ? 'var(--bg-active)' : 'var(--bg-raised)',
                     border: `1px solid ${filterType === t ? 'var(--border-mid)' : 'var(--border)'}`,
                     color: filterType === t ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -380,7 +373,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
                     transition: 'all 0.15s',
                   }}
                 >
-                  {t === 'all' ? 'Все' : TYPE_META[t as NoteType].icon + ' ' + TYPE_META[t as NoteType].label}
+                  {t === 'all' ? 'Все' : TYPE_META[t as NoteType].label}
                 </button>
               ))}
             </div>
@@ -389,7 +382,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
               <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '2px' }}>
                 <button onClick={() => setFilterBook('all')}
                   style={{
-                    padding: '4px 10px', borderRadius: '99px', whiteSpace: 'nowrap',
+                    padding: '4px 10px', borderRadius: 0, whiteSpace: 'nowrap',
                     background: filterBook === 'all' ? 'var(--bg-active)' : 'var(--bg-raised)',
                     border: `1px solid ${filterBook === 'all' ? 'var(--border-mid)' : 'var(--border)'}`,
                     color: filterBook === 'all' ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -402,7 +395,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
                 {books.map(b => (
                   <button key={b.id} onClick={() => { vibe(5); setFilterBook(b.id); }}
                     style={{
-                      padding: '4px 10px', borderRadius: '99px', whiteSpace: 'nowrap',
+                      padding: '4px 10px', borderRadius: 0, whiteSpace: 'nowrap',
                       background: filterBook === b.id ? 'var(--bg-active)' : 'var(--bg-raised)',
                       border: `1px solid ${filterBook === b.id ? 'var(--border-mid)' : 'var(--border)'}`,
                       color: filterBook === b.id ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -410,7 +403,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
                       transition: 'all 0.15s',
                     }}
                   >
-                    {b.coverEmoji} {b.title}
+                    {b.title}
                   </button>
                 ))}
               </div>
@@ -420,7 +413,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
               {([['updated','По изменению'],['created','По дате'],['alpha','А–Я']] as [SortKey,string][]).map(([k,l]) => (
                 <button key={k} onClick={() => { vibe(5); setSortBy(k); }}
                   style={{
-                    padding: '4px 10px', borderRadius: '99px',
+                    padding: '4px 10px', borderRadius: 0,
                     background: sortBy === k ? 'var(--bg-active)' : 'var(--bg-raised)',
                     border: `1px solid ${sortBy === k ? 'var(--border-mid)' : 'var(--border)'}`,
                     color: sortBy === k ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -458,7 +451,6 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
             textAlign: 'center', padding: '60px 20px',
             animation: 'fadeUp 0.4s ease-out both',
           }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px' }}>📝</div>
             <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-serif)', fontSize: '15px' }}>
               {search ? 'Ничего не найдено' : 'Нет записей'}
             </p>
@@ -468,7 +460,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
           </div>
         ) : (
           <>
-            <Section label="📌 Закреплённые" items={pinned} offset={0} />
+            <Section label="Закреплённые" items={pinned} offset={0} />
             <Section label="Сегодня" items={today} offset={pinned.length} />
             <Section label="Ранее" items={rest} offset={pinned.length + today.length} />
           </>

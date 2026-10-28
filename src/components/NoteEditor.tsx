@@ -275,7 +275,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               onClick={() => { setType(t); closeMenu(); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 9,
-                width: '100%', padding: '10px 12px', borderRadius: 10,
+                width: '100%', padding: '10px 12px', borderRadius: 2,
                 background: type === t ? 'var(--bg-active)' : 'none',
                 border: 'none', cursor: 'pointer',
                 color: NOTE_TYPES[t].color,
@@ -302,7 +302,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             onClick={() => { setBookId(undefined); closeMenu(); }}
             style={{
               display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-              padding: '9px 12px', borderRadius: 10,
+              padding: '9px 12px', borderRadius: 2,
               background: !bookId ? 'var(--bg-active)' : 'none',
               border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
               fontSize: 13, fontFamily: 'Inter,sans-serif', textAlign: 'left',
@@ -318,7 +318,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               onClick={() => { setBookId(b.id); closeMenu(); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 9, width: '100%',
-                padding: '9px 12px', borderRadius: 10,
+                padding: '9px 12px', borderRadius: 2,
                 background: bookId === b.id ? 'var(--bg-active)' : 'none',
                 border: 'none', cursor: 'pointer', color: 'var(--text-secondary)',
                 fontSize: 13, fontFamily: 'Inter,sans-serif', textAlign: 'left',
@@ -348,7 +348,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
                 key={h.color}
                 title={h.label}
                 style={{
-                  width: 34, height: 34, borderRadius: 10,
+                  width: 34, height: 34, borderRadius: 2,
                   background: h.color, cursor: 'pointer',
                   border: '2px solid var(--border-mid)',
                   transition: 'transform 0.1s, border-color 0.1s',
@@ -366,7 +366,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
           <button
             onMouseDown={e => { e.preventDefault(); editor.chain().focus().unsetHighlight().run(); closeMenu(); }}
             style={{
-              width: '100%', padding: '7px 10px', borderRadius: 9,
+              width: '100%', padding: '7px 10px', borderRadius: 2,
               background: 'var(--bg-active)', border: '1px solid var(--border-mid)',
               color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
               fontFamily: 'Inter,sans-serif',
@@ -390,7 +390,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
                 key={tc.color}
                 title={tc.label}
                 style={{
-                  width: 34, height: 34, borderRadius: 10,
+                  width: 34, height: 34, borderRadius: 2,
                   background: tc.color === 'var(--text-primary)' ? 'var(--text-primary)' : tc.color,
                   cursor: 'pointer',
                   border: '2px solid var(--border-mid)',
@@ -409,7 +409,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
           <button
             onMouseDown={e => { e.preventDefault(); editor.chain().focus().unsetColor().run(); closeMenu(); }}
             style={{
-              width: '100%', padding: '7px 10px', borderRadius: 9,
+              width: '100%', padding: '7px 10px', borderRadius: 2,
               background: 'var(--bg-active)', border: '1px solid var(--border-mid)',
               color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
               fontFamily: 'Inter,sans-serif',
@@ -441,7 +441,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             zIndex: 9999,
             background: 'var(--bg-raised)',
             border: '1px solid var(--border-mid)',
-            borderRadius: 16,
+            borderRadius: 2,
             padding: 12,
             boxShadow: '0 12px 48px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.4)',
             animation: 'scaleIn 0.15s cubic-bezier(0.22,1,0.36,1) both',
@@ -481,7 +481,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
           <button
             onClick={handleClose}
             style={{
-              width: 38, height: 38, borderRadius: 11,
+              width: 38, height: 38, borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'var(--text-secondary)', cursor: 'pointer', flexShrink: 0,
@@ -499,7 +499,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
                 if (window.confirm('Удалить эту запись?')) onDelete(note.id);
               }}
               style={{
-                width: 38, height: 38, borderRadius: 11,
+                width: 38, height: 38, borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--red)', cursor: 'pointer', flexShrink: 0,
@@ -528,7 +528,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             <button
               onClick={() => setIsFavorite(v => !v)}
               style={{
-                width: 34, height: 34, borderRadius: 9,
+                width: 34, height: 34, borderRadius: 2,
                 background: 'none', border: 'none',
                 color: isFavorite ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -540,7 +540,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             <button
               onClick={() => setIsPinned(v => !v)}
               style={{
-                width: 34, height: 34, borderRadius: 9,
+                width: 34, height: 34, borderRadius: 2,
                 background: 'none', border: 'none',
                 color: isPinned ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -554,7 +554,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
                 onClick={() => { try { navigator.vibrate?.(8); } catch {} onExportPDF(note); }}
                 title="Экспорт в PDF"
                 style={{
-                  width: 34, height: 34, borderRadius: 9,
+                  width: 34, height: 34, borderRadius: 2,
                   background: 'none', border: 'none',
                   color: 'var(--text-muted)', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -569,7 +569,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               onClick={() => { try { navigator.vibrate?.(6); } catch {} setFocusMode(v => !v); }}
               title="Фокус-режим"
               style={{
-                width: 34, height: 34, borderRadius: 9,
+                width: 34, height: 34, borderRadius: 2,
                 background: focusMode ? 'var(--accent)' : 'var(--bg-raised)',
                 border: `1px solid ${focusMode ? 'var(--accent)' : 'var(--border)'}`,
                 color: focusMode ? '#fff' : 'var(--text-muted)',
@@ -582,7 +582,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             <button
               onClick={handleSave}
               style={{
-                padding: '8px 14px', borderRadius: 11,
+                padding: '8px 14px', borderRadius: 2,
                 background: 'var(--accent)', border: 'none',
                 color: 'var(--on-accent)', fontWeight: 700, fontSize: 13,
                 fontFamily: 'Inter,sans-serif', cursor: 'pointer',
@@ -615,7 +615,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               onClick={() => openDropdown('type', typeBtnRef)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
-                padding: '6px 11px', borderRadius: 10,
+                padding: '6px 11px', borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
                 color: typeMeta.color, cursor: 'pointer',
                 fontSize: 12, fontWeight: 600, fontFamily: 'Inter,sans-serif',
@@ -634,7 +634,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               onClick={() => openDropdown('book', bookBtnRef)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
-                padding: '6px 11px', borderRadius: 10,
+                padding: '6px 11px', borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
                 color: bookId ? 'var(--text-secondary)' : 'var(--text-muted)',
                 cursor: 'pointer', fontSize: 12, fontFamily: 'Inter,sans-serif',
@@ -656,7 +656,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             <button
               onClick={() => setShowMeta(v => !v)}
               style={{
-                width: 34, height: 34, borderRadius: 10,
+                width: 34, height: 34, borderRadius: 2,
                 background: showMeta ? 'var(--bg-active)' : 'var(--bg-raised)',
                 border: `1px solid ${showMeta ? 'var(--accent-dim)' : 'var(--border)'}`,
                 color: showMeta ? 'var(--accent)' : 'var(--text-muted)',
@@ -760,7 +760,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
                   <button
                     onClick={handleNewTag}
                     style={{
-                      padding: '8px 14px', borderRadius: 11,
+                      padding: '8px 14px', borderRadius: 2,
                       background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
                       color: 'var(--accent)', cursor: 'pointer',
                       fontSize: 12, fontFamily: 'Inter,sans-serif', fontWeight: 600,
@@ -999,7 +999,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               onClick={() => setFocusMode(false)}
               style={{
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 10, padding: '6px 12px', cursor: 'pointer',
+                borderRadius: 2, padding: '6px 12px', cursor: 'pointer',
                 color: 'var(--text-muted)', fontSize: 13, fontFamily: 'Inter,sans-serif',
               }}
             >

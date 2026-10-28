@@ -157,7 +157,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
         {/* Search */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'var(--bg-raised)', borderRadius: '12px',
+          background: 'var(--bg-raised)', borderRadius: 2,
           border: '1px solid var(--border-mid)', padding: '0 12px',
         }}>
           <Search size={15} color="var(--text-muted)" />
@@ -206,7 +206,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                       className="card-hover"
                       style={{
                         background: 'var(--bg-card)', border: 'var(--card-border)',
-                        borderRadius: '14px', padding: '12px 14px',
+                        borderRadius: 2, padding: '12px 14px',
                         cursor: 'pointer', textAlign: 'left', width: '100%',
                         animation: `card-enter 0.3s both`, animationDelay: `${i * 0.04}s`,
                       }}
@@ -243,7 +243,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                 style={{
                   background: 'linear-gradient(145deg, var(--bg-raised) 0%, var(--bg-card) 100%)',
                   border: '1px solid var(--border-mid)',
-                  borderRadius: '20px',
+                  borderRadius: 2,
                   padding: '20px',
                   position: 'relative',
                   overflow: 'hidden',
@@ -269,7 +269,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', position: 'relative' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                     <div style={{
-                      width: 28, height: 28, borderRadius: 9,
+                      width: 28, height: 28, borderRadius: 2,
                       background: 'var(--accent-glow)',
                       border: '1px solid var(--accent-dim)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -289,7 +289,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                     onClick={nextInsight}
                     style={{
                       background: 'var(--bg-base)', border: '1px solid var(--border)',
-                      borderRadius: '10px', padding: '6px 10px',
+                      borderRadius: 2, padding: '6px 10px',
                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
                       color: 'var(--text-muted)', fontSize: '11px', fontFamily: 'Inter, sans-serif',
                       transition: 'all 0.15s',
@@ -368,7 +368,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
               </div>
             ) : (
               <div style={{
-                background: 'var(--bg-card)', borderRadius: '20px',
+                background: 'var(--bg-card)', borderRadius: 2,
                 padding: '32px', textAlign: 'center',
                 border: '1px dashed var(--border-mid)',
                 animation: 'fadeUp 0.4s ease-out both',
@@ -401,7 +401,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                 <div key={i}
                   className="card-enter"
                   style={{
-                    background: 'var(--bg-card)', borderRadius: '16px',
+                    background: 'var(--bg-card)', borderRadius: 2,
                     border: 'var(--card-border)', padding: '14px 10px',
                     animationDelay: `${0.1 + i * 0.05}s`,
                     textAlign: 'center',
@@ -419,7 +419,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
             {/* ══ ACTIVITY CHART ══ */}
             {notes.length > 0 && (
               <div style={{
-                background: 'var(--bg-card)', borderRadius: '18px',
+                background: 'var(--bg-card)', borderRadius: 2,
                 border: 'var(--card-border)', padding: '16px',
                 animation: 'fadeUp 0.4s ease-out 0.14s both',
               }}>
@@ -463,7 +463,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
             {/* ══ BY TYPE ══ */}
             {Object.keys(byType).length > 0 && (
               <div style={{
-                background: 'var(--bg-card)', borderRadius: '18px',
+                background: 'var(--bg-card)', borderRadius: 2,
                 border: 'var(--card-border)', padding: '16px',
                 animation: 'fadeUp 0.4s ease-out 0.18s both',
               }}>
@@ -505,7 +505,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
             {/* ══ READING PROGRESS ══ */}
             {books.filter(b => b.status === 'reading' && b.totalPages && b.currentPage).length > 0 && (
               <div style={{
-                background: 'var(--bg-card)', borderRadius: '18px',
+                background: 'var(--bg-card)', borderRadius: 2,
                 border: 'var(--card-border)', padding: '16px',
                 animation: 'fadeUp 0.4s ease-out 0.22s both',
               }}>
@@ -552,7 +552,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
             {/* ══ TOP TAGS ══ */}
             {topTags.length > 0 && (
               <div style={{
-                background: 'var(--bg-card)', borderRadius: '18px',
+                background: 'var(--bg-card)', borderRadius: 2,
                 border: 'var(--card-border)', padding: '16px',
                 animation: 'fadeUp 0.4s ease-out 0.26s both',
               }}>

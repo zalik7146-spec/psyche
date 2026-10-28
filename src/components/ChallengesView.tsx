@@ -191,7 +191,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => { vibe(8); onClose(); }} style={{
-            width: 36, height: 36, borderRadius: 12,
+            width: 36, height: 36, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--text-secondary)', cursor: 'pointer',
@@ -212,7 +212,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
           {(['active', 'completed'] as const).map(t => (
             <button key={t} onClick={() => { vibe(6); setTab(t); }} style={{
-              flex: 1, padding: '8px', borderRadius: 10,
+              flex: 1, padding: '8px', borderRadius: 2,
               background: tab === t ? 'var(--accent)' : 'var(--bg-raised)',
               border: `1px solid ${tab === t ? 'var(--accent)' : 'var(--border)'}`,
               color: tab === t ? 'var(--bg-base)' : 'var(--text-muted)',
@@ -265,7 +265,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
             <div key={c.id} style={{
               background: c.completed ? 'var(--bg-raised)' : 'var(--bg-card)',
               border: `1px solid ${c.completed ? `color-mix(in srgb, ${c.color} 25%, transparent)` : 'var(--border)'}`,
-              borderRadius: 16, padding: '16px',
+              borderRadius: 2, padding: '16px',
               animation: `fadeSlideUp 0.4s ease-out ${i * 0.06}s both`,
               position: 'relative', overflow: 'hidden',
             }}>
@@ -281,7 +281,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
 
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
                 <div style={{
-                  width: 44, height: 44, borderRadius: 14,
+                  width: 44, height: 44, borderRadius: 2,
                   background: c.bg, border: `1px solid color-mix(in srgb, ${c.color} 19%, transparent)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: c.color, flexShrink: 0,
@@ -321,7 +321,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
               {/* Badge */}
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '4px 10px', borderRadius: 8,
+                padding: '4px 10px', borderRadius: 2,
                 background: c.completed ? `color-mix(in srgb, ${c.color} 13%, transparent)` : 'var(--bg-raised)',
                 border: `1px solid ${c.completed ? `color-mix(in srgb, ${c.color} 25%, transparent)` : 'var(--border)'}`,
               }}>

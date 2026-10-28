@@ -206,7 +206,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
         {transcript && (
           <div style={{
             background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 12, padding: '12px 16px', marginBottom: 20,
+            borderRadius: 2, padding: '12px 16px', marginBottom: 20,
             maxHeight: 120, overflowY: 'auto',
           }}>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0, fontFamily: 'Inter, sans-serif' }}>
@@ -220,14 +220,14 @@ export default function VoiceNote({ onSave, onClose }: Props) {
           {mode === 'idle' && (
             <>
               <button onClick={onClose} style={{
-                flex: 1, padding: '14px', borderRadius: 14,
+                flex: 1, padding: '14px', borderRadius: 2,
                 background: 'var(--bg-card)', border: '1px solid var(--border)',
                 color: 'var(--text-muted)', fontSize: 15, cursor: 'pointer',
               }}>
                 Отмена
               </button>
               <button onClick={startRecording} style={{
-                flex: 2, padding: '14px', borderRadius: 14,
+                flex: 2, padding: '14px', borderRadius: 2,
                 background: 'linear-gradient(135deg, var(--red), var(--red))',
                 border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -239,7 +239,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
 
           {mode === 'recording' && (
             <button onClick={stopRecording} style={{
-              flex: 1, padding: '14px', borderRadius: 14,
+              flex: 1, padding: '14px', borderRadius: 2,
               background: 'linear-gradient(135deg, var(--red), var(--red))',
               border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -251,7 +251,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
           {(mode === 'recorded' || mode === 'playing') && (
             <>
               <button onClick={reset} style={{
-                width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                width: 48, height: 48, borderRadius: 2, flexShrink: 0,
                 background: 'var(--bg-card)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--red)', cursor: 'pointer',
@@ -259,7 +259,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
                 <Trash2 size={18} />
               </button>
               <button onClick={playAudio} style={{
-                flex: 1, padding: '14px', borderRadius: 14,
+                flex: 1, padding: '14px', borderRadius: 2,
                 background: 'var(--bg-card)', border: '1px solid var(--border)',
                 color: 'var(--text-primary)', fontSize: 15, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -267,7 +267,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
                 {mode === 'playing' ? <><Pause size={18} /> Пауза</> : <><Play size={18} /> Воспроизвести</>}
               </button>
               <button onClick={handleSave} style={{
-                flex: 1, padding: '14px', borderRadius: 14,
+                flex: 1, padding: '14px', borderRadius: 2,
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
                 border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

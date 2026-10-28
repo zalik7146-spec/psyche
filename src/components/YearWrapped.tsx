@@ -234,7 +234,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           </button>
 
           <button onClick={handleShare} style={{
-            padding: '12px 24px', borderRadius: 24,
+            padding: '12px 24px', borderRadius: 2,
             background: slide.color, border: 'none',
             color: 'var(--bg-base)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8,

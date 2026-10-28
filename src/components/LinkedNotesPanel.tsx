@@ -59,7 +59,7 @@ export default function LinkedNotesPanel({ currentNoteId, linkedNoteIds, allNote
               {linkedNotes.map(note => (
                 <div key={note.id} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 10px', borderRadius: 10,
+                  padding: '8px 10px', borderRadius: 2,
                   background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 }}>
                   <span style={{ fontSize: 14 }}>{NOTE_ICONS[note.type] || '📝'}</span>
@@ -73,7 +73,7 @@ export default function LinkedNotesPanel({ currentNoteId, linkedNoteIds, allNote
                     </div>
                   </div>
                   <button onClick={() => { vibe(8); onUnlink(note.id); }} style={{
-                    width: 24, height: 24, borderRadius: 8,
+                    width: 24, height: 24, borderRadius: 2,
                     background: 'rgba(224,112,112,0.12)', border: '1px solid rgba(224,112,112,0.2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'var(--red)', cursor: 'pointer', flexShrink: 0,
@@ -93,7 +93,7 @@ export default function LinkedNotesPanel({ currentNoteId, linkedNoteIds, allNote
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Найти запись для связи..."
-              style={{ width: '100%', padding: '9px 10px 9px 30px', borderRadius: 10,
+              style={{ width: '100%', padding: '9px 10px 9px 30px', borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 outline: 'none', color: 'var(--text-primary)', fontSize: 13,
                 fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }}
@@ -105,7 +105,7 @@ export default function LinkedNotesPanel({ currentNoteId, linkedNoteIds, allNote
             <div style={{ maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {availableNotes.slice(0, 8).map(note => (
                 <button key={note.id} onClick={() => { vibe(8); onLink(note.id); }}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: 10,
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 2,
                     background: 'var(--bg-active)', border: '1px solid var(--border)',
                     display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', textAlign: 'left' }}>
                   <span style={{ fontSize: 13 }}>{NOTE_ICONS[note.type] || '📝'}</span>

@@ -326,7 +326,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
         onClick={onBack}
         style={{
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
-          borderRadius: 10, width: 34, height: 34, display: 'flex',
+          borderRadius: 2, width: 34, height: 34, display: 'flex',
           alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0,
         }}
@@ -365,7 +365,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
       {hint && (
         <div style={{
           margin: '8px 16px 0', padding: '8px 12px',
-          background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12,
+          background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 2,
           display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
           animation: 'fadeIn 0.3s ease',
         }}>
@@ -414,7 +414,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
               { icon: <Maximize2 size={16} />, fn: resetView },
             ].map((b, i) => (
               <button key={i} onClick={b.fn} style={{
-                width: 36, height: 36, borderRadius: 10,
+                width: 36, height: 36, borderRadius: 2,
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--text-secondary)', cursor: 'pointer',
@@ -431,13 +431,13 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
           position: 'fixed', bottom: 72, left: '50%', transform: 'translateX(-50%)',
           width: 'min(calc(100vw - 32px), 398px)',
           background: 'var(--bg-card)', border: '1px solid var(--border-mid)',
-          borderRadius: 18, padding: '16px',
+          borderRadius: 2, padding: '16px',
           boxShadow: 'var(--shadow-lg)', zIndex: 200,
           animation: 'sheetSlideUp 0.25s cubic-bezier(0.34,1.2,0.64,1)',
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <div style={{
-              width: 40, height: 40, borderRadius: 12,
+              width: 40, height: 40, borderRadius: 2,
               background: `${selected.color}22`, border: `1.5px solid ${selected.color}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
             }}>
@@ -465,7 +465,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
               style={{
                 marginTop: 12, width: '100%', padding: '10px 16px',
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
-                border: 'none', borderRadius: 12,
+                border: 'none', borderRadius: 2,
                 color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer',
               }}
             >Открыть запись →</button>

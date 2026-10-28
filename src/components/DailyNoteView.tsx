@@ -230,7 +230,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           marginBottom: 12,
         }}>
           <button onClick={goBack} style={{
-            width: 36, height: 36, borderRadius: 11,
+            width: 36, height: 36, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: 'var(--text-secondary)',
@@ -238,7 +238,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
 
           <div style={{ textAlign: 'center' }}>
             <div style={{
-              fontSize: 20, fontWeight: 700,
+              fontSize: 22, fontWeight: 400,
               fontFamily: 'var(--font-serif)',
               color: 'var(--text-primary)',
               lineHeight: 1.2,
@@ -260,7 +260,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           </div>
 
           <button onClick={goForward} disabled={isToday} style={{
-            width: 36, height: 36, borderRadius: 11,
+            width: 36, height: 36, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: isToday ? 'default' : 'pointer',
@@ -270,29 +270,31 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
         </div>
 
         {/* Mood selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
           <span style={{
             fontSize: 10, color: 'var(--text-muted)',
             fontFamily: 'Inter,sans-serif',
             textTransform: 'uppercase', letterSpacing: '0.07em',
             flexShrink: 0,
           }}>Настроение</span>
-          <div style={{ display: 'flex', gap: 5, flex: 1 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {MOODS.map(m => (
               <button
                 key={m.value}
                 onClick={() => handleMood(m.value as 1|2|3|4|5)}
                 title={m.label}
                 style={{
-                  flex: 1, height: 34, borderRadius: 10,
-                  background: currentNote.mood === m.value ? 'var(--bg-active)' : 'var(--bg-raised)',
-                  border: currentNote.mood === m.value ? `1.5px solid ${m.color}` : '1px solid var(--border)',
-                  cursor: 'pointer', fontSize: 17,
+                  flex: '1 0 auto', height: 34, borderRadius: 0, padding: '0 10px',
+                  background: currentNote.mood === m.value ? 'var(--accent)' : 'none',
+                  border: currentNote.mood === m.value ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  color: currentNote.mood === m.value ? 'var(--on-accent)' : 'var(--text-primary)',
+                  cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-ui)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.15s',
-                  transform: currentNote.mood === m.value ? 'scale(1.15)' : 'scale(1)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  transition: 'background var(--dur-quick) var(--ease-calm), color var(--dur-quick) var(--ease-calm)',
                 }}
-              >{m.emoji}</button>
+                aria-pressed={currentNote.mood === m.value}
+              >{m.label}</button>
             ))}
           </div>
         </div>
@@ -307,7 +309,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
             style={{
               margin: '12px 16px 0',
               padding: '12px 14px',
-              borderRadius: 14,
+              borderRadius: 2,
               background: 'var(--bg-raised)',
               border: '1px solid var(--border)',
               animation: 'fadeUp 0.3s ease',
@@ -335,7 +337,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               onClick={() => setShowQuote(false)}
               style={{
                 position: 'absolute', top: 8, right: 8,
-                width: 20, height: 20, borderRadius: 6,
+                width: 20, height: 20, borderRadius: 2,
                 background: 'var(--bg-active)', border: 'none',
                 cursor: 'pointer', color: 'var(--text-muted)',
                 fontSize: 11, lineHeight: 1,
@@ -350,14 +352,12 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           <div style={{
             display: 'flex', alignItems: 'center', gap: 7,
             padding: '9px 12px',
-            borderRadius: 11,
-            background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-active))',
-            border: '1px solid var(--border)',
+            borderLeft: '1px solid var(--text-primary)',
           }}>
-            <Lightbulb size={13} color="var(--gold)" />
+            <Lightbulb size={13} color="var(--text-muted)" />
             <span style={{
-              fontSize: 12, color: 'var(--text-secondary)',
-              fontFamily: 'Inter, sans-serif', lineHeight: 1.4,
+              fontSize: 17, color: 'var(--text-primary)',
+              fontFamily: 'var(--font-serif)', lineHeight: 1.35,
               fontStyle: 'italic',
             }}>{PROMPTS[activePrompt]}</span>
           </div>
@@ -366,7 +366,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
         {/* Textarea — main writing area */}
         <div style={{
           margin: '10px 16px 0',
-          borderRadius: 14,
+          borderRadius: 2,
           background: 'var(--bg-card)',
           border: '1px solid var(--border-mid)',
           overflow: 'hidden',
@@ -385,10 +385,13 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               border: 'none',
               outline: 'none',
               resize: 'none',
-              fontSize: 15.5,
-              lineHeight: 1.78,
+              fontSize: 16,
+              lineHeight: '30px',
               color: 'var(--text-primary)',
-              fontFamily: 'var(--font-serif)',
+              fontFamily: 'var(--font-typed)',
+              textShadow: '0 0 0.7px var(--ink-bleed)',
+              backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 29px, var(--border) 29px, var(--border) 30px)',
+              backgroundPosition: '0 16px', backgroundAttachment: 'local',
               boxSizing: 'border-box',
               caretColor: 'var(--accent)',
               minHeight: 200,
@@ -418,12 +421,12 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               <button
                 onClick={handleSave}
                 style={{
-                  padding: '5px 12px', borderRadius: 8,
+                  padding: '5px 12px', borderRadius: 2,
                   background: textValue.trim()
-                    ? 'linear-gradient(135deg, var(--accent), var(--accent-soft))'
+                    ? 'var(--accent)'
                     : 'var(--bg-raised)',
                   border: textValue.trim() ? 'none' : '1px solid var(--border)',
-                  color: textValue.trim() ? 'var(--bg-base)' : 'var(--text-muted)',
+                  color: textValue.trim() ? 'var(--on-accent)' : 'var(--text-muted)',
                   fontSize: 12, fontWeight: 600,
                   fontFamily: 'Inter, sans-serif',
                   cursor: textValue.trim() ? 'pointer' : 'default',
@@ -445,7 +448,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           {/* Streak */}
           <div style={{
             padding: '12px 10px',
-            borderRadius: 12,
+            borderRadius: 2,
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
             textAlign: 'center',
@@ -468,7 +471,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           {/* Total entries */}
           <div style={{
             padding: '12px 10px',
-            borderRadius: 12,
+            borderRadius: 2,
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
             textAlign: 'center',
@@ -491,7 +494,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           {/* Linked notes */}
           <div style={{
             padding: '12px 10px',
-            borderRadius: 12,
+            borderRadius: 2,
             background: 'var(--bg-card)',
             border: '1px solid var(--border)',
             textAlign: 'center',
@@ -537,7 +540,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
                 >
                   <div style={{
                     width: '100%', height: day.filled ? 28 : 14,
-                    borderRadius: 6,
+                    borderRadius: 2,
                     background: day.filled
                       ? (mood?.color || 'var(--accent-dim)')
                       : 'var(--bg-raised)',
@@ -565,7 +568,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 width: '100%', padding: '10px 12px',
-                borderRadius: 12,
+                borderRadius: 2,
                 background: showLinked ? 'var(--bg-active)' : 'var(--bg-card)',
                 border: '1px solid var(--border)',
                 cursor: 'pointer', textAlign: 'left',
@@ -600,7 +603,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
                     onClick={() => { onOpenNote(n); setShowLinked(false); }}
                     style={{
                       display: 'flex', alignItems: 'flex-start', gap: 10,
-                      padding: '10px 12px', borderRadius: 11,
+                      padding: '10px 12px', borderRadius: 2,
                       background: 'var(--bg-raised)',
                       border: '1px solid var(--border)',
                       cursor: 'pointer', textAlign: 'left',

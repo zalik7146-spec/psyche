@@ -233,7 +233,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
         onClick={onBack}
         style={{
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
-          borderRadius: 10, width: 34, height: 34, display: 'flex',
+          borderRadius: 2, width: 34, height: 34, display: 'flex',
           alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0,
         }}
@@ -262,14 +262,14 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
         <div style={{
           background: `linear-gradient(135deg, color-mix(in srgb, ${lv.color} 9%, transparent), color-mix(in srgb, ${lv.color} 3%, transparent))`,
           border: `1.5px solid color-mix(in srgb, ${lv.color} 25%, transparent)`,
-          borderRadius: 20,
+          borderRadius: 2,
           padding: '20px',
           marginBottom: 20,
           animation: 'fadeSlideUp 0.4s ease both',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 20,
+              width: 64, height: 64, borderRadius: 2,
               background: `color-mix(in srgb, ${lv.color} 13%, transparent)`,
               border: `2px solid color-mix(in srgb, ${lv.color} 38%, transparent)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -330,7 +330,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
             <div key={i} style={{
               background: 'var(--bg-card)',
               border: 'var(--card-border)',
-              borderRadius: 16, padding: '14px 10px',
+              borderRadius: 2, padding: '14px 10px',
               textAlign: 'center',
               animation: `fadeSlideUp 0.4s ease ${i * 0.08}s both`,
             }}>
@@ -375,7 +375,7 @@ function BadgeCard({ badge, index }: { badge: Badge; index: number }) {
       border: badge.earned
         ? `1.5px solid color-mix(in srgb, ${badge.color} 25%, transparent)`
         : 'var(--card-border)',
-      borderRadius: 16,
+      borderRadius: 2,
       padding: '14px 12px',
       opacity: badge.earned ? 1 : 0.5,
       transition: 'opacity 0.2s',

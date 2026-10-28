@@ -16,7 +16,7 @@ const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
 const SECTION: Partial<Record<TabId, TabId>> = {
   feed: 'feed',
   library: 'library',
-  notes: 'notes', daily: 'notes', cards: 'notes', graph: 'notes', stats: 'notes',
+  journal: 'journal', notes: 'journal', daily: 'journal', cards: 'journal', graph: 'journal', stats: 'journal',
   profile: 'profile', achievements: 'profile', anki: 'profile', share: 'profile', settings: 'profile',
 };
 
@@ -34,7 +34,7 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
     { id: 'feed'    as TabId, icon: <Landmark size={23} strokeWidth={1.5} />,    label: 'Агора'   },
     { id: 'library' as TabId, icon: <BookOpen size={23} strokeWidth={1.5} />,    label: 'Книги'   },
     null,
-    { id: 'notes'   as TabId, icon: <NotebookPen size={23} strokeWidth={1.5} />, label: 'Дневник' },
+    { id: 'journal' as TabId, icon: <NotebookPen size={23} strokeWidth={1.5} />, label: 'Дневник' },
     { id: 'profile' as TabId, icon: <UserCircle size={23} strokeWidth={1.5} />,  label: 'Профиль' },
   ];
 

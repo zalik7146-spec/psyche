@@ -95,7 +95,7 @@ export default function TemplatesModal({ templates, onSelect, onClose }: Props) 
           <button
             onClick={onClose}
             style={{
-              width: 30, height: 30, borderRadius: 10,
+              width: 30, height: 30, borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: 'var(--text-muted)',
@@ -119,7 +119,7 @@ export default function TemplatesModal({ templates, onSelect, onClose }: Props) 
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '11px 13px',
-                borderRadius: 14,
+                borderRadius: 2,
                 background: TYPE_COLORS[tpl.type],
                 border: `1px solid ${TYPE_BORDER[tpl.type]}`,
                 cursor: 'pointer', textAlign: 'left', width: '100%',
@@ -131,7 +131,7 @@ export default function TemplatesModal({ templates, onSelect, onClose }: Props) 
             >
               {/* Icon */}
               <div style={{
-                width: 38, height: 38, borderRadius: 10,
+                width: 38, height: 38, borderRadius: 2,
                 background: 'var(--bg-card)',
                 border: `1px solid ${TYPE_BORDER[tpl.type]}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -183,7 +183,7 @@ export default function TemplatesModal({ templates, onSelect, onClose }: Props) 
               onClick={() => { vibe(8); onClose(); }}
               style={{
                 width: '100%', padding: '10px 13px',
-                borderRadius: 12,
+                borderRadius: 2,
                 background: 'transparent',
                 border: '1px dashed var(--border-mid)',
                 cursor: 'pointer',

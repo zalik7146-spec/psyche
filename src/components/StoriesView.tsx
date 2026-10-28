@@ -131,7 +131,7 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
           </div>
           {story.userId === userId && (
             <button onClick={() => { vibe(8); onDelete(story.id); onClose(); }}
-              style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '6px 10px', color: 'var(--on-accent)', cursor: 'pointer', fontSize: 12 }}>
+              style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 2, padding: '6px 10px', color: 'var(--on-accent)', cursor: 'pointer', fontSize: 12 }}>
               Удалить
             </button>
           )}
@@ -210,7 +210,7 @@ function CreateStorySheet({ onClose, onCreate }: {
         <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Preview */}
           <div style={{
-            borderRadius: 16, padding: '32px 20px', background: bg,
+            borderRadius: 2, padding: '32px 20px', background: bg,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
             minHeight: 140,
           }}>
@@ -231,7 +231,7 @@ function CreateStorySheet({ onClose, onCreate }: {
             rows={3}
             style={{
               width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              borderRadius: 12, padding: '12px 14px', fontSize: 15,
+              borderRadius: 2, padding: '12px 14px', fontSize: 15,
               color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
               outline: 'none', resize: 'none', boxSizing: 'border-box',
               lineHeight: 1.6,
@@ -246,7 +246,7 @@ function CreateStorySheet({ onClose, onCreate }: {
               {EMOJIS.map(e => (
                 <button key={e} onClick={() => { vibe(6); setEmoji(e); }}
                   style={{
-                    width: 40, height: 40, borderRadius: 10, fontSize: 20,
+                    width: 40, height: 40, borderRadius: 2, fontSize: 20,
                     border: emoji === e ? '2px solid var(--accent)' : '1px solid var(--border)',
                     background: emoji === e ? 'var(--accent-muted)' : 'var(--bg-raised)',
                     cursor: 'pointer', transition: 'all 0.15s',
@@ -262,7 +262,7 @@ function CreateStorySheet({ onClose, onCreate }: {
               {BG_COLORS.map(c => (
                 <button key={c} onClick={() => { vibe(6); setBg(c); }}
                   style={{
-                    flex: 1, height: 32, borderRadius: 8, background: c,
+                    flex: 1, height: 32, borderRadius: 2, background: c,
                     border: bg === c ? '2px solid var(--accent)' : '1px solid var(--border)',
                     cursor: 'pointer', transition: 'all 0.15s',
                   }} />
@@ -274,7 +274,7 @@ function CreateStorySheet({ onClose, onCreate }: {
         <div style={{ padding: '12px 16px' }}>
           <button onClick={handleCreate} disabled={!text.trim()}
             style={{
-              width: '100%', padding: '14px', borderRadius: 14,
+              width: '100%', padding: '14px', borderRadius: 2,
               background: text.trim() ? 'linear-gradient(135deg, var(--accent), var(--accent))' : 'var(--bg-raised)',
               border: 'none', color: text.trim() ? '#fff' : 'var(--text-muted)',
               fontSize: 15, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'not-allowed',

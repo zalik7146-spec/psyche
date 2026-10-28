@@ -101,7 +101,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
 
       {/* Icon */}
       <div style={{
-        width: 72, height: 72, borderRadius: 20,
+        width: 72, height: 72, borderRadius: 2,
         background: 'var(--bg-raised)',
         border: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -137,7 +137,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
               style={{
                 width: '100%', padding: '14px 16px 14px 32px',
                 background: 'var(--bg-raised)', border: `1px solid ${usernameError ? 'var(--red)' : 'var(--border)'}`,
-                borderRadius: 12, color: 'var(--text-primary)', fontSize: 16,
+                borderRadius: 2, color: 'var(--text-primary)', fontSize: 16,
                 fontFamily: 'Inter, sans-serif', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -165,7 +165,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
               style={{
                 width: '100%', padding: '12px 16px',
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 12, color: 'var(--text-primary)', fontSize: 15,
+                borderRadius: 2, color: 'var(--text-primary)', fontSize: 15,
                 fontFamily: 'Inter, sans-serif', outline: 'none', boxSizing: 'border-box',
               }}
             />
@@ -182,7 +182,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
               style={{
                 width: '100%', padding: '12px 16px',
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 12, color: 'var(--text-primary)', fontSize: 15,
+                borderRadius: 2, color: 'var(--text-primary)', fontSize: 15,
                 fontFamily: 'Inter, sans-serif', outline: 'none', resize: 'none',
                 lineHeight: 1.6, boxSizing: 'border-box',
               }}
@@ -205,7 +205,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
                   key={int.id}
                   onClick={() => toggleInterest(int.id)}
                   style={{
-                    padding: '10px 12px', borderRadius: 12, border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+                    padding: '10px 12px', borderRadius: 2, border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
                     background: selected ? 'var(--accent-muted)' : 'var(--bg-raised)',
                     cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s ease',
                     transform: selected ? 'scale(0.97)' : 'scale(1)',
@@ -233,7 +233,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
             style={{
               width: '100%', padding: '16px',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
-              border: 'none', borderRadius: 16, color: 'var(--on-accent)',
+              border: 'none', borderRadius: 2, color: 'var(--on-accent)',
               fontSize: 16, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: (step === 0 && (!!usernameError || !username)) ? 0.5 : 1,
@@ -249,7 +249,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
             style={{
               width: '100%', padding: '16px',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
-              border: 'none', borderRadius: 16, color: 'var(--on-accent)',
+              border: 'none', borderRadius: 2, color: 'var(--on-accent)',
               fontSize: 16, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               fontFamily: 'Inter, sans-serif',

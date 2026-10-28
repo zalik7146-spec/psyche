@@ -386,7 +386,7 @@ export default function AuthScreen({ onAuth }: Props) {
         }}>
           {/* Иконка */}
           <div style={{
-            width: 80, height: 80, borderRadius: '24px',
+            width: 80, height: 80, borderRadius: 2,
             background: 'linear-gradient(135deg, rgba(196,129,60,0.15), rgba(196,129,60,0.08))',
             border: '1px solid rgba(196,129,60,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -412,7 +412,7 @@ export default function AuthScreen({ onAuth }: Props) {
           </p>
 
           <div style={{
-            padding: '8px 16px', borderRadius: '10px', marginBottom: '16px',
+            padding: '8px 16px', borderRadius: 2, marginBottom: '16px',
             background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
           }}>
             <span style={{
@@ -441,7 +441,7 @@ export default function AuthScreen({ onAuth }: Props) {
             <div key={step.n} style={{
               display: 'flex', alignItems: 'center', gap: '12px',
               width: '100%', maxWidth: '320px',
-              padding: '10px 14px', borderRadius: '12px',
+              padding: '10px 14px', borderRadius: 2,
               background: 'var(--bg-card)', border: '1px solid var(--border)',
               marginBottom: '8px', textAlign: 'left',
             }}>
@@ -463,7 +463,7 @@ export default function AuthScreen({ onAuth }: Props) {
           {error && (
             <div style={{
               width: '100%', maxWidth: '320px',
-              padding: '12px 14px', borderRadius: '12px', marginTop: '12px',
+              padding: '12px 14px', borderRadius: 2, marginTop: '12px',
               background: 'rgba(196,72,72,0.12)', color: 'var(--red)',
               border: '1px solid rgba(196,72,72,0.25)',
               fontSize: '13px', fontFamily: 'Inter, sans-serif', textAlign: 'left',
@@ -474,7 +474,7 @@ export default function AuthScreen({ onAuth }: Props) {
           {info && (
             <div style={{
               width: '100%', maxWidth: '320px',
-              padding: '12px 14px', borderRadius: '12px', marginTop: '12px',
+              padding: '12px 14px', borderRadius: 2, marginTop: '12px',
               background: 'rgba(100,180,120,0.12)', color: 'var(--green)',
               border: '1px solid rgba(100,180,120,0.25)',
               fontSize: '13px', fontFamily: 'Inter, sans-serif', textAlign: 'left',
@@ -490,7 +490,7 @@ export default function AuthScreen({ onAuth }: Props) {
               disabled={loading}
               style={{
                 width: '100%', padding: '16px',
-                borderRadius: '18px', border: 'none',
+                borderRadius: 2, border: 'none',
                 background: loading ? 'var(--bg-active)' : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
                 color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
                 fontWeight: 700, fontSize: '15px', fontFamily: 'Inter, sans-serif',
@@ -506,7 +506,7 @@ export default function AuthScreen({ onAuth }: Props) {
               disabled={loading}
               style={{
                 width: '100%', padding: '14px',
-                borderRadius: '18px',
+                borderRadius: 2,
                 border: '1px solid var(--border-mid)',
                 background: 'var(--bg-raised)',
                 color: 'var(--text-secondary)', fontWeight: 500, fontSize: '14px',
@@ -547,7 +547,7 @@ export default function AuthScreen({ onAuth }: Props) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
         }}>
           <div className="fade-in" style={{
-            width: 64, height: 64, borderRadius: '20px',
+            width: 64, height: 64, borderRadius: 2,
             background: 'linear-gradient(135deg, var(--bg-raised), var(--bg-active))',
             border: '1px solid var(--border-mid)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -592,7 +592,7 @@ export default function AuthScreen({ onAuth }: Props) {
         {/* Carousel */}
         <div className="fade-in delay-2" style={{
           margin: '20px 18px 0',
-          borderRadius: '20px',
+          borderRadius: 2,
           background: 'var(--bg-card)',
           border: '1px solid var(--border-mid)',
           height: 190,
@@ -648,7 +648,7 @@ export default function AuthScreen({ onAuth }: Props) {
         <div className="fade-in delay-3" style={{ margin: '16px 18px 0' }}>
           {/* Slide card — fixed height, absolute children */}
           <div style={{
-            borderRadius: '20px',
+            borderRadius: 2,
             background: 'var(--bg-card)',
             border: '1px solid var(--border-mid)',
             overflow: 'hidden',
@@ -673,7 +673,7 @@ export default function AuthScreen({ onAuth }: Props) {
                 }} />
                 {/* icon */}
                 <div style={{
-                  width: 58, height: 58, borderRadius: '18px', flexShrink: 0,
+                  width: 58, height: 58, borderRadius: 2, flexShrink: 0,
                   background: `color-mix(in srgb, ${o.color} 13%, transparent)`,
                   border: `1.5px solid color-mix(in srgb, ${o.color} 25%, transparent)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -728,7 +728,7 @@ export default function AuthScreen({ onAuth }: Props) {
             onClick={() => setMode('register')}
             style={{
               width: '100%', padding: '14px',
-              borderRadius: '16px', border: 'none',
+              borderRadius: 2, border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
               color: 'var(--bg-base)', fontWeight: 700, fontSize: '15px',
               fontFamily: 'Inter, sans-serif',
@@ -749,7 +749,7 @@ export default function AuthScreen({ onAuth }: Props) {
             onClick={() => setMode('login')}
             style={{
               width: '100%', padding: '13px',
-              borderRadius: '16px',
+              borderRadius: 2,
               border: '1px solid var(--border-mid)',
               background: 'var(--bg-raised)',
               color: 'var(--text-primary)', fontWeight: 500, fontSize: '15px',
@@ -788,7 +788,7 @@ export default function AuthScreen({ onAuth }: Props) {
         <button
           onClick={() => { setMode('welcome'); setError(''); setInfo(''); }}
           style={{
-            width: 42, height: 42, borderRadius: '13px',
+            width: 42, height: 42, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border-mid)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--text-secondary)', cursor: 'pointer', flexShrink: 0,
@@ -815,7 +815,7 @@ export default function AuthScreen({ onAuth }: Props) {
       {/* Cloud indicator */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '8px',
-        padding: '10px 14px', borderRadius: '12px', marginBottom: '20px',
+        padding: '10px 14px', borderRadius: 2, marginBottom: '20px',
         background: 'rgba(100,180,120,0.08)',
         border: '1px solid rgba(100,180,120,0.2)',
       }}>
@@ -881,7 +881,7 @@ export default function AuthScreen({ onAuth }: Props) {
 
         {error && (
           <div style={{
-            padding: '12px 14px', borderRadius: '12px', fontSize: '13px',
+            padding: '12px 14px', borderRadius: 2, fontSize: '13px',
             background: 'rgba(196,72,72,0.12)', color: 'var(--red)',
             border: '1px solid rgba(196,72,72,0.25)',
             fontFamily: 'Inter, sans-serif',
@@ -892,7 +892,7 @@ export default function AuthScreen({ onAuth }: Props) {
 
         {info && (
           <div style={{
-            padding: '12px 14px', borderRadius: '12px', fontSize: '13px',
+            padding: '12px 14px', borderRadius: 2, fontSize: '13px',
             background: 'rgba(100,180,120,0.12)', color: 'var(--green)',
             border: '1px solid rgba(100,180,120,0.25)',
             fontFamily: 'Inter, sans-serif',
@@ -906,7 +906,7 @@ export default function AuthScreen({ onAuth }: Props) {
           disabled={loading}
           style={{
             width: '100%', padding: '16px',
-            borderRadius: '18px', border: 'none',
+            borderRadius: 2, border: 'none',
             background: loading
               ? 'var(--bg-active)'
               : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',

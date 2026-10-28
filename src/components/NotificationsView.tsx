@@ -129,7 +129,7 @@ export default function NotificationsView({ user, onBack }: Props) {
         <button
           onClick={() => { vibe(6); onBack(); }}
           style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 36, height: 36, borderRadius: 2,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: 'var(--text-primary)', flexShrink: 0,
@@ -149,7 +149,7 @@ export default function NotificationsView({ user, onBack }: Props) {
           <button
             onClick={markAllRead}
             style={{
-              padding: '6px 12px', borderRadius: 8,
+              padding: '6px 12px', borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 4,
@@ -265,7 +265,7 @@ export default function NotificationsView({ user, onBack }: Props) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 36, height: 36, borderRadius: 2,
             background: 'var(--accent-muted)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--accent)', flexShrink: 0,

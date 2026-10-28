@@ -29,6 +29,7 @@ import GamificationView from './components/GamificationView';
 import AnkiView        from './components/AnkiView';
 import PublicShareView from './components/PublicShareView';
 import FeedView        from './components/FeedView';
+import JournalView     from './components/JournalView';
 import type { ComposeDraft } from './components/FeedView';
 import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
@@ -70,7 +71,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
           <button
             onClick={() => { this.setState({ hasError: false, error: '' }); window.location.reload(); }}
             style={{
-              padding: '12px 28px', borderRadius: 12,
+              padding: '12px 28px', borderRadius: 2,
               background: 'linear-gradient(135deg, var(--accent), var(--accent))',
               border: 'none', color: 'var(--on-accent)', cursor: 'pointer',
               fontSize: 15, fontWeight: 600,
@@ -116,8 +117,9 @@ function AppInner() {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const syncedRef = useRef(false);
   // Разделы нижней панели сменяются растворением, вложенные экраны приходят справа
-  const sectionTabs: TabId[] = ['feed', 'library', 'notes', 'profile'];
+  const sectionTabs: TabId[] = ['feed', 'library', 'journal', 'profile'];
   const [tabMotion, setTabMotion] = useState<'view-enter' | 'view-push'>('view-enter');
+  const [lastSection, setLastSection] = useState<TabId>('feed');
   const [tabKey, setTabKey] = useState(0);
 
   // ── Apply theme immediately ───────────────────────────────────────────────
@@ -500,7 +502,7 @@ function AppInner() {
     Object.assign(t.style, {
       position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
       background: 'var(--bg-raised)', color: 'var(--text-primary)',
-      padding: '10px 20px', borderRadius: '12px', border: '1px solid var(--border)',
+      padding: '10px 20px', borderRadius: 2, border: '1px solid var(--border)',
       fontFamily: 'Inter, sans-serif', fontSize: '13px', zIndex: '99999',
       boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
       whiteSpace: 'nowrap',
@@ -557,6 +559,7 @@ function AppInner() {
       setShowTemplates(true);
     } else {
       setTabMotion(sectionTabs.includes(tab) ? 'view-enter' : 'view-push');
+      if (sectionTabs.includes(tab)) setLastSection(tab);
       setTabKey(k => k + 1);
       setActiveTab(tab);
     }
@@ -590,7 +593,7 @@ function AppInner() {
       Object.assign(t.style, {
         position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
         background: 'var(--bg-raised)', color: 'var(--text-primary)',
-        padding: '12px 20px', borderRadius: '14px', border: '1px solid var(--border)',
+        padding: '12px 20px', borderRadius: 2, border: '1px solid var(--border)',
         fontFamily: 'Inter, sans-serif', fontSize: '13px',
         zIndex: '99999', maxWidth: '320px', width: '90%',
         boxShadow: '0 4px 24px rgba(0,0,0,0.5)', cursor: 'pointer', lineHeight: '1.5',
@@ -671,6 +674,18 @@ function AppInner() {
         style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}
         className={tabMotion}
       >
+        {activeTab === 'journal' && (
+          <JournalView
+            notes={state.notes}
+            dailyNotes={state.dailyNotes}
+            flashcards={state.flashcards}
+            onSaveDailyNote={handleSaveDailyNote}
+            onNavigate={handleTabChange}
+            onOpenNote={note => setEditingNote(note)}
+            onOpenChallenges={() => setShowChallenges(true)}
+          />
+        )}
+
         {activeTab === 'notes' && (
           <NotesList
             notes={state.notes}
@@ -726,7 +741,7 @@ function AppInner() {
             notes={state.notes}
             books={state.books}
             onOpenNote={note => setEditingNote(note)}
-            onBack={() => handleTabChange('profile')}
+            onBack={() => handleTabChange(lastSection)}
           />
         )}
 

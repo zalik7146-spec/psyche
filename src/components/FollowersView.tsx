@@ -136,7 +136,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
           <button
             onClick={() => onOpenMessages(p.id)}
             style={{
-              width: 34, height: 34, borderRadius: 10,
+              width: 34, height: 34, borderRadius: 2,
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: 'var(--text-secondary)',
@@ -146,7 +146,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
             <button
               onClick={() => isFollowing ? unfollow(p.id) : follow(p.id)}
               style={{
-                height: 34, padding: '0 12px', borderRadius: 10,
+                height: 34, padding: '0 12px', borderRadius: 2,
                 background: isFollowing ? 'var(--bg-raised)' : 'var(--accent)',
                 border: `1px solid ${isFollowing ? 'var(--border)' : 'var(--accent)'}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -175,7 +175,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
         flexShrink: 0,
       }}>
         <button onClick={onBack} style={{
-          width: 36, height: 36, borderRadius: 10,
+          width: 36, height: 36, borderRadius: 2,
           background: 'var(--bg-raised)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--text-secondary)',
