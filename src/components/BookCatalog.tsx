@@ -28,10 +28,6 @@ const TOPICS = [
   { label: 'Саморазвитие', query: 'self improvement' },
 ]
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16,
-}
-
 export default function BookCatalog({ onClose, onAddToLibrary, onOpenReader, existingBooks }: Props) {
   const [query, setQuery] = useState('')
   const [submittedQuery, setSubmittedQuery] = useState('psychology')
@@ -88,7 +84,7 @@ export default function BookCatalog({ onClose, onAddToLibrary, onOpenReader, exi
       description: book.description,
       coverUrl: book.coverUrl,
       coverEmoji: '📚',
-      color: 'var(--on-accent)',
+      color: '#3d2a1a',
       status: 'want',
       totalPages: book.pages,
       currentPage: 0,
@@ -110,50 +106,76 @@ export default function BookCatalog({ onClose, onAddToLibrary, onOpenReader, exi
     })
   }
 
+  const label: React.CSSProperties = { fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }
+  const quiet: React.CSSProperties = { fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--text-muted)', margin: 0 }
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
-      <header style={{ padding: 'calc(14px + env(safe-area-inset-top)) 18px 16px', background: 'var(--bg-raised)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <button aria-label="Закрыть каталог" onClick={onClose} style={{ width: 38, height: 38, display: 'grid', placeItems: 'center', borderRadius: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)', cursor: 'pointer' }}><X size={18} /></button>
+    <div role="dialog" aria-label="Каталог книг" className="view-push" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
+      <header style={{ paddingTop: 'env(safe-area-inset-top)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 8px 0 4px' }}>
+          <button aria-label="Закрыть каталог" onClick={onClose} style={{ width: 44, height: 44, display: 'grid', placeItems: 'center', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}><X size={20} strokeWidth={1.5} /></button>
           <div style={{ flex: 1 }}>
-            <h2 style={{ margin: 0, color: 'var(--text-primary)', font: '700 20px var(--font-serif)' }}>Каталог книг</h2>
-            <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 3 }}>Google Books · Open Library · Project Gutenberg</div>
+            <h2 style={{ margin: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 24 }}>Каталог</h2>
           </div>
         </div>
-        <form onSubmit={event => { event.preventDefault(); submitSearch() }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14 }}>
-          <Search size={17} color="var(--text-muted)" />
-          <input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Название, автор или тема" aria-label="Поиск книг" style={{ flex: 1, minWidth: 0, padding: '13px 0', color: 'var(--text-primary)', background: 'transparent', border: 0, outline: 0, fontSize: 15 }} />
-          <button type="submit" disabled={!query.trim()} style={{ border: 0, borderRadius: 10, padding: '8px 12px', background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 600, cursor: 'pointer', opacity: query.trim() ? 1 : .5 }}>Найти</button>
+        <form onSubmit={event => { event.preventDefault(); submitSearch() }} style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 20px', height: 48, borderBottom: '1px solid var(--text-primary)' }}>
+          <Search size={17} strokeWidth={1.5} color="var(--text-muted)" />
+          <input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Название, автор или тема" aria-label="Поиск книг" style={{ flex: 1, minWidth: 0, color: 'var(--text-primary)', background: 'transparent', border: 0, outline: 0, fontSize: 15, fontFamily: 'var(--font-ui)' }} />
+          <button type="submit" disabled={!query.trim()} style={{ border: 0, height: 34, padding: '0 14px', background: query.trim() ? 'var(--accent)' : 'var(--bg-active)', color: query.trim() ? 'var(--on-accent)' : 'var(--text-muted)', fontSize: 13, fontWeight: 500, cursor: query.trim() ? 'pointer' : 'default' }}>Найти</button>
         </form>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 12, scrollbarWidth: 'none' }}>
-          {TOPICS.map(topic => <button key={topic.query} onClick={() => { setQuery(topic.label); submitSearch(topic.query) }} style={{ flexShrink: 0, border: '1px solid var(--border)', borderRadius: 20, padding: '7px 12px', background: submittedQuery === topic.query ? 'var(--accent)' : 'var(--bg-card)', color: submittedQuery === topic.query ? '#fff' : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>{topic.label}</button>)}
+        <div style={{ display: 'flex', gap: 18, overflowX: 'auto', padding: '0 20px', scrollbarWidth: 'none' }}>
+          {TOPICS.map(topic => {
+            const on = submittedQuery === topic.query
+            return (
+              <button key={topic.query} aria-pressed={on} onClick={() => { setQuery(topic.label); submitSearch(topic.query) }}
+                style={{ flexShrink: 0, height: 44, background: 'none', border: 'none', borderBottom: on ? '1px solid var(--text-primary)' : '1px solid transparent', marginBottom: -1, color: on ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: 13, cursor: 'pointer', fontFamily: 'var(--font-ui)', transition: 'color var(--dur-quick) var(--ease-calm)' }}>
+                {topic.label}
+              </button>
+            )
+          })}
         </div>
       </header>
 
-      <main style={{ flex: 1, overflowY: 'auto', padding: '16px 18px calc(24px + env(safe-area-inset-bottom))' }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 12 }}>Полные тексты отмечены отдельно. Каталог показывает сведения о книгах даже когда открытого текста нет.</div>
-        {loading && <div style={{ ...cardStyle, minHeight: 180, display: 'grid', placeItems: 'center', color: 'var(--text-secondary)' }}><span><LoaderCircle size={18} className="spinner" style={{ verticalAlign: 'middle', marginRight: 8 }} />Ищем книги…</span></div>}
-        {!loading && failedSources.length > 0 && <div role="status" style={{ ...cardStyle, padding: 14, marginBottom: 12, color: 'var(--text-secondary)', fontSize: 13 }}>Не ответили источники: {failedSources.join(', ')}. Показаны результаты доступных источников.</div>}
-        {!loading && books.length === 0 && <div style={{ ...cardStyle, padding: '38px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}><div style={{ fontSize: 34, marginBottom: 10 }}>📚</div>{failedSources.length === 3 ? 'Каталоги сейчас недоступны. Проверьте подключение и повторите поиск.' : `По запросу «${submittedQuery}» ничего не найдено.`}<div><button onClick={() => setReloadKey(value => value + 1)} style={{ marginTop: 14, border: 0, borderRadius: 10, padding: '9px 14px', background: 'var(--accent)', color: 'var(--on-accent)', cursor: 'pointer' }}>Повторить поиск</button></div></div>}
-        {!loading && books.length > 0 && <div style={{ display: 'grid', gap: 12 }}>
+      <main style={{ flex: 1, overflowY: 'auto', padding: '14px 20px calc(24px + env(safe-area-inset-bottom))' }}>
+        <p style={{ ...label, margin: '0 0 6px', lineHeight: 1.6 }}>Google Books · Open Library · Project Gutenberg</p>
+        {loading && (
+          <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-muted)' }}>
+            <LoaderCircle size={16} strokeWidth={1.5} className="spinner" /> <span style={label}>Ищем книги</span>
+          </div>
+        )}
+        {!loading && failedSources.length > 0 && (
+          <p role="status" style={{ margin: '8px 0', padding: '10px 0', borderTop: '1px dashed var(--border)', borderBottom: '1px dashed var(--border)', color: 'var(--text-muted)', fontSize: 13 }}>
+            Не ответили: {failedSources.join(', ')}. Показаны результаты остальных источников.
+          </p>
+        )}
+        {!loading && books.length === 0 && (
+          <div style={{ padding: '36px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+            <p style={quiet}>{failedSources.length === 3 ? 'Каталоги сейчас недоступны. Проверьте подключение.' : `По запросу «${submittedQuery}» ничего не найдено.`}</p>
+            <button onClick={() => setReloadKey(value => value + 1)} style={{ border: 0, height: 40, padding: '0 16px', background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 13, cursor: 'pointer' }}>Повторить поиск</button>
+          </div>
+        )}
+        {!loading && books.length > 0 && <div style={{ display: 'flex', flexDirection: 'column' }}>
           {books.map(book => {
             const existing = libraryBookFor(book)
             const added = addedIds.has(book.id)
-            return <article key={book.id} style={{ ...cardStyle, display: 'flex', gap: 14, padding: 14 }}>
-              <div style={{ width: 70, height: 98, flexShrink: 0, overflow: 'hidden', display: 'grid', placeItems: 'center', borderRadius: 9, background: 'var(--bg-raised)', color: 'var(--text-muted)' }}>
-                {book.coverUrl ? <img src={book.coverUrl} alt={`Обложка «${book.title}»`} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <BookOpen size={26} />}
+            const inLibrary = !!existing || added
+            return <article key={book.id} className="view-enter" style={{ display: 'flex', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ width: 64, height: 92, flexShrink: 0, overflow: 'hidden', display: 'grid', placeItems: 'center', border: '1px solid var(--text-primary)', background: 'var(--bg-card)', color: 'var(--text-muted)' }}>
+                {book.coverUrl ? <img src={book.coverUrl} alt={`Обложка «${book.title}»`} loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <BookOpen size={22} strokeWidth={1.25} />}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ margin: '0 0 4px', color: 'var(--text-primary)', font: '700 15px/1.35 var(--font-serif)' }}>{book.title}</h3>
-                <div style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{book.author}{book.year ? ` · ${book.year}` : ''}{book.pages ? ` · ${book.pages} стр.` : ''}</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                  <span style={{ padding: '3px 8px', borderRadius: 20, background: 'var(--bg-raised)', color: 'var(--text-muted)', fontSize: 10 }}>{book.source}</span>
-                  {book.textUrl && <span style={{ padding: '3px 8px', borderRadius: 20, background: 'rgba(90,138,106,.17)', color: '#76b58d', fontSize: 10 }}>Полный текст · свободный доступ</span>}
-                </div>
-                {book.description && <p style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '8px 0 10px', color: 'var(--text-muted)', fontSize: 12, lineHeight: 1.45 }}>{book.description}</p>}
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <h3 style={{ margin: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 18, lineHeight: 1.25 }}>{book.title}</h3>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{book.author}{book.year ? ` · ${book.year}` : ''}{book.pages ? ` · ${book.pages} стр.` : ''}</span>
+                <span style={{ ...label, letterSpacing: '0.08em', marginTop: 2 }}>{book.source}{book.textUrl ? ' · полный текст' : ''}</span>
+                {book.description && <p style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>{book.description}</p>}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                  {book.textUrl ? <button onClick={() => openReader(book)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: 0, borderRadius: 10, padding: '8px 11px', background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}><BookOpen size={14} /> Читать</button> : book.sourceUrl && <a href={book.sourceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: '1px solid var(--border)', borderRadius: 10, padding: '7px 10px', color: 'var(--text-secondary)', fontSize: 12, textDecoration: 'none' }}>Подробнее <ArrowUpRight size={13} /></a>}
-                  <button onClick={() => addToLibrary(book)} disabled={!!existing || added} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border)', borderRadius: 10, padding: '7px 10px', background: 'var(--bg-raised)', color: existing || added ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: 12, cursor: existing || added ? 'default' : 'pointer' }}>{existing || added ? <><Check size={14} /> В библиотеке</> : <><Plus size={14} /> Добавить</>}</button>
+                  {book.textUrl
+                    ? <button onClick={() => openReader(book)} style={{ height: 36, padding: '0 14px', border: 0, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Читать</button>
+                    : book.sourceUrl && <a href={book.sourceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 36, padding: '0 12px', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 13, textDecoration: 'none', boxSizing: 'border-box' }}>Подробнее <ArrowUpRight size={13} strokeWidth={1.5} /></a>}
+                  <button onClick={() => addToLibrary(book)} disabled={inLibrary}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px', border: '1px solid var(--border)', background: 'none', color: inLibrary ? 'var(--text-muted)' : 'var(--text-primary)', fontSize: 13, cursor: inLibrary ? 'default' : 'pointer' }}>
+                    {inLibrary ? <><Check size={14} strokeWidth={1.5} /> На полке</> : <><Plus size={14} strokeWidth={1.5} /> На полку</>}
+                  </button>
                 </div>
               </div>
             </article>

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
+import { Search, Plus, LayoutGrid, List, X } from 'lucide-react'
 import { Book } from '../types'
 import BookModal from './BookModal'
 
@@ -11,14 +13,63 @@ interface Props {
   onOpenReader: (book: any) => void
 }
 
+const SHELVES: [string, string][] = [['all', 'Все'], ['reading', 'Читаю'], ['finished', 'Прочитано'], ['want', 'Хочу'], ['paused', 'Пауза']]
+const STATUS_LABEL: Record<string, string> = { reading: 'Читаю', finished: 'Прочитано', want: 'Хочу', paused: 'Пауза' }
 
+const label: CSSProperties = { fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }
+const iconBtn: CSSProperties = {
+  width: 44, height: 44, background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)',
+}
+const inkButton: CSSProperties = {
+  height: 36, padding: '0 16px', border: 'none', cursor: 'pointer',
+  background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-ui)',
+}
+
+const progressOf = (book: Book) => book.totalPages && book.currentPage ? Math.min(100, Math.round((book.currentPage / book.totalPages) * 100)) : 0
+
+// Обложка: настоящая картинка в тонкой рамке или машинописная библиотечная карточка
+export function BookCover({ book, width, height }: { book: Pick<Book, 'title' | 'author' | 'coverUrl'>; width: number; height: number }) {
+  const small = width < 60
+  if (book.coverUrl) {
+    return (
+      <span style={{ width, height, flexShrink: 0, border: '1px solid var(--text-primary)', background: `var(--bg-card) url(${book.coverUrl}) center/cover`, display: 'block' }} />
+    )
+  }
+  return (
+    <span style={{
+      width, height, flexShrink: 0, boxSizing: 'border-box', border: '1px solid var(--text-primary)', background: 'var(--bg-card)',
+      padding: small ? 0 : '10px 9px', display: 'flex', flexDirection: 'column',
+      justifyContent: small ? 'center' : 'space-between', alignItems: small ? 'center' : 'stretch', overflow: 'hidden',
+      fontFamily: 'var(--font-typed)', color: 'var(--text-primary)', textShadow: '0 0 0.7px var(--ink-bleed)',
+    }}>
+      {small ? (
+        <span style={{ fontSize: 15 }}>{(book.title[0] || '?').toUpperCase()}</span>
+      ) : (
+        <>
+          <span style={{ fontSize: Math.max(9, width / 9.5), lineHeight: 1.25, textTransform: 'uppercase', wordBreak: 'break-word', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{book.title}</span>
+          <span style={{ fontSize: Math.max(8, width / 11), color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</span>
+        </>
+      )}
+    </span>
+  )
+}
+
+function ProgressLine({ value }: { value: number }) {
+  return (
+    <span style={{ height: 1, background: 'var(--border)', display: 'flex' }}>
+      <span style={{ width: `${value}%`, background: 'var(--text-primary)', transition: 'width var(--dur-screen) var(--ease-calm)' }} />
+    </span>
+  )
+}
 
 export default function Library({ books, notes, onSave, onDelete, onOpenCatalog, onOpenReader }: Props) {
   const [filter, setFilter] = useState<string>('all')
-  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [view, setView] = useState<'grid' | 'list'>('list')
   const [showModal, setShowModal] = useState(false)
   const [editBook, setEditBook] = useState<Book | undefined>(undefined)
   const [search, setSearch] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const [showGoal, setShowGoal] = useState(false)
   const [goal, setGoal] = useState(() => parseInt(localStorage.getItem('reading_goal') || '12'))
   const [goalInput, setGoalInput] = useState(goal.toString())
@@ -26,93 +77,154 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
 
   const filtered = books.filter(b => {
     const matchStatus = filter === 'all' || b.status === filter
-    const matchSearch = !search || b.title.toLowerCase().includes(search.toLowerCase()) || b.author.toLowerCase().includes(search.toLowerCase())
+    const q = search.toLowerCase()
+    const matchSearch = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)
     return matchStatus && matchSearch
   })
 
+  // Текущая книга — крупно наверху, если смотрим «Все» или «Читаю» без поиска
+  const current = !search && (filter === 'all' || filter === 'reading') ? filtered.find(b => b.status === 'reading') : undefined
+  const rest = current ? filtered.filter(b => b.id !== current.id) : filtered
+
   const doneCount = books.filter(b => b.status === 'finished').length
-  const progress = Math.min(100, Math.round((doneCount / goal) * 100))
+  const goalProgress = Math.min(100, Math.round((doneCount / goal) * 100))
+  const notesFor = (id: string) => notes.filter((n: any) => n.bookId === id).length
+  const openEdit = (book?: Book) => { vibe(); setEditBook(book); setShowModal(true) }
+  const read = (book: Book) => { vibe(12); onOpenReader(book) }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ padding: '16px 16px 8px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)', margin: 0 }}>Библиотека</h2>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => { vibe(); onOpenCatalog() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>📚 Каталог</button>
-            <button onClick={() => { vibe(); setEditBook(undefined); setShowModal(true) }} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}>+ Книга</button>
-          </div>
-        </div>
-
-        {/* Search */}
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="🔍 Поиск книг..."
-          style={{ width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', color: 'var(--text-primary)', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
-        />
-
-        {/* Reading goal */}
-        <button onClick={() => { vibe(); setShowGoal(true) }} style={{ width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', cursor: 'pointer', textAlign: 'left' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>🎯 Цель: {doneCount} из {goal} книг</span>
-            <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>{progress}%</span>
-          </div>
-          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent), #d4a96a)', borderRadius: 2, transition: 'width 0.5s' }} />
-          </div>
-        </button>
-
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 2 }}>
-          {[['all', '📚 Все'], ['reading', '📖 Читаю'], ['finished', '✅ Прочитано'], ['want', '🔖 Хочу'], ['paused', '⏸ Пауза']].map(([id, label]) => (
-            <button key={id} onClick={() => { vibe(); setFilter(id) }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', background: filter === id ? 'var(--accent)' : 'var(--bg-raised)', color: filter === id ? '#fff' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
-              {label}
+      <header style={{ paddingTop: 'env(safe-area-inset-top)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 56, padding: '0 8px 0 20px' }}>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 28, color: 'var(--text-primary)' }}>Книги</h1>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button aria-label="Поиск по полке" aria-pressed={showSearch} onClick={() => { vibe(); setShowSearch(s => !s); if (showSearch) setSearch('') }} style={iconBtn}>
+              {showSearch ? <X size={20} strokeWidth={1.5} /> : <Search size={20} strokeWidth={1.5} />}
             </button>
-          ))}
-          <button onClick={() => { vibe(); setView(v => v === 'grid' ? 'list' : 'grid') }} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--bg-raised)', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>
-            {view === 'grid' ? '☰' : '⊞'}
-          </button>
+            <button aria-label={view === 'grid' ? 'Показать списком' : 'Показать сеткой'} onClick={() => { vibe(); setView(v => v === 'grid' ? 'list' : 'grid') }} style={iconBtn}>
+              {view === 'grid' ? <List size={20} strokeWidth={1.5} /> : <LayoutGrid size={20} strokeWidth={1.5} />}
+            </button>
+            <button aria-label="Добавить книгу вручную" onClick={() => openEdit(undefined)} style={iconBtn}>
+              <Plus size={21} strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Books */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+        {showSearch && (
+          <label className="view-enter" style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, margin: '0 20px 8px', borderBottom: '1px solid var(--text-primary)' }}>
+            <Search size={16} strokeWidth={1.5} color="var(--text-muted)" />
+            <input autoFocus value={search} onChange={e => setSearch(e.target.value)} aria-label="Поиск книг" placeholder="Название или автор"
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 15, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }} />
+          </label>
+        )}
+
+        <div role="tablist" aria-label="Полки" style={{ display: 'flex', padding: '0 12px', marginBottom: -1, overflowX: 'auto', scrollbarWidth: 'none' }}>
+          {SHELVES.map(([id, name]) => (
+            <button key={id} role="tab" aria-selected={filter === id} onClick={() => { vibe(); setFilter(id) }}
+              style={{
+                flex: '1 0 auto', height: 44, padding: '0 10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-ui)',
+                borderBottom: filter === id ? '1px solid var(--text-primary)' : '1px solid transparent',
+                color: filter === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                transition: 'color var(--dur-quick) var(--ease-calm), border-color var(--dur-quick) var(--ease-calm)',
+              }}>{name}</button>
+          ))}
+        </div>
+      </header>
+
+      <div key={filter + view} className="view-enter" style={{ flex: 1, overflowY: 'auto', padding: '16px 12px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {current && (
+          <div style={{ display: 'flex', gap: 18, padding: 18, background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+            <button onClick={() => openEdit(current)} aria-label="Карточка книги" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+              <BookCover book={current} width={92} height={132} />
+            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0 }}>
+              <span style={label}>Сейчас читаю</span>
+              <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20, lineHeight: 1.2, color: 'var(--text-primary)' }}>{current.title}</span>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{current.author} · {notesFor(current.id)} записей</span>
+              <span style={{ marginTop: 4 }}><ProgressLine value={progressOf(current)} /></span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{progressOf(current)}%</span>
+              <button onClick={() => read(current)} style={{ ...inkButton, alignSelf: 'flex-start', marginTop: 2 }}>Читать</button>
+            </div>
+          </div>
+        )}
+
+        {filter === 'all' && !search && (
+          <button onClick={() => { vibe(); setGoalInput(goal.toString()); setShowGoal(true) }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <span style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              <span style={label}>Цель года · {doneCount} из {goal}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{goalProgress}%</span>
+            </span>
+            <span style={{ width: '100%' }}><ProgressLine value={goalProgress} /></span>
+          </button>
+        )}
+
         {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
-            <div style={{ fontSize: 16, marginBottom: 8, color: 'var(--text-secondary)' }}>Книг нет</div>
-            <div style={{ fontSize: 13 }}>Добавь книгу или найди в каталоге</div>
+          <div style={{ padding: '40px 8px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)' }}>{search ? 'Ничего не нашлось' : 'Полка пуста'}</span>
+            <span style={{ fontFamily: 'var(--font-typed)', fontSize: 15, color: 'var(--text-muted)' }}>
+              {search ? `По «${search}» книг нет.` : 'Найдите книгу в каталоге — тексты Project Gutenberg читаются прямо здесь.'}
+            </span>
+            {!search && <button onClick={() => { vibe(); onOpenCatalog() }} style={{ ...inkButton, height: 40, marginTop: 6 }}>Открыть каталог</button>}
           </div>
-        ) : view === 'grid' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {filtered.map((book, i) => (
-              <BookCard key={book.id} book={book} notes={notes} index={i} onEdit={() => { setEditBook(book); setShowModal(true) }} onRead={() => onOpenReader(book)} vibe={vibe} />
-            ))}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {filtered.map((book, i) => (
-              <BookListItem key={book.id} book={book} notes={notes} index={i} onEdit={() => { setEditBook(book); setShowModal(true) }} onRead={() => onOpenReader(book)} vibe={vibe} />
-            ))}
-          </div>
+        ) : rest.length > 0 && (
+          <section style={{ display: 'flex', flexDirection: 'column' }}>
+            {current && <span style={{ ...label, padding: '0 8px 4px' }}>На полке</span>}
+            {view === 'list' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', padding: '0 8px' }}>
+                {rest.map(book => (
+                  <div key={book.id} style={{ display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid var(--border)' }}>
+                    <button onClick={() => openEdit(book)} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                      <BookCover book={book} width={34} height={48} />
+                      <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                        <span style={{ fontSize: 15, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {book.author}{book.rating ? ` · ${'★'.repeat(book.rating)}` : ''}
+                        </span>
+                      </span>
+                    </button>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>
+                      {book.status === 'reading' && progressOf(book) ? `${progressOf(book)}%` : STATUS_LABEL[book.status] || ''}
+                    </span>
+                    <button onClick={() => read(book)} style={{ ...iconBtn, width: 'auto', padding: '0 4px 0 8px', fontSize: 13, color: 'var(--text-primary)', textDecoration: 'underline', textUnderlineOffset: 4 }}>
+                      Читать
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14, padding: '6px 8px 0' }}>
+                {rest.map(book => (
+                  <button key={book.id} onClick={() => openEdit(book)} style={{ display: 'flex', flexDirection: 'column', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', minWidth: 0 }}>
+                    <span style={{ width: '100%', aspectRatio: '2 / 3', display: 'flex' }}>
+                      <BookCoverFill book={book} />
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{STATUS_LABEL[book.status] || ''}{book.status === 'reading' && progressOf(book) ? ` · ${progressOf(book)}%` : ''}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {filtered.length > 0 && (
+          <button onClick={() => { vibe(); onOpenCatalog() }}
+            style={{ alignSelf: 'stretch', height: 48, margin: '4px 8px 0', background: 'none', border: '1px dashed var(--border-mid)', cursor: 'pointer', fontSize: 14, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+            Найти книгу в каталоге
+          </button>
         )}
       </div>
 
-      {/* Goal Modal */}
       {showGoal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowGoal(false)}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 430 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-primary)', marginBottom: 16 }}>🎯 Цель чтения</h3>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>Сколько книг хочешь прочитать в этом году?</p>
-            <input
-              type="number"
-              value={goalInput}
-              onChange={e => setGoalInput(e.target.value)}
-              style={{ width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', color: 'var(--text-primary)', fontSize: 18, textAlign: 'center', boxSizing: 'border-box', outline: 'none', marginBottom: 16 }}
-            />
-            <button onClick={() => { const v = Math.max(1, parseInt(goalInput) || 12); setGoal(v); localStorage.setItem('reading_goal', v.toString()); setShowGoal(false); vibe(12) }} style={{ width: '100%', background: 'var(--accent)', border: 'none', borderRadius: 12, padding: 16, color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000, animation: 'fadeIn var(--dur-quick) var(--ease-calm)' }} onClick={() => setShowGoal(false)}>
+          <div role="dialog" aria-label="Цель чтения" className="view-feed" style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)', padding: '24px 24px calc(24px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 430, display: 'flex', flexDirection: 'column', gap: 14 }} onClick={e => e.stopPropagation()}>
+            <span style={label}>Цель года</span>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)' }}>Сколько книг прочитать в этом году?</span>
+            <input type="number" min={1} value={goalInput} onChange={e => setGoalInput(e.target.value)} aria-label="Книг в год"
+              style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--text-primary)', padding: '8px 0', color: 'var(--text-primary)', fontSize: 28, fontFamily: 'var(--font-typed)', outline: 'none', textAlign: 'center' }} />
+            <button onClick={() => { const v = Math.max(1, parseInt(goalInput) || 12); setGoal(v); localStorage.setItem('reading_goal', v.toString()); setShowGoal(false); vibe(12) }}
+              style={{ ...inkButton, height: 48, fontSize: 15 }}>
               Сохранить
             </button>
           </div>
@@ -131,69 +243,19 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
   )
 }
 
-function BookCard({ book, notes, index, onEdit, onRead, vibe }: any) {
-  const noteCount = notes.filter((n: any) => n.bookId === book.id).length
-  const progress = book.totalPages && book.currentPage ? Math.round((book.currentPage / book.totalPages) * 100) : 0
-
+// Обложка, растянутая на ячейку сетки
+function BookCoverFill({ book }: { book: Book }) {
+  if (book.coverUrl) {
+    return <span style={{ flex: 1, border: '1px solid var(--text-primary)', background: `var(--bg-card) url(${book.coverUrl}) center/cover` }} />
+  }
   return (
-    <div
-      onClick={() => { vibe(); onEdit() }}
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', animation: `fadeSlideUp 0.4s ease both`, animationDelay: `${index * 0.05}s`, transition: 'transform 0.15s' }}
-      onPointerDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
-      onPointerUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-      onPointerLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-    >
-      {/* Cover */}
-      <div style={{ height: 120, background: book.coverUrl ? `url(${book.coverUrl}) center/cover` : `linear-gradient(135deg, color-mix(in srgb, ${book.color} 20%, transparent), color-mix(in srgb, ${book.color} 40%, transparent))`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-        {!book.coverUrl && <span style={{ fontSize: 40 }}>{book.coverEmoji || '📚'}</span>}
-        <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: '3px 8px', fontSize: 11, color: 'var(--on-accent)' }}>
-          {noteCount} заметок
-        </div>
-        <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '5px 10px', color: 'var(--on-accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-          📖 Читать
-        </button>
-      </div>
-      <div style={{ padding: '10px 12px 12px' }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3, fontFamily: 'var(--font-serif)', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</div>
-        {progress > 0 && (
-          <div style={{ marginBottom: 6 }}>
-            <div style={{ height: 3, background: 'var(--border)', borderRadius: 2 }}>
-              <div style={{ width: `${progress}%`, height: '100%', background: 'var(--accent)', borderRadius: 2 }} />
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{progress}% прочитано</div>
-          </div>
-        )}
-        {book.rating && <div style={{ fontSize: 12, color: '#f59e0b' }}>{'★'.repeat(book.rating)}{'☆'.repeat(5 - book.rating)}</div>}
-      </div>
-    </div>
-  )
-}
-
-function BookListItem({ book, notes, index, onEdit, onRead, vibe }: any) {
-  const noteCount = notes.filter((n: any) => n.bookId === book.id).length
-  return (
-    <div
-      onClick={() => { vibe(); onEdit() }}
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 14, padding: '12px 14px', display: 'flex', gap: 12, cursor: 'pointer', animation: `fadeSlideUp 0.4s ease both`, animationDelay: `${index * 0.05}s` }}
-      onPointerDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
-      onPointerUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-      onPointerLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-    >
-      <div style={{ width: 56, height: 72, borderRadius: 8, background: book.coverUrl ? `url(${book.coverUrl}) center/cover` : `linear-gradient(135deg, color-mix(in srgb, ${book.color} 20%, transparent), color-mix(in srgb, ${book.color} 40%, transparent))`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {!book.coverUrl && <span style={{ fontSize: 24 }}>{book.coverEmoji || '📚'}</span>}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>{book.author}</div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{noteCount} заметок</span>
-          {book.rating && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat(book.rating)}</span>}
-        </div>
-      </div>
-      <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: 'var(--on-accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-        📖
-      </button>
-    </div>
+    <span style={{
+      flex: 1, boxSizing: 'border-box', border: '1px solid var(--text-primary)', background: 'var(--bg-card)', padding: '10px 8px',
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', overflow: 'hidden',
+      fontFamily: 'var(--font-typed)', color: 'var(--text-primary)', textShadow: '0 0 0.7px var(--ink-bleed)',
+    }}>
+      <span style={{ fontSize: 11, lineHeight: 1.25, textTransform: 'uppercase', wordBreak: 'break-word', display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{book.title}</span>
+      <span style={{ fontSize: 9, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</span>
+    </span>
   )
 }

@@ -427,18 +427,22 @@ function StrikeButton({ areaRef, value, onChange }: {
 }
 
 // ── Новый лист ───────────────────────────────────────────────────────────────
-function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
+// Черновик из читалки: выделенная цитата и книга, из которой она взята
+export interface ComposeDraft { content: string; bookTitle?: string; bookAuthor?: string }
+
+function CreatePostSheet({ userId, notes, books, draft, onClose, onCreated }: {
   userId: string;
   notes: import('../types').Note[];
   books: Book[];
+  draft?: ComposeDraft | null;
   onClose: () => void;
   onCreated: (post: SocialPost) => void;
 }) {
-  const [type, setType] = useState<PostType>('note');
+  const [type, setType] = useState<PostType>(draft ? 'quote' : 'note');
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(draft?.content || '');
   const [honest, setHonest] = useState(true);
-  const [selectedBookId, setSelectedBookId] = useState('');
+  const [selectedBookId, setSelectedBookId] = useState(() => books.find(b => b.title === draft?.bookTitle)?.id || '');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState('');
   const [publishing, setPublishing] = useState(false);
@@ -468,8 +472,8 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
         type,
         title: title || stripStrikes(content).slice(0, 60),
         content: finalContent,
-        bookTitle: selectedBook?.title,
-        bookAuthor: selectedBook?.author,
+        bookTitle: selectedBook?.title ?? draft?.bookTitle,
+        bookAuthor: selectedBook?.author ?? draft?.bookAuthor,
         bookEmoji: selectedBook?.coverEmoji,
         tags: selectedTags,
       });
@@ -744,11 +748,13 @@ function SavedTab({ savedPosts, userId, onLike, onSave, onComment }: {
 }
 
 // ── Агора ────────────────────────────────────────────────────────────────────
-export default function FeedView({ user, notes, books, composeRequest = 0, onOpenNotifications, onOpenMessages }: {
+export default function FeedView({ user, notes, books, composeRequest = 0, composeDraft, onDraftUsed, onOpenNotifications, onOpenMessages }: {
   user: User;
   notes: import('../types').Note[];
   books: Book[];
   composeRequest?: number;
+  composeDraft?: ComposeDraft | null;
+  onDraftUsed?: () => void;
   onOpenNotifications?: () => void;
   onOpenMessages?: () => void;
 }) {
@@ -896,8 +902,8 @@ export default function FeedView({ user, notes, books, composeRequest = 0, onOpe
       </div>
 
       {showCreate && (
-        <CreatePostSheet userId={user.id} notes={notes} books={books}
-          onClose={() => setShowCreate(false)}
+        <CreatePostSheet userId={user.id} notes={notes} books={books} draft={composeDraft}
+          onClose={() => { setShowCreate(false); onDraftUsed?.(); }}
           onCreated={post => { setPosts(prev => [post, ...prev]); }} />
       )}
       {commentPost && (

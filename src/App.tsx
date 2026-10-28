@@ -29,6 +29,7 @@ import GamificationView from './components/GamificationView';
 import AnkiView        from './components/AnkiView';
 import PublicShareView from './components/PublicShareView';
 import FeedView        from './components/FeedView';
+import type { ComposeDraft } from './components/FeedView';
 import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
 import NotificationsView from './components/NotificationsView';
@@ -524,6 +525,7 @@ function AppInner() {
   // ── Tab navigation ─────────────────────────────────────────────────────────
   const [activeTab, setActiveTab]         = useState<TabId>('feed');
   const [composeRequest, setComposeRequest] = useState(0);
+  const [composeDraft, setComposeDraft] = useState<ComposeDraft | null>(null);
   const [editingNote, setEditingNote]     = useState<Note | null | 'new'>(null);
   const [newNoteBookId, setNewNoteBookId] = useState<string | undefined>(undefined);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -762,6 +764,8 @@ function AppInner() {
             notes={state.notes}
             books={state.books}
             composeRequest={composeRequest}
+            composeDraft={composeDraft}
+            onDraftUsed={() => setComposeDraft(null)}
             onOpenNotifications={() => { setUnreadNotifs(0); setShowNotifications(true); }}
             onOpenMessages={() => setShowMessages(true)}
           />
@@ -861,7 +865,7 @@ function AppInner() {
                 author: book.author,
                 coverUrl: book.coverUrl,
                 coverEmoji: '📚',
-                color: 'var(--on-accent)',
+                color: '#3d2a1a',
                 status: 'reading',
                 currentPage: 0,
                 tags: [],
@@ -880,6 +884,12 @@ function AppInner() {
           book={{ id: readerBook.id || Date.now().toString(), title: readerBook.title, author: readerBook.author, textUrl: readerBook.textUrl, coverUrl: readerBook.cover || readerBook.coverUrl, source: readerBook.source }}
           onClose={() => setReaderBook(null)}
           onReturnToCatalog={() => { setReaderBook(null); setShowCatalog(true) }}
+          onShareToAgora={(text: string) => {
+            setComposeDraft({ content: text, bookTitle: readerBook.title, bookAuthor: readerBook.author });
+            setReaderBook(null);
+            handleTabChange('feed');
+            setComposeRequest(n => n + 1);
+          }}
           onProgress={(page: number, totalPages: number) => handleReaderProgress(readerBook.id, page, totalPages)}
           onCreateNote={(title: string, content: string, type: string, page?: number) => {
             const libraryBook = state.books.find(book => book.id === readerBook.id);
