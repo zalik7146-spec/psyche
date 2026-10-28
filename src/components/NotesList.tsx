@@ -116,7 +116,7 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
         onClick={handleDelete}
         style={{
           position: 'absolute', right: 0, top: 0, bottom: 0,
-          width: 110, background: 'rgba(180,50,50,0.88)',
+          width: 110, background: 'color-mix(in srgb, var(--red) 88%, transparent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           borderRadius: 2, gap: 6, border: 'none', cursor: 'pointer',
           opacity: showDelete ? 1 : 0,

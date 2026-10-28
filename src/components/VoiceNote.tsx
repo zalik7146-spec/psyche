@@ -151,7 +151,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
         {/* Handle */}
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 24px' }} />
 
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', textAlign: 'center', marginBottom: 8 }}>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', textAlign: 'center', marginBottom: 8 }}>
           Голосовая заметка
         </h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 32 }}>
@@ -186,7 +186,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
           </div>
 
           {/* Timer */}
-          <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', letterSpacing: '-1px' }}>
+          <div style={{ fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', letterSpacing: '-1px' }}>
             {formatDuration(duration)}
           </div>
 

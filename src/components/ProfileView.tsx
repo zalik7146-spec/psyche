@@ -1,81 +1,67 @@
 import { useState, useEffect } from 'react';
-import {
-  Edit2, Check, X, BookOpen, FileText, Sparkles, Globe, Lock,
-  Trash2, Settings, ChevronRight
-} from 'lucide-react';
+import type { CSSProperties } from 'react';
+import { Mail, Settings, ChevronRight, Trash2, X } from 'lucide-react';
 import type { User, SocialPost, SocialProfile, Book, Note } from '../types';
 import { getMyProfile, upsertProfile, getUserPosts, deletePost } from '../socialStore';
 
 const vibe = (ms = 8) => navigator.vibrate?.(ms);
 
-function Avatar({ profile, size = 64 }: { profile?: SocialProfile | null; size?: number }) {
+const label: CSSProperties = { fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' };
+const typed: CSSProperties = {
+  fontFamily: 'var(--font-typed)', color: 'var(--text-primary)', textShadow: '0 0 0.7px var(--ink-bleed)',
+  margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+};
+const iconBtn: CSSProperties = {
+  width: 44, height: 44, background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)',
+};
+const ghostBtn: CSSProperties = {
+  height: 36, border: '1px solid var(--border)', background: 'var(--bg-card)', cursor: 'pointer',
+  fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)',
+};
+const field: CSSProperties = {
+  width: '100%', boxSizing: 'border-box', background: 'none', border: 'none', borderBottom: '1px solid var(--border-mid)',
+  padding: '8px 0', fontSize: 15, color: 'var(--text-primary)', outline: 'none', fontFamily: 'var(--font-ui)',
+};
+
+const plain = (html: string) => html.replace(/<[^>]+>/g, '');
+
+function plural(n: number, one: string, few: string, many: string) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+function Avatar({ profile, size = 76 }: { profile?: SocialProfile | null; size?: number }) {
   const av = profile?.avatar;
   const name = profile?.displayName || '?';
   const initial = name[0]?.toUpperCase() || '?';
   return (
     <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
+      width: size, height: size, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
+      border: '1px solid var(--text-primary)', background: 'var(--bg-card)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.4, fontWeight: 700, color: 'var(--on-accent)',
-      overflow: 'hidden', border: '3px solid var(--accent)',
-      flexShrink: 0,
+      fontSize: size * 0.4, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
     }}>
       {av
         ? av.startsWith('data:')
-          ? <img src={av} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+          ? <img src={av} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <span style={{ fontSize: size * 0.5 }}>{av}</span>
-        : initial
-      }
+        : initial}
     </div>
   );
 }
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = (now.getTime() - d.getTime()) / 1000;
-  if (diff < 60) return 'только что';
-  if (diff < 3600) return `${Math.floor(diff / 60)}м назад`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}ч назад`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}д назад`;
-  return d.toLocaleDateString('ru', { day: 'numeric', month: 'long' });
-}
-
-// Инструменты — карточки-плитки
-const TOOLS = [
-  {
-    id: 'anki',
-    icon: '🃏',
-    label: 'Anki',
-    desc: 'Повторение карточек',
-    bg: 'linear-gradient(135deg, rgba(212,145,74,0.18), rgba(180,100,40,0.08))',
-    border: 'rgba(212,145,74,0.3)',
-  },
-  {
-    id: 'achievements',
-    icon: '🏆',
-    label: 'Достижения',
-    desc: 'Бейджи и прогресс',
-    bg: 'linear-gradient(135deg, rgba(180,150,80,0.18), rgba(140,100,40,0.08))',
-    border: 'rgba(180,150,80,0.3)',
-  },
-  {
-    id: 'graph',
-    icon: '🔗',
-    label: 'Граф связей',
-    desc: 'Карта книг и идей',
-    bg: 'linear-gradient(135deg, rgba(106,158,138,0.18), rgba(60,120,100,0.08))',
-    border: 'rgba(106,158,138,0.3)',
-  },
-  {
-    id: 'share',
-    icon: '📄',
-    label: 'Конспекты',
-    desc: 'Экспорт PDF и публикация',
-    bg: 'linear-gradient(135deg, rgba(138,106,158,0.18), rgba(100,60,120,0.08))',
-    border: 'rgba(138,106,158,0.3)',
-  },
+// Инструменты и разделы, которые живут в профиле
+const TOOLS: { id: string; label: string; desc: string }[] = [
+  { id: 'achievements', label: 'Достижения', desc: 'Уровни и знаки' },
+  { id: 'challenges', label: 'Вызовы', desc: 'Серии и цели' },
+  { id: 'wrapped', label: 'Итоги года', desc: 'Год в цифрах' },
+  { id: 'anki', label: 'Карточки Anki', desc: 'Повторение' },
+  { id: 'graph', label: 'Граф связей', desc: 'Карта книг и идей' },
+  { id: 'share', label: 'Конспекты', desc: 'PDF и публикация' },
+  { id: 'settings', label: 'Настройки', desc: 'Тема, аккаунт, корзина' },
 ];
 
 export default function ProfileView({
@@ -99,9 +85,10 @@ export default function ProfileView({
   const [editPublic, setEditPublic] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'tools' | 'stats'>('tools');
+  const [activeTab, setActiveTab] = useState<'posts' | 'tools' | 'stats'>('posts');
+  const [openPost, setOpenPost] = useState<SocialPost | null>(null);
 
-  // Avatar from localStorage
+  // Аватар хранится локально
   const avatarKey = `psyche_avatar_${user.id}`;
   const avatarVal = localStorage.getItem(avatarKey) || '';
 
@@ -144,507 +131,227 @@ export default function ProfileView({
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm('Удалить публикацию?')) return;
+    if (!confirm('Удалить этот лист?')) return;
     vibe(10);
     await deletePost(postId, user.id);
     setPosts(prev => prev.filter(p => p.id !== postId));
+    setOpenPost(null);
   };
 
-  const totalLikes = posts.reduce((sum, p) => sum + p.likesCount, 0);
+  const handleShare = async () => {
+    vibe(6);
+    const text = `@${profile?.username || editUsername} в Psyche`;
+    try { await navigator.share({ title: 'Psyche', text, url: window.location.origin }); }
+    catch { try { await navigator.clipboard.writeText(`${text} — ${window.location.origin}`); } catch { /* ignore */ } }
+  };
+
+  const openTool = (id: string) => {
+    vibe(8);
+    if (id === 'wrapped') onOpenWrapped?.();
+    else if (id === 'challenges') onOpenChallenges?.();
+    else onNavigate?.(id);
+  };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <div style={{ fontSize: 32, animation: 'spin 1.5s linear infinite' }}>✦</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'var(--bg-base)' }}>
+        <div style={{ width: 24, height: 24, border: '1px solid var(--border)', borderTopColor: 'var(--text-primary)', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
       </div>
     );
   }
 
-  const profileForAvatar: SocialProfile = profile || {
+  const me: SocialProfile = profile || {
     id: user.id, username: editUsername, displayName: editName,
     avatar: avatarVal, isPublic: true,
     followersCount: 0, followingCount: 0, postsCount: 0,
     createdAt: user.createdAt, bio: '',
   };
+  const finished = books.filter(b => b.status === 'finished').length;
+  const reading = books.filter(b => b.status === 'reading').length;
+  const totalStamps = posts.reduce((sum, p) => sum + (p.likesCount || 0), 0);
+  const totalMargins = posts.reduce((sum, p) => sum + (p.commentsCount || 0), 0);
+
+  const counters: { v: number; l: string; onClick?: () => void }[] = [
+    { v: posts.length, l: 'листов', onClick: () => setActiveTab('posts') },
+    { v: me.followersCount || 0, l: 'читателей', onClick: () => onOpenFollowers?.('followers') },
+    { v: me.followingCount || 0, l: 'читает', onClick: () => onOpenFollowers?.('following') },
+  ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--bg-base)' }}>
+      <header style={{ paddingTop: 'env(safe-area-inset-top)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 56, padding: '0 8px 0 20px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
+            {me.username || 'профиль'}
+            {!me.isPublic && <span style={{ ...label, letterSpacing: '0.08em' }}>· закрытый</span>}
+          </span>
+          <span style={{ display: 'flex' }}>
+            <button aria-label="Письма" onClick={() => { vibe(6); onOpenMessages?.(); }} style={iconBtn}><Mail size={21} strokeWidth={1.5} /></button>
+            <button aria-label="Настройки" onClick={() => { vibe(6); onNavigate?.('settings'); }} style={iconBtn}><Settings size={21} strokeWidth={1.5} /></button>
+          </span>
+        </div>
+      </header>
 
-      {/* ── Header ──────────────────────────────────────────────────── */}
-      <div style={{
-        padding: '16px 20px',
-        paddingTop: `calc(16px + env(safe-area-inset-top))`,
-        background: 'var(--bg-base)', flexShrink: 0,
-        borderBottom: '1px solid var(--border)',
-      }}>
-        {/* Title row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-            Профиль
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => { vibe(6); onOpenMessages?.(); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 12px', borderRadius: 2,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                cursor: 'pointer', color: 'var(--text-secondary)',
-                fontSize: 13, fontFamily: 'Inter, sans-serif',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              ✉️ Сообщения
-            </button>
-            <button
-              onClick={() => { vibe(6); onNavigate?.('settings'); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 12px', borderRadius: 2,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                cursor: 'pointer', color: 'var(--text-secondary)',
-                fontSize: 13, fontFamily: 'Inter, sans-serif',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <Settings size={15} color='var(--accent)' />
-              Настройки
-            </button>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {/* Шапка профиля */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 22, padding: '4px 24px 0' }}>
+          <Avatar profile={me} size={76} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', flex: 1 }}>
+            {counters.map(c => (
+              <button key={c.l} onClick={() => { vibe(6); c.onClick?.(); }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0' }}>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)' }}>{c.v}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.l}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Avatar + info */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
-          <Avatar profile={profileForAvatar} size={68} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {editing ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <input value={editName} onChange={e => setEditName(e.target.value)}
-                  placeholder='Имя' style={{
-                    background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                    borderRadius: 2, padding: '8px 12px', fontSize: 15, fontWeight: 700,
-                    color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', outline: 'none',
-                    width: '100%', boxSizing: 'border-box',
-                  }}/>
-                <input value={editUsername} onChange={e => setEditUsername(e.target.value)}
-                  placeholder='username' style={{
-                    background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                    borderRadius: 2, padding: '8px 12px', fontSize: 13,
-                    color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', outline: 'none',
-                    width: '100%', boxSizing: 'border-box',
-                  }}/>
-                <textarea value={editBio} onChange={e => setEditBio(e.target.value)}
-                  placeholder='Расскажите о себе...' rows={2} style={{
-                    background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                    borderRadius: 2, padding: '8px 12px', fontSize: 13,
-                    color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif',
-                    outline: 'none', resize: 'none', lineHeight: 1.5,
-                    width: '100%', boxSizing: 'border-box',
-                  }}/>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button onClick={() => { setEditPublic(p => !p); vibe(6); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-                      borderRadius: 2, border: '1px solid var(--border)', cursor: 'pointer',
-                      background: editPublic ? 'var(--accent-muted)' : 'var(--bg-raised)',
-                      color: editPublic ? 'var(--accent)' : 'var(--text-muted)', fontSize: 12,
-                      fontFamily: 'Inter, sans-serif',
-                    }}>
-                    {editPublic ? <Globe size={12}/> : <Lock size={12}/>}
-                    {editPublic ? 'Публичный' : 'Приватный'}
-                  </button>
-                  <div style={{ flex: 1 }}/>
-                  <button onClick={() => setEditing(false)}
-                    style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 2, padding: '6px 10px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                    <X size={16}/>
-                  </button>
-                  <button onClick={handleSave} disabled={saving}
-                    style={{
-                      background: 'linear-gradient(135deg, var(--accent), var(--accent))', border: 'none',
-                      borderRadius: 2, padding: '6px 14px', cursor: 'pointer', color: 'var(--on-accent)',
-                      fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
-                    }}>
-                    <Check size={14}/> {saving ? '...' : 'Готово'}
-                  </button>
-                </div>
+        {!editing ? (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 24px 0' }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{me.displayName || me.username}</span>
+              {me.bio && <p style={{ ...typed, fontSize: 14, lineHeight: 1.5 }}>{me.bio}</p>}
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {finished} {plural(finished, 'книга прочитана', 'книги прочитаны', 'книг прочитано')} · читаю {reading}
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, padding: '14px 24px 0' }}>
+              <button onClick={() => { vibe(6); setEditing(true); }} style={ghostBtn}>Править профиль</button>
+              <button onClick={handleShare} style={ghostBtn}>Поделиться</button>
+            </div>
+          </>
+        ) : (
+          <div className="view-enter" style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '18px 24px 0' }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={label}>Имя</span>
+              <input value={editName} onChange={e => setEditName(e.target.value)} style={field} />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={label}>Имя пользователя</span>
+              <input value={editUsername} onChange={e => setEditUsername(e.target.value)} style={field} />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={label}>О себе</span>
+              <textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={3}
+                style={{ ...field, ...typed, fontSize: 15, resize: 'none', lineHeight: 1.5 }} />
+            </label>
+            <button role="switch" aria-checked={editPublic} onClick={() => { vibe(6); setEditPublic(p => !p); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+              <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>Открытый профиль</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{editPublic ? 'Листы видны в Агоре' : 'Листы видите только вы'}</span>
+              </span>
+              <span style={{ width: 40, height: 22, flexShrink: 0, boxSizing: 'border-box', border: '1px solid var(--accent)', padding: 2, display: 'flex', background: editPublic ? 'var(--accent)' : 'none', transition: 'background var(--dur-quick) var(--ease-calm)' }}>
+                <span style={{ width: 16, height: 16, background: editPublic ? 'var(--on-accent)' : 'var(--accent)', transform: `translateX(${editPublic ? 16 : 0}px)`, transition: 'transform var(--dur-quick) var(--ease-calm)' }} />
+              </span>
+            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+              <button onClick={() => setEditing(false)} style={ghostBtn}>Отмена</button>
+              <button onClick={handleSave} disabled={saving || !editName.trim() || !editUsername.trim()}
+                style={{ ...ghostBtn, background: 'var(--accent)', color: 'var(--on-accent)', border: '1px solid var(--accent)' }}>
+                {saving ? 'Сохраняю…' : 'Сохранить'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Вкладки */}
+        <div role="tablist" aria-label="Профиль" style={{ display: 'flex', marginTop: 18, borderBottom: '1px solid var(--border)' }}>
+          {([['posts', 'Листы'], ['tools', 'Инструменты'], ['stats', 'Статистика']] as const).map(([id, name]) => (
+            <button key={id} role="tab" aria-selected={activeTab === id} onClick={() => { vibe(6); setActiveTab(id); }}
+              style={{
+                flex: 1, height: 44, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, marginBottom: -1, fontFamily: 'var(--font-ui)',
+                borderBottom: activeTab === id ? '1px solid var(--text-primary)' : '1px solid transparent',
+                color: activeTab === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                transition: 'color var(--dur-quick) var(--ease-calm), border-color var(--dur-quick) var(--ease-calm)',
+              }}>{name}</button>
+          ))}
+        </div>
+
+        <div key={activeTab} className="view-enter">
+          {activeTab === 'posts' && (
+            posts.length === 0 ? (
+              <div style={{ padding: '36px 24px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)' }}>Листов пока нет</span>
+                <p style={{ ...typed, fontSize: 14, color: 'var(--text-muted)' }}>Напишите первый — он появится здесь и в Агоре.</p>
+                <button onClick={() => { vibe(6); onNavigate?.('feed'); }} style={{ ...ghostBtn, padding: '0 16px', background: 'var(--accent)', color: 'var(--on-accent)', border: '1px solid var(--accent)' }}>В Агору</button>
               </div>
             ) : (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {profile?.displayName || editName || user.name}
-                  </div>
-                  {profile?.isPublic
-                    ? <Globe size={12} color='var(--text-muted)'/>
-                    : <Lock size={12} color='var(--text-muted)'/>}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-                  @{profile?.username || editUsername}
-                </div>
-                {profile?.bio && (
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>
-                    {profile.bio}
-                  </div>
-                )}
-                <button onClick={() => { vibe(6); setEditing(true); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px',
-                    borderRadius: 2, border: '1px solid var(--border)', cursor: 'pointer',
-                    background: 'var(--bg-raised)', color: 'var(--text-secondary)',
-                    fontSize: 12, fontFamily: 'Inter, sans-serif',
-                  }}>
-                  <Edit2 size={12}/> Редактировать
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 2, padding: 2 }}>
+                {posts.map(p => (
+                  <button key={p.id} onClick={() => { vibe(6); setOpenPost(p); }} aria-label={`Лист: ${p.title || plain(p.content).slice(0, 30)}`}
+                    style={{ aspectRatio: '3 / 4', background: 'var(--bg-card)', padding: 10, overflow: 'hidden', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'flex-start' }}>
+                    <span style={{ ...typed, fontSize: 9.5, lineHeight: 1.45 }}>{plain(p.content).replace(/~~([\s\S]+?)~~/g, '$1').slice(0, 170)}</span>
+                  </button>
+                ))}
+              </div>
+            )
+          )}
+
+          {activeTab === 'tools' && (
+            <div style={{ display: 'flex', flexDirection: 'column', padding: '4px 24px 24px' }}>
+              {TOOLS.map(t => (
+                <button key={t.id} onClick={() => openTool(t.id)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 56, background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+                  <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>{t.label}</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t.desc}</span>
+                  </span>
+                  <ChevronRight size={16} strokeWidth={1.5} color="var(--text-muted)" />
                 </button>
-              </>
-            )}
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'stats' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 22, padding: '18px 24px 24px' }}>
+              {([
+                ['Библиотека', [[books.length, 'книг'], [reading, 'читаю'], [finished, 'прочитано']]],
+                ['Агора', [[posts.length, 'листов'], [totalStamps, 'оттисков'], [totalMargins, 'на полях']]],
+              ] as [string, [number, string][]][]).map(([title, items]) => (
+                <section key={title} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={label}>{title}</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                    {items.map(([v, l]) => (
+                      <span key={l} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '14px 0' }}>
+                        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: 'var(--text-primary)' }}>{v}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{l}</span>
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              ))}
+              <button onClick={() => { vibe(6); onNavigate?.('stats'); }}
+                style={{ ...ghostBtn, height: 44 }}>Подробная статистика</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Свой лист крупно */}
+      {openPost && (
+        <div onClick={() => setOpenPost(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--overlay)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', animation: 'fadeIn var(--dur-quick) var(--ease-calm)' }}>
+          <div role="dialog" aria-label="Лист" className="view-feed" onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 430, maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-card)', borderTop: '1px solid var(--border)', padding: '6px 20px calc(20px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={label}>{new Date(openPost.createdAt).toLocaleDateString('ru', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              <button aria-label="Закрыть" onClick={() => setOpenPost(null)} style={{ ...iconBtn, marginRight: -12 }}><X size={18} strokeWidth={1.5} /></button>
+            </div>
+            {openPost.title && <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-primary)' }}>{openPost.title}</span>}
+            <p style={{ ...typed, fontSize: 16, lineHeight: 1.6 }}>{plain(openPost.content).replace(/~~([\s\S]+?)~~/g, '$1')}</p>
+            {openPost.bookTitle && <span style={label}>{openPost.bookTitle}{openPost.bookAuthor ? ` · ${openPost.bookAuthor}` : ''}</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, borderTop: '1px dashed var(--border)', paddingTop: 10, fontSize: 13, color: 'var(--text-muted)' }}>
+              <span>Оттиск · {openPost.likesCount || 0}</span>
+              <span>На полях · {openPost.commentsCount || 0}</span>
+              <button onClick={() => handleDeletePost(openPost.id)}
+                style={{ marginLeft: 'auto', height: 36, display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', fontSize: 13 }}>
+                <Trash2 size={15} strokeWidth={1.5} /> Удалить
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Stats row */}
-        {!editing && (
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 8, padding: '12px 0 4px',
-            borderTop: '1px solid var(--border)',
-          }}>
-            {[
-              { v: posts.length, l: 'постов', onClick: undefined },
-              { v: profile?.followersCount || 0, l: 'читателей', onClick: () => onOpenFollowers?.('followers') },
-              { v: profile?.followingCount || 0, l: 'читает', onClick: () => onOpenFollowers?.('following') },
-              { v: totalLikes, l: 'лайков', onClick: undefined },
-            ].map(s => (
-              <div key={s.l}
-                onClick={s.onClick}
-                style={{ textAlign: 'center', cursor: s.onClick ? 'pointer' : 'default', padding: '4px 0', borderRadius: 2 }}
-              >
-                <div style={{ fontSize: 18, fontWeight: 700, color: s.onClick ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{s.v}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Tabs */}
-        {!editing && (
-          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-raised)', borderRadius: 2, padding: 3, marginTop: 10 }}>
-            {([
-              { id: 'tools', label: '🛠 Инструменты' },
-              { id: 'posts', label: '📝 Публикации' },
-              { id: 'stats', label: '📊 Статистика' },
-            ] as const).map(t => (
-              <button key={t.id} onClick={() => { vibe(6); setActiveTab(t.id); }}
-                style={{
-                  flex: 1, padding: '7px 4px', borderRadius: 2, border: 'none', cursor: 'pointer',
-                  background: activeTab === t.id ? 'var(--bg-card)' : 'transparent',
-                  color: activeTab === t.id ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontSize: 11, fontWeight: activeTab === t.id ? 700 : 400,
-                  fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
-                  WebkitTapHighlightColor: 'transparent',
-                }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Content ─────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 100px' }}>
-
-        {/* ── TOOLS tab ──────────────────────────────────────────────── */}
-        {!editing && activeTab === 'tools' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-            {/* 2×2 grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {TOOLS.map((tool, i) => (
-                <button
-                  key={tool.id}
-                  onClick={() => { vibe(8); onNavigate?.(tool.id); }}
-                  style={{
-                    padding: '18px 14px', borderRadius: 2,
-                    background: tool.bg, border: `1px solid ${tool.border}`,
-                    cursor: 'pointer', textAlign: 'left', width: '100%',
-                    display: 'flex', flexDirection: 'column', gap: 8,
-                    animation: `fadeSlideUp 0.3s ease ${i * 0.06}s both`,
-                    WebkitTapHighlightColor: 'transparent',
-                  }}
-                  onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
-                  onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                  onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <div style={{ fontSize: 30 }}>{tool.icon}</div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                      {tool.label}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2, lineHeight: 1.4 }}>
-                      {tool.desc}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Wrapped + Challenges row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <button
-                onClick={() => { vibe(8); onOpenWrapped?.(); }}
-                style={{
-                  padding: '16px 14px', borderRadius: 2,
-                  background: 'linear-gradient(135deg, rgba(232,201,122,0.18), rgba(180,140,60,0.08))',
-                  border: '1px solid rgba(232,201,122,0.3)',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  display: 'flex', flexDirection: 'column', gap: 6,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-                onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
-                onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              >
-                <div style={{ fontSize: 28 }}>🎉</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                    Итоги года
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
-                    Wrapped {new Date().getFullYear()}
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => { vibe(8); onOpenChallenges?.(); }}
-                style={{
-                  padding: '16px 14px', borderRadius: 2,
-                  background: 'linear-gradient(135deg, rgba(232,122,122,0.18), rgba(180,60,60,0.08))',
-                  border: '1px solid rgba(232,122,122,0.3)',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  display: 'flex', flexDirection: 'column', gap: 6,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-                onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; }}
-                onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              >
-                <div style={{ fontSize: 28 }}>🏆</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                    Челленджи
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
-                    Цели и бейджи
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            {/* Library quick link */}
-            <button
-              onClick={() => { vibe(6); onNavigate?.('library'); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 16px', borderRadius: 2, cursor: 'pointer', width: '100%',
-                background: 'rgba(212,145,74,0.06)', border: '1px solid rgba(212,145,74,0.2)',
-                animation: 'fadeSlideUp 0.3s ease 0.24s both',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
-              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              <div style={{
-                width: 42, height: 42, borderRadius: 2,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <BookOpen size={20} color='var(--accent)'/>
-              </div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                  Библиотека
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
-                  {books.length} книг в коллекции
-                </div>
-              </div>
-              <ChevronRight size={16} color='var(--text-muted)'/>
-            </button>
-
-            {/* Сообщество */}
-            <button
-              onClick={() => { vibe(6); onNavigate?.('feed'); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 16px', borderRadius: 2, cursor: 'pointer', width: '100%',
-                background: 'rgba(106,158,138,0.06)', border: '1px solid rgba(106,158,138,0.2)',
-                animation: 'fadeSlideUp 0.3s ease 0.3s both',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
-              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              <div style={{
-                width: 42, height: 42, borderRadius: 2,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <span style={{ fontSize: 20 }}>🌐</span>
-              </div>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                  Сообщество
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 1 }}>
-                  Читатели и психологи
-                </div>
-              </div>
-              <ChevronRight size={16} color='var(--text-muted)'/>
-            </button>
-
-            {/* Prompt to setup public profile */}
-            {!profile && (
-              <div style={{
-                background: 'var(--accent-muted)', borderRadius: 2, padding: '16px',
-                border: '1px solid var(--accent)', textAlign: 'center',
-                animation: 'fadeSlideUp 0.3s ease 0.36s both',
-              }}>
-                <div style={{ fontSize: 20, marginBottom: 8 }}>✦</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-serif)', marginBottom: 6 }}>
-                  Настройте публичный профиль
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
-                  Выберите username и начните делиться инсайтами с сообществом
-                </div>
-                <button onClick={() => { vibe(8); setEditing(true); }}
-                  style={{
-                    padding: '8px 20px', borderRadius: 2, border: 'none', cursor: 'pointer',
-                    background: 'linear-gradient(135deg, var(--accent), var(--accent))', color: 'var(--on-accent)',
-                    fontSize: 13, fontWeight: 700,
-                  }}>
-                  Настроить
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── POSTS tab ──────────────────────────────────────────────── */}
-        {!editing && activeTab === 'posts' && (
-          posts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', animation: 'fadeSlideUp 0.4s ease both' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
-                Нет публикаций
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                Поделитесь мыслью или инсайтом в разделе «Сообщество»
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {posts.map((post, i) => (
-                <div key={post.id} style={{
-                  background: 'var(--bg-card)', borderRadius: 2,
-                  border: '1px solid var(--border)', overflow: 'hidden',
-                  animation: `fadeSlideUp 0.3s ease ${i * 0.05}s both`,
-                }}>
-                  <div style={{ padding: '12px 14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                      <div style={{ fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>
-                        {post.title || post.content.replace(/<[^>]+>/g,'').slice(0, 60)}
-                      </div>
-                      <button onClick={() => handleDeletePost(post.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4, flexShrink: 0 }}>
-                        <Trash2 size={14}/>
-                      </button>
-                    </div>
-                    {post.bookTitle && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                        <span style={{ fontSize: 14 }}>{post.bookEmoji || '📖'}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>{post.bookTitle}</span>
-                      </div>
-                    )}
-                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6,
-                      display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {post.content.replace(/<[^>]+>/g,'').slice(0, 150)}
-                    </div>
-                  </div>
-                  <div style={{
-                    padding: '8px 14px 10px', borderTop: '1px solid var(--border)',
-                    display: 'flex', alignItems: 'center', gap: 16,
-                  }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      ♥ {post.likesCount}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      💬 {post.commentsCount}
-                    </span>
-                    <div style={{ flex: 1 }}/>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatTime(post.createdAt)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        )}
-
-        {/* ── STATS tab ──────────────────────────────────────────────── */}
-        {!editing && activeTab === 'stats' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, animation: 'fadeSlideUp 0.4s ease both' }}>
-            {/* Library stats */}
-            <div style={{ background: 'var(--bg-card)', borderRadius: 2, padding: '16px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>БИБЛИОТЕКА</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                {[
-                  { icon: <BookOpen size={18}/>, v: books.length, l: 'книг' },
-                  { icon: <FileText size={18}/>, v: books.filter(b => b.status === 'reading').length, l: 'читаю' },
-                  { icon: <Sparkles size={18}/>, v: books.filter(b => b.status === 'finished').length, l: 'прочитано' },
-                ].map(s => (
-                  <div key={s.l} style={{
-                    background: 'var(--bg-raised)', borderRadius: 2, padding: '12px 8px',
-                    textAlign: 'center', border: '1px solid var(--border)',
-                  }}>
-                    <div style={{ color: 'var(--accent)', marginBottom: 6 }}>{s.icon}</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{s.v}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Social stats */}
-            <div style={{ background: 'var(--bg-card)', borderRadius: 2, padding: '16px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>АКТИВНОСТЬ</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[
-                  { l: 'Публикации', v: posts.length, max: Math.max(posts.length, 1) },
-                  { l: 'Лайки получено', v: totalLikes, max: Math.max(totalLikes, 1) },
-                  { l: 'Читателей', v: profile?.followersCount || 0, max: Math.max(profile?.followersCount || 0, 1) },
-                ].map(s => (
-                  <div key={s.l}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif' }}>{s.l}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>{s.v}</span>
-                    </div>
-                    <div style={{ height: 6, background: 'var(--bg-raised)', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 3,
-                        background: 'linear-gradient(90deg, var(--accent), var(--accent))',
-                        width: `${Math.min((s.v / s.max) * 100, 100)}%`,
-                        transition: 'width 0.6s ease',
-                      }}/>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
-
-

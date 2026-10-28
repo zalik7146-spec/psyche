@@ -145,7 +145,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BarChart2 size={18} color="var(--accent)" />
-            <h1 style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', margin: 0 }}>
+            <h1 style={{ fontSize: '1.1rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', margin: 0 }}>
               Прогресс
             </h1>
           </div>
@@ -277,7 +277,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                       <Sparkles size={14} color="var(--accent)" />
                     </div>
                     <div>
-                      <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', fontFamily: 'Inter, sans-serif', display: 'block' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', fontFamily: 'Inter, sans-serif', display: 'block' }}>
                         Инсайт дня
                       </span>
                       <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -310,7 +310,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                   }}
                 >
                   <h3 style={{
-                    fontSize: '1.15rem', fontWeight: 700,
+                    fontSize: '1.15rem', fontWeight: 600,
                     fontFamily: 'var(--font-serif)', color: 'var(--text-primary)',
                     margin: '0 0 12px', lineHeight: 1.4,
                   }}>
@@ -408,7 +408,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                   }}
                 >
                   <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'center' }}>{m.icon}</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: m.accent, fontFamily: 'Inter, sans-serif', lineHeight: 1, marginBottom: '3px' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 600, color: m.accent, fontFamily: 'Inter, sans-serif', lineHeight: 1, marginBottom: '3px' }}>
                     <AnimatedNumber value={m.value} />
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{m.label}</div>
@@ -450,7 +450,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                         fontFamily: 'Inter, sans-serif', fontWeight: i === 6 ? 700 : 400,
                       }}>{day.label}</span>
                       {day.count > 0 && (
-                        <span style={{ fontSize: '9px', color: 'var(--accent)', fontFamily: 'Inter, sans-serif', fontWeight: 700 }}>
+                        <span style={{ fontSize: '9px', color: 'var(--accent)', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                           {day.count}
                         </span>
                       )}
@@ -530,7 +530,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                               стр. {b.currentPage} / {b.totalPages}
                             </div>
                           </div>
-                          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'Inter, sans-serif' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--accent)', fontFamily: 'Inter, sans-serif' }}>
                             {pct}%
                           </span>
                         </div>

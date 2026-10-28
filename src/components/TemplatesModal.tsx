@@ -19,7 +19,7 @@ const TYPE_ICONS: Record<NoteType, string> = {
 
 const TYPE_COLORS: Record<NoteType, string> = {
   note:     'rgba(138,154,122,0.18)',
-  quote:    'rgba(212,145,74,0.18)',
+  quote:    'color-mix(in srgb, var(--accent) 18%, transparent)',
   insight:  'rgba(106,158,138,0.18)',
   question: 'rgba(138,122,154,0.18)',
   summary:  'rgba(122,138,106,0.18)',
@@ -29,7 +29,7 @@ const TYPE_COLORS: Record<NoteType, string> = {
 
 const TYPE_BORDER: Record<NoteType, string> = {
   note:     'rgba(138,154,122,0.35)',
-  quote:    'rgba(212,145,74,0.35)',
+  quote:    'color-mix(in srgb, var(--accent) 35%, transparent)',
   insight:  'rgba(106,158,138,0.35)',
   question: 'rgba(138,122,154,0.35)',
   summary:  'rgba(122,138,106,0.35)',
@@ -84,7 +84,7 @@ export default function TemplatesModal({ templates, onSelect, onClose }: Props) 
         }}>
           <div>
             <div style={{
-              fontSize: 16, fontWeight: 700,
+              fontSize: 16, fontWeight: 600,
               color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
             }}>Шаблоны</div>
             <div style={{

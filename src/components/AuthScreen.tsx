@@ -397,7 +397,7 @@ export default function AuthScreen({ onAuth }: Props) {
           </div>
 
           <h2 className="font-serif" style={{
-            fontSize: '1.4rem', fontWeight: 700,
+            fontSize: '1.4rem', fontWeight: 600,
             color: 'var(--text-primary)', margin: '0 0 10px',
           }}>
             Подтвердите email
@@ -449,7 +449,7 @@ export default function AuthScreen({ onAuth }: Props) {
                 width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                 background: 'var(--accent)', color: 'var(--bg-base)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif',
+                fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
               }}>
                 {step.n}
               </div>
@@ -475,8 +475,8 @@ export default function AuthScreen({ onAuth }: Props) {
             <div style={{
               width: '100%', maxWidth: '320px',
               padding: '12px 14px', borderRadius: 2, marginTop: '12px',
-              background: 'rgba(100,180,120,0.12)', color: 'var(--green)',
-              border: '1px solid rgba(100,180,120,0.25)',
+              background: 'color-mix(in srgb, var(--green) 12%, transparent)', color: 'var(--green)',
+              border: '1px solid color-mix(in srgb, var(--green) 25%, transparent)',
               fontSize: '13px', fontFamily: 'Inter, sans-serif', textAlign: 'left',
             }}>
               {info}
@@ -493,7 +493,7 @@ export default function AuthScreen({ onAuth }: Props) {
                 borderRadius: 2, border: 'none',
                 background: loading ? 'var(--bg-active)' : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
                 color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
-                fontWeight: 700, fontSize: '15px', fontFamily: 'Inter, sans-serif',
+                fontWeight: 600, fontSize: '15px', fontFamily: 'Inter, sans-serif',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 cursor: loading ? 'not-allowed' : 'pointer',
               }}
@@ -558,7 +558,7 @@ export default function AuthScreen({ onAuth }: Props) {
 
           <div className="fade-in delay-1" style={{ textAlign: 'center' }}>
             <h1 className="gradient-text" style={{
-              fontSize: '2.1rem', fontWeight: 700,
+              fontSize: '2.1rem', fontWeight: 600,
               fontFamily: 'var(--font-serif)',
               margin: 0, lineHeight: 1.2,
             }}>
@@ -575,8 +575,8 @@ export default function AuthScreen({ onAuth }: Props) {
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '5px',
               marginTop: '8px', padding: '4px 10px', borderRadius: '99px',
-              background: cloudStatus === 'ok' ? 'rgba(100,180,120,0.12)' : 'rgba(180,120,60,0.12)',
-              border: `1px solid ${cloudStatus === 'ok' ? 'rgba(100,180,120,0.3)' : 'rgba(180,120,60,0.3)'}`,
+              background: cloudStatus === 'ok' ? 'color-mix(in srgb, var(--green) 12%, transparent)' : 'rgba(180,120,60,0.12)',
+              border: `1px solid ${cloudStatus === 'ok' ? 'color-mix(in srgb, var(--green) 30%, transparent)' : 'rgba(180,120,60,0.3)'}`,
             }}>
               <div style={{
                 width: 6, height: 6, borderRadius: '50%',
@@ -683,14 +683,14 @@ export default function AuthScreen({ onAuth }: Props) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     display: 'inline-block',
-                    fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+                    fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
                     color: o.color, fontFamily: 'Inter, sans-serif',
                     textTransform: 'uppercase', marginBottom: 6,
                     padding: '2px 8px', borderRadius: 99,
                     background: `color-mix(in srgb, ${o.color} 8%, transparent)`,
                   }}>{o.tag}</div>
                   <div style={{
-                    fontSize: 16, fontWeight: 700,
+                    fontSize: 16, fontWeight: 600,
                     color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
                     marginBottom: 7, lineHeight: 1.3,
                   }}>{o.title}</div>
@@ -730,7 +730,7 @@ export default function AuthScreen({ onAuth }: Props) {
               width: '100%', padding: '14px',
               borderRadius: 2, border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
-              color: 'var(--bg-base)', fontWeight: 700, fontSize: '15px',
+              color: 'var(--bg-base)', fontWeight: 600, fontSize: '15px',
               fontFamily: 'Inter, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               cursor: 'pointer', boxShadow: '0 4px 20px var(--accent-glow)',
@@ -801,7 +801,7 @@ export default function AuthScreen({ onAuth }: Props) {
         </button>
         <div>
           <h2 className="font-serif" style={{
-            fontSize: '1.3rem', fontWeight: 700,
+            fontSize: '1.3rem', fontWeight: 600,
             color: 'var(--text-primary)', margin: 0,
           }}>
             {mode === 'login' ? 'Добро пожаловать' : 'Создать аккаунт'}
@@ -816,8 +816,8 @@ export default function AuthScreen({ onAuth }: Props) {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '8px',
         padding: '10px 14px', borderRadius: 2, marginBottom: '20px',
-        background: 'rgba(100,180,120,0.08)',
-        border: '1px solid rgba(100,180,120,0.2)',
+        background: 'color-mix(in srgb, var(--green) 8%, transparent)',
+        border: '1px solid color-mix(in srgb, var(--green) 20%, transparent)',
       }}>
         <Cloud size={14} style={{ color: 'var(--green)', flexShrink: 0 }} />
         <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -893,8 +893,8 @@ export default function AuthScreen({ onAuth }: Props) {
         {info && (
           <div style={{
             padding: '12px 14px', borderRadius: 2, fontSize: '13px',
-            background: 'rgba(100,180,120,0.12)', color: 'var(--green)',
-            border: '1px solid rgba(100,180,120,0.25)',
+            background: 'color-mix(in srgb, var(--green) 12%, transparent)', color: 'var(--green)',
+            border: '1px solid color-mix(in srgb, var(--green) 25%, transparent)',
             fontFamily: 'Inter, sans-serif',
           }}>
             {info}
@@ -911,7 +911,7 @@ export default function AuthScreen({ onAuth }: Props) {
               ? 'var(--bg-active)'
               : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
             color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
-            fontWeight: 700, fontSize: '15px', fontFamily: 'Inter, sans-serif',
+            fontWeight: 600, fontSize: '15px', fontFamily: 'Inter, sans-serif',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             cursor: loading ? 'not-allowed' : 'pointer',
             transition: 'transform 0.15s', marginTop: '4px',

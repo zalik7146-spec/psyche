@@ -54,7 +54,7 @@ const NOTE_TYPES: Record<NoteType, { label: string; icon: string; color: string 
 const HIGHLIGHT_COLORS = [
   { color: 'rgba(251,191,36,0.45)',  label: 'Жёлтый' },
   { color: 'rgba(134,239,172,0.38)', label: 'Зелёный' },
-  { color: 'rgba(212,145,74,0.42)',  label: 'Янтарь' },
+  { color: 'color-mix(in srgb, var(--accent) 42%, transparent)',  label: 'Янтарь' },
   { color: 'rgba(167,139,250,0.38)', label: 'Фиолет' },
   { color: 'rgba(248,113,113,0.38)', label: 'Красный' },
   { color: 'rgba(96,165,250,0.35)',  label: 'Синий' },
@@ -584,10 +584,10 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               style={{
                 padding: '8px 14px', borderRadius: 2,
                 background: 'var(--accent)', border: 'none',
-                color: 'var(--on-accent)', fontWeight: 700, fontSize: 13,
+                color: 'var(--on-accent)', fontWeight: 600, fontSize: 13,
                 fontFamily: 'Inter,sans-serif', cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                boxShadow: '0 2px 12px rgba(212,145,74,0.35)',
+                boxShadow: '0 2px 12px color-mix(in srgb, var(--accent) 35%, transparent)',
               }}
             >
               Готово

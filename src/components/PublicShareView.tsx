@@ -132,7 +132,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             Выберите книгу
           </span>
           <button onClick={() => setShowBookSheet(false)} style={{
@@ -226,7 +226,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           padding: '10px 16px 12px', borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             Экспорт книги в PDF
           </span>
           <button onClick={() => setShowExportSheet(false)} style={{
@@ -301,7 +301,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           color: 'var(--text-secondary)', cursor: 'pointer',
         }}><ChevronLeft size={18} /></button>
         <div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
             Конспекты
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -336,7 +336,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             <BookOpen size={24} color="var(--accent)" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
               Экспорт книги в PDF
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 3 }}>
@@ -352,7 +352,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         <div style={{ animation: 'fadeSlideUp 0.35s ease 0.07s both' }}>
           <div style={{
             fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
-            marginBottom: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+            marginBottom: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
             Мои конспекты {conspects.length > 0 && `(${conspects.length})`}
           </div>
@@ -377,7 +377,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                         }}>{book?.coverEmoji || '📚'}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{
-                            fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
+                            fontSize: 15, fontWeight: 600, color: 'var(--text-primary)',
                             fontFamily: 'var(--font-serif)', marginBottom: 2,
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>{c.title}</div>
@@ -483,7 +483,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           }}><ChevronLeft size={18} /></button>
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <div style={{
-              fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
+              fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>{viewing.title}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{book?.title}</div>
@@ -522,13 +522,13 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               {note.quote && (
                 <div style={{
                   padding: '10px 12px', borderRadius: 2, marginBottom: 10,
-                  background: 'rgba(212,145,74,0.08)', borderLeft: '3px solid var(--accent)',
+                  background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderLeft: '3px solid var(--accent)',
                   fontSize: 14, fontFamily: 'var(--font-serif)', color: 'var(--text-secondary)',
                   lineHeight: 1.6, fontStyle: 'italic',
                 }}>"{note.quote}"</div>
               )}
               {note.title && (
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', marginBottom: 8 }}>
                   {note.title}
                 </div>
               )}
@@ -575,7 +575,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
         }}><ChevronLeft size={18} /></button>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
           Новый конспект
         </div>
       </div>
@@ -584,7 +584,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
 
         {/* Book picker — большая кнопка */}
         <div style={{ animation: 'fadeSlideUp 0.35s ease' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             Книга *
           </div>
           <button onClick={() => { vibe(6); setShowBookSheet(true); }} style={{
@@ -628,7 +628,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
 
         {/* Title */}
         <div style={{ animation: 'fadeSlideUp 0.35s ease 0.04s both' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             Мысли *
           </div>
           <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
@@ -644,7 +644,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
 
         {/* Description */}
         <div style={{ animation: 'fadeSlideUp 0.35s ease 0.08s both' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             Описание
           </div>
           <div style={{ borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)', overflow: 'hidden' }}>
@@ -695,7 +695,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         {selBook && availNotes.length > 0 && (
           <div style={{ animation: 'fadeSlideUp 0.35s ease 0.16s both' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Записи ({selNotes.length}/{availNotes.length})
               </div>
               <button onClick={() => {
@@ -747,7 +747,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
               : 'var(--bg-raised)',
             color: selBook && title.trim() ? '#fff' : 'var(--text-muted)',
-            fontSize: 16, fontWeight: 700,
+            fontSize: 16, fontWeight: 600,
             cursor: selBook && title.trim() ? 'pointer' : 'not-allowed',
             fontFamily: 'Inter, sans-serif',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

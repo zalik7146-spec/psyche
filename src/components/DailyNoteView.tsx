@@ -458,7 +458,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               <Flame size={18} color={streak > 0 ? 'var(--accent)' : 'var(--text-muted)'} style={{ display: 'inline' }} />
             </div>
             <div style={{
-              fontSize: 18, fontWeight: 700,
+              fontSize: 18, fontWeight: 600,
               color: streak > 0 ? 'var(--accent)' : 'var(--text-muted)',
               fontFamily: 'var(--font-serif)', lineHeight: 1,
             }}>{streak}</div>
@@ -481,7 +481,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               <BarChart2 size={18} color="var(--text-muted)" style={{ display: 'inline' }} />
             </div>
             <div style={{
-              fontSize: 18, fontWeight: 700,
+              fontSize: 18, fontWeight: 600,
               color: 'var(--text-secondary)',
               fontFamily: 'var(--font-serif)', lineHeight: 1,
             }}>{totalEntries}</div>
@@ -504,7 +504,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               <Link2 size={18} color="var(--text-muted)" style={{ display: 'inline' }} />
             </div>
             <div style={{
-              fontSize: 18, fontWeight: 700,
+              fontSize: 18, fontWeight: 600,
               color: 'var(--text-secondary)',
               fontFamily: 'var(--font-serif)', lineHeight: 1,
             }}>{linkedNotes.length}</div>
@@ -518,7 +518,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
         {/* Last 7 days activity */}
         <div style={{ margin: '12px 16px 0' }}>
           <p style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
             letterSpacing: '0.07em', color: 'var(--text-muted)',
             fontFamily: 'Inter,sans-serif', marginBottom: 8,
           }}>Последние 7 дней</p>

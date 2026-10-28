@@ -138,7 +138,7 @@ export default function NotificationsView({ user, onBack }: Props) {
           <ArrowLeft size={18} />
         </button>
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', margin: 0 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', margin: 0 }}>
             Уведомления
           </h2>
           {unreadCount > 0 && (
@@ -205,7 +205,7 @@ export default function NotificationsView({ user, onBack }: Props) {
                   width: 44, height: 44, borderRadius: '50%',
                   background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, fontWeight: 700, color: 'var(--on-accent)', overflow: 'hidden',
+                  fontSize: 18, fontWeight: 600, color: 'var(--on-accent)', overflow: 'hidden',
                   border: '2px solid var(--border)',
                 }}>
                   {av

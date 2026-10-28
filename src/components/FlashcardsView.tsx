@@ -115,7 +115,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Brain size={20} color="var(--accent)" />
             <span style={{
-              fontSize: '18px', fontWeight: 700,
+              fontSize: '18px', fontWeight: 600,
               fontFamily: 'var(--font-serif)', color: 'var(--text-primary)',
             }}>Карточки</span>
           </div>
@@ -174,7 +174,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                   <div style={{ color: s.color, marginBottom: '6px', display: 'flex', justifyContent: 'center' }}>
                     {s.icon}
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+                  <div style={{ fontSize: '22px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
                     {s.value}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: 'Inter,sans-serif' }}>
@@ -426,7 +426,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
               }}>
                 <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
                 <p style={{
-                  fontSize: '20px', fontWeight: 700,
+                  fontSize: '20px', fontWeight: 600,
                   color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
                   marginBottom: '10px',
                 }}>

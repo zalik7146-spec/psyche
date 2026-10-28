@@ -203,7 +203,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           </p>
           <p style={{
             fontSize: typeof slide.value === 'string' && slide.value.length > 10 ? 28 : 64,
-            fontWeight: 800, color: 'var(--on-accent)',
+            fontWeight: 600, color: 'var(--on-accent)',
             fontFamily: 'var(--font-serif)', textAlign: 'center',
             lineHeight: 1.1, marginBottom: 16,
             textShadow: `0 0 40px color-mix(in srgb, ${slide.color} 38%, transparent)`,
@@ -236,7 +236,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           <button onClick={handleShare} style={{
             padding: '12px 24px', borderRadius: 2,
             background: slide.color, border: 'none',
-            color: 'var(--bg-base)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            color: 'var(--bg-base)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <Share2 size={16} /> Поделиться

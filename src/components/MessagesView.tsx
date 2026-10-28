@@ -57,7 +57,7 @@ const Avatar = ({ p, size=44 }: { p: Profile; size?: number }) => (
     width:size, height:size, borderRadius:'50%', flexShrink:0,
     background:'linear-gradient(135deg,var(--accent),#5a3e2a)',
     display:'flex', alignItems:'center', justifyContent:'center',
-    color: 'var(--on-accent)', fontWeight:700, fontSize:size*0.38,
+    color: 'var(--on-accent)', fontWeight: 600, fontSize:size*0.38,
     overflow:'hidden', border:'2px solid var(--border)'
   }}>
     {p.avatar?.startsWith('http')
@@ -407,7 +407,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               <ArrowLeft size={20} />
             </button>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
                 Сообщения
               </div>
             </div>
@@ -491,7 +491,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                           {c.lastMsg}
                         </span>
                         {c.unread > 0 && (
-                          <span style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 2, fontSize: 11, fontWeight: 700, padding: '2px 7px', flexShrink: 0 }}>
+                          <span style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 2, fontSize: 11, fontWeight: 600, padding: '2px 7px', flexShrink: 0 }}>
                             {c.unread}
                           </span>
                         )}
@@ -550,7 +550,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
             </button>
             <Avatar p={partner} size={38} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 16 }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 16 }}>
                 {partner.display_name || partner.username}
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>@{partner.username}</div>

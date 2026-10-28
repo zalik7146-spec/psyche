@@ -87,7 +87,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
   const avatarEl = (p: Profile) => (
     <div style={{
       width: 48, height: 48, borderRadius: '50%',
-      background: 'linear-gradient(135deg,var(--accent),var(--accent))',
+      background: 'var(--accent)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 20, flexShrink: 0, overflow: 'hidden',
       border: '2px solid var(--border)',
@@ -111,7 +111,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
       }}>
         {avatarEl(p)}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif' }}>
             {p.display_name || p.username}
           </div>
           <div style={{ fontSize: 12, color: 'var(--accent)', fontFamily: 'Inter,sans-serif', marginBottom: 2 }}>
@@ -180,7 +180,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--text-secondary)',
         }}><ArrowLeft size={18} /></button>
-        <h2 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+        <h2 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
           Подписки
         </h2>
       </div>

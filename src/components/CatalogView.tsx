@@ -180,7 +180,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
             <X size={18} />
           </button>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
               📚 Каталог книг
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
@@ -300,7 +300,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
+                  fontSize: 15, fontWeight: 600, color: 'var(--text-primary)',
                   fontFamily: 'var(--font-serif)', marginBottom: 4,
                   display: '-webkit-box', WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical', overflow: 'hidden'

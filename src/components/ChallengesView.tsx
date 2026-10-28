@@ -199,7 +199,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
             <X size={18} />
           </button>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-serif)' }}>
+            <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-serif)' }}>
               🏆 Челленджи
             </h1>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>

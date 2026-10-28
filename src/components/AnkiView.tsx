@@ -169,7 +169,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           <ChevronLeft size={18} />
         </button>
         <div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600,
             color: 'var(--text-primary)' }}>Повторение</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
             Алгоритм SM-2
@@ -201,7 +201,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <div style={{ fontSize: 32 }}>{dueCards.length > 0 ? '🧠' : '✅'}</div>
               <div>
-                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
+                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600,
                   color: dueCards.length > 0 ? '#fff' : 'var(--text-primary)' }}>
                   {dueCards.length > 0 ? `${dueCards.length} к повторению` : 'Всё повторено!'}
                 </div>
@@ -215,7 +215,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               <button onClick={() => startSession(dueCards)} style={{
                 width: '100%', padding: '14px', borderRadius: 2,
                 background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
-                color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+                color: 'var(--on-accent)', fontSize: 16, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif', backdropFilter: 'blur(8px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
@@ -237,7 +237,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
               textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
               <div style={{ color: s.color, marginBottom: 6 }}>{s.icon}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)' }}>{s.value}</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)' }}>{s.value}</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
@@ -346,7 +346,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           }}>
             <ChevronLeft size={18} />
           </button>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600,
             color: 'var(--text-primary)' }}>Сессия завершена</div>
         </div>
 
@@ -359,7 +359,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           </div>
 
           <div style={{ textAlign: 'center', fontFamily: 'var(--font-serif)' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+            <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
               {accuracy >= 80 ? 'Отлично!' : accuracy >= 60 ? 'Хорошо!' : 'Продолжай!'}
             </div>
             <div style={{ fontSize: 15, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -378,7 +378,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
                 textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
                 <div style={{ fontSize: 20, color: s.color, marginBottom: 4 }}>{s.icon}</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{s.value}</div>
+                <div style={{ fontSize: 24, fontWeight: 600, color: 'var(--text-primary)' }}>{s.value}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
               </div>
             ))}
@@ -443,7 +443,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             <ChevronLeft size={18} />
           </button>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700,
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600,
               color: 'var(--text-primary)' }}>Повторение</div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -562,7 +562,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                   onPointerDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)'; }}
                   onPointerUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                   >
-                    <span style={{ fontSize: 16, fontWeight: 700 }}>{cfg.icon}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600 }}>{cfg.icon}</span>
                     <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{cfg.label}</span>
                   </button>
                 );
@@ -575,7 +575,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               marginTop: 16, width: '100%', padding: '16px',
               borderRadius: 2, border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-              color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+              color: 'var(--on-accent)', fontSize: 16, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
@@ -600,7 +600,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         }}>
           <ChevronLeft size={18} />
         </button>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600,
           color: 'var(--text-primary)' }}>Все карточки</div>
         <button onClick={() => { vibe(6); setMode('create'); }} style={{
           marginLeft: 'auto', width: 38, height: 38, borderRadius: 2,
@@ -661,7 +661,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         }}>
           <ChevronLeft size={18} />
         </button>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600,
           color: 'var(--text-primary)' }}>Новая карточка</div>
       </div>
 
@@ -670,7 +670,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--accent)', fontFamily: 'Inter, sans-serif',
-            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Вопрос / Понятие
           </div>
           <textarea
@@ -688,7 +688,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.05s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif',
-            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Ответ / Определение
           </div>
           <textarea
@@ -706,7 +706,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.1s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
-            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Связать с записью (необязательно)
           </div>
           <select
@@ -728,7 +728,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.15s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
             fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif',
-            fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Теги (через запятую)
           </div>
           <input
@@ -751,7 +751,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               ? 'linear-gradient(135deg, var(--accent), var(--accent-warm))'
               : 'var(--bg-raised)',
             color: front.trim() && back.trim() ? '#fff' : 'var(--text-muted)',
-            fontSize: 16, fontWeight: 700, cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
+            fontSize: 16, fontWeight: 600, cursor: front.trim() && back.trim() ? 'pointer' : 'not-allowed',
             fontFamily: 'Inter, sans-serif',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             animation: 'fadeSlideUp 0.35s ease 0.2s both',

@@ -112,7 +112,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
       </div>
 
       <h2 style={{
-        fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700,
+        fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 600,
         color: 'var(--text-primary)', marginBottom: 8, textAlign: 'center',
       }}>
         {steps[step].title}

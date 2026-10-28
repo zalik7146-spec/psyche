@@ -171,7 +171,7 @@ export default function SettingsView({
               onClick={() => { vibe(15); if (window.confirm('Очистить корзину? Это нельзя отменить.')) onEmptyTrash(); }}
               style={{
                 padding: '6px 12px', borderRadius: 2,
-                background: 'rgba(180,50,50,0.15)', border: '1px solid rgba(180,50,50,0.3)',
+                background: 'color-mix(in srgb, var(--red) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--red) 30%, transparent)',
                 color: 'var(--red)', cursor: 'pointer', fontSize: 12,
                 fontFamily: 'Inter, sans-serif', fontWeight: 600,
                 display: 'flex', alignItems: 'center', gap: 5,
@@ -233,7 +233,7 @@ export default function SettingsView({
                     onClick={() => { vibe(15); if (window.confirm('Удалить навсегда?')) onPermanentDelete(note.id); }}
                     style={{
                       padding: '8px 14px', borderRadius: 2,
-                      background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
+                      background: 'color-mix(in srgb, var(--red) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--red) 25%, transparent)',
                       color: 'var(--red)', cursor: 'pointer', fontSize: 12,
                       fontFamily: 'Inter, sans-serif', fontWeight: 600,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
@@ -284,7 +284,7 @@ export default function SettingsView({
           padding: '8px 16px 12px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             Изменить аватар
           </span>
           <button
@@ -378,7 +378,7 @@ export default function SettingsView({
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
           </button>
-          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
             Настройки
           </span>
         </div>
@@ -386,7 +386,7 @@ export default function SettingsView({
         {/* ── Profile hero ──────────────────────────────────────────── */}
         <div style={{
           padding: '20px 20px 20px',
-          background: 'linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-base) 100%)',
+          background: 'var(--bg-base)',
           borderBottom: '1px solid var(--border)',
           animation: 'fadeUp 0.35s ease-out both',
         }}>
@@ -396,7 +396,7 @@ export default function SettingsView({
               onClick={() => { vibe(8); setShowAvatarPicker(true); }}
               style={{
                 width: 64, height: 64, borderRadius: 2,
-                background: isPhotoAvatar ? 'none' : 'linear-gradient(135deg, var(--bg-active), var(--bg-raised))',
+                background: isPhotoAvatar ? 'none' : 'var(--bg-card)',
                 border: '2px solid var(--border-mid)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 30, flexShrink: 0,
@@ -428,7 +428,7 @@ export default function SettingsView({
             </button>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+              <p style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
                 {user.name}
               </p>
               <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif' }}>
@@ -479,7 +479,7 @@ export default function SettingsView({
                 animationDelay: `${0.05 + i * 0.03}s`,
               }}>
                 <div style={{ color: 'var(--accent)', marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
-                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
                   {s.val.toLocaleString()}
                 </p>
                 <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -497,7 +497,7 @@ export default function SettingsView({
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 16px', borderRadius: 2, cursor: 'pointer',
-              background: 'rgba(212,145,74,0.08)', border: '1px solid rgba(212,145,74,0.25)',
+              background: 'color-mix(in srgb, var(--accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
               WebkitTapHighlightColor: 'transparent',
             }}
             onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)'; }}
@@ -535,7 +535,7 @@ export default function SettingsView({
                 style={{
                   padding: '14px 8px', borderRadius: 2, cursor: 'pointer',
                   background: t.bg,
-                  border: `2px solid ${state.theme === t.id ? 'var(--accent)' : 'rgba(128,100,60,0.3)'}`,
+                  border: `2px solid ${state.theme === t.id ? 'var(--accent)' : 'color-mix(in srgb, var(--border-mid) 30%, transparent)'}`,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                   boxShadow: state.theme === t.id ? '0 0 0 3px var(--accent-glow)' : 'none',
                   transition: 'all 0.2s',
@@ -562,7 +562,7 @@ export default function SettingsView({
             <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
                 width: 40, height: 40, borderRadius: 2,
-                background: 'rgba(100,180,120,0.15)', border: '1px solid rgba(100,180,120,0.3)',
+                background: 'color-mix(in srgb, var(--green) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--green) 30%, transparent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
                 <Cloud size={18} color="var(--green)" />
@@ -580,10 +580,10 @@ export default function SettingsView({
                 disabled={syncStatus === 'syncing'}
                 style={{
                   padding: '7px 12px', borderRadius: 2,
-                  background: syncStatus === 'done' ? 'rgba(100,180,120,0.15)'
-                    : syncStatus === 'error' ? 'rgba(180,80,80,0.15)' : 'var(--bg-raised)',
-                  border: `1px solid ${syncStatus === 'done' ? 'rgba(100,180,120,0.4)'
-                    : syncStatus === 'error' ? 'rgba(180,80,80,0.4)' : 'var(--border)'}`,
+                  background: syncStatus === 'done' ? 'color-mix(in srgb, var(--green) 15%, transparent)'
+                    : syncStatus === 'error' ? 'color-mix(in srgb, var(--red) 15%, transparent)' : 'var(--bg-raised)',
+                  border: `1px solid ${syncStatus === 'done' ? 'color-mix(in srgb, var(--green) 40%, transparent)'
+                    : syncStatus === 'error' ? 'color-mix(in srgb, var(--red) 40%, transparent)' : 'var(--border)'}`,
                   color: syncStatus === 'done' ? 'var(--green)'
                     : syncStatus === 'error' ? 'var(--red)' : 'var(--text-secondary)',
                   cursor: 'pointer', fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 600,
@@ -651,7 +651,7 @@ export default function SettingsView({
             >
               <div style={{
                 width: 36, height: 36, borderRadius: 2,
-                background: 'rgba(180,100,50,0.12)', border: '1px solid rgba(180,100,50,0.25)',
+                background: 'color-mix(in srgb, var(--accent) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 25%, transparent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 color: 'var(--accent)',
               }}>
@@ -668,7 +668,7 @@ export default function SettingsView({
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {deletedNotes.length > 0 && (
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
+                    fontSize: 11, fontWeight: 600, color: 'var(--accent)',
                     background: 'var(--accent-glow)', borderRadius: 99, padding: '1px 7px',
                   }}>{deletedNotes.length}</span>
                 )}
@@ -687,7 +687,7 @@ export default function SettingsView({
             >
               <div style={{
                 width: 36, height: 36, borderRadius: 2,
-                background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
+                background: 'color-mix(in srgb, var(--red) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--red) 25%, transparent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 color: 'var(--red)',
               }}>
@@ -715,7 +715,7 @@ export default function SettingsView({
             onClick={() => { vibe(15); onClearData(); }}
             style={{
               width: '100%', padding: '13px 16px', borderRadius: 2,
-              background: 'rgba(180,50,50,0.08)', border: '1px solid rgba(180,50,50,0.2)',
+              background: 'color-mix(in srgb, var(--red) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--red) 20%, transparent)',
               color: 'var(--red)', cursor: 'pointer', fontSize: 14,
               fontFamily: 'Inter, sans-serif', fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 8,

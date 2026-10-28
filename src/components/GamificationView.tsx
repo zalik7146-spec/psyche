@@ -244,7 +244,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
         </button>
         <div>
           <h2 style={{
-            fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
+            fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 600,
             color: 'var(--text-primary)', margin: 0,
           }}>Достижения</h2>
           <p style={{
@@ -260,7 +260,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
 
         {/* Level card */}
         <div style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${lv.color} 9%, transparent), color-mix(in srgb, ${lv.color} 3%, transparent))`,
+          background: `color-mix(in srgb, ${lv.color} 6%, transparent)`,
           border: `1.5px solid color-mix(in srgb, ${lv.color} 25%, transparent)`,
           borderRadius: 2,
           padding: '20px',
@@ -282,7 +282,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
                 textTransform: 'uppercase', letterSpacing: '0.08em',
               }}>Уровень {lv.level}</div>
               <div style={{
-                fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
+                fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600,
                 color: 'var(--text-primary)', lineHeight: 1.2,
               }}>{lv.title}</div>
               <div style={{
@@ -309,7 +309,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
             }}>
               <div style={{
                 height: '100%', width: `${stats.progress * 100}%`,
-                background: `linear-gradient(90deg, ${lv.color}, color-mix(in srgb, ${lv.color} 67%, transparent))`,
+                background: lv.color,
                 borderRadius: 99,
                 transition: 'width 1s cubic-bezier(0.22,1,0.36,1)',
               }} />
@@ -336,7 +336,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
             }}>
               <div style={{ fontSize: 24 }}>{s.emoji}</div>
               <div style={{
-                fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
+                fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600,
                 color: 'var(--text-primary)', lineHeight: 1.2,
               }}>{s.val}</div>
               <div style={{
@@ -387,12 +387,12 @@ function BadgeCard({ badge, index }: { badge: Badge; index: number }) {
         <div style={{
           position: 'absolute', top: 6, right: 8,
           fontSize: 10, color: badge.color,
-          fontFamily: 'Inter, sans-serif', fontWeight: 700,
+          fontFamily: 'Inter, sans-serif', fontWeight: 600,
         }}>✓</div>
       )}
       <div style={{ fontSize: 28, marginBottom: 8 }}>{badge.emoji}</div>
       <div style={{
-        fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
+        fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
         color: 'var(--text-primary)', marginBottom: 4, lineHeight: 1.3,
       }}>{badge.title}</div>
       <div style={{

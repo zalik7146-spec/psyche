@@ -34,7 +34,7 @@ function Avatar({ profile, size = 36 }: { profile?: SocialProfile | null; size?:
       width: size, height: size, borderRadius: '50%',
       background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.4, fontWeight: 700, color: 'var(--on-accent)', flexShrink: 0,
+      fontSize: size * 0.4, fontWeight: 600, color: 'var(--on-accent)', flexShrink: 0,
       overflow: 'hidden', border: '2px solid var(--border)',
     }}>
       {av ? av.startsWith('data:')
@@ -203,7 +203,7 @@ function CreateStorySheet({ onClose, onCreate }: {
           <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2 }} />
         </div>
         <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Новая история</span>
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Новая история</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
         </div>
 
