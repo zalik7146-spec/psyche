@@ -43,12 +43,12 @@ interface Props {
 
 const NOTE_TYPES: Record<NoteType, { label: string; icon: string; color: string }> = {
   note:     { label: 'Заметка',  icon: '📝', color: 'var(--text-secondary)' },
-  quote:    { label: 'Цитата',   icon: '❝',  color: '#d4914a' },
-  insight:  { label: 'Инсайт',  icon: '💡', color: '#6a9e8a' },
-  question: { label: 'Вопрос',  icon: '🔍', color: '#8a7a9a' },
-  summary:  { label: 'Резюме',  icon: '📋', color: '#7a8a6a' },
-  idea:     { label: 'Идея',    icon: '🌱', color: '#9a8a4a' },
-  task:     { label: 'Задача',  icon: '✓',  color: '#6a7a9a' },
+  quote:    { label: 'Цитата',   icon: '❝',  color: 'var(--accent)' },
+  insight:  { label: 'Инсайт',  icon: '💡', color: 'var(--text-secondary)' },
+  question: { label: 'Вопрос',  icon: '🔍', color: 'var(--text-secondary)' },
+  summary:  { label: 'Резюме',  icon: '📋', color: 'var(--text-secondary)' },
+  idea:     { label: 'Идея',    icon: '🌱', color: 'var(--accent)' },
+  task:     { label: 'Задача',  icon: '✓',  color: 'var(--text-secondary)' },
 };
 
 const HIGHLIGHT_COLORS = [
@@ -64,10 +64,10 @@ const HIGHLIGHT_COLORS = [
 
 const TEXT_COLORS = [
   { color: 'var(--text-primary)',   label: 'Стандарт' },
-  { color: '#d4914a',               label: 'Янтарь' },
+  { color: 'var(--accent)',               label: 'Янтарь' },
   { color: '#78c8a0',               label: 'Зелёный' },
   { color: '#a090c0',               label: 'Фиолет' },
-  { color: '#e07070',               label: 'Красный' },
+  { color: 'var(--red)',               label: 'Красный' },
   { color: '#70a0d0',               label: 'Синий' },
   { color: '#d4b840',               label: 'Золото' },
   { color: '#c09080',               label: 'Медь' },
@@ -86,7 +86,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
   const [page, setPage]             = useState<string>(note?.page?.toString() || '');
   const [chapter, setChapter]       = useState(note?.chapter || '');
   const [quote, setQuote]           = useState(note?.quote || '');
-  const [quoteColor, setQuoteColor] = useState(note?.quoteColor || '#d4914a');
+  const [quoteColor, setQuoteColor] = useState(note?.quoteColor || 'var(--accent)');
   const [noteTags, setNoteTags]     = useState<string[]>(note?.tags || []);
   const [isPinned, setIsPinned]         = useState(note?.isPinned || false);
   const [isFavorite, setIsFavorite]     = useState(note?.isFavorite || false);
@@ -517,7 +517,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
             style={{
               flex: 1, background: 'none', border: 'none', outline: 'none',
               fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)',
-              fontFamily: 'Lora, serif', minWidth: 0,
+              fontFamily: 'var(--font-serif)', minWidth: 0,
             }}
           />
 
@@ -530,12 +530,12 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               style={{
                 width: 34, height: 34, borderRadius: 9,
                 background: 'none', border: 'none',
-                color: isFavorite ? '#d4914a' : 'var(--text-muted)',
+                color: isFavorite ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'color 0.15s',
               }}
             >
-              <Star size={17} fill={isFavorite ? '#d4914a' : 'none'} />
+              <Star size={17} fill={isFavorite ? 'var(--accent)' : 'none'} />
             </button>
             <button
               onClick={() => setIsPinned(v => !v)}
@@ -584,7 +584,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               style={{
                 padding: '8px 14px', borderRadius: 11,
                 background: 'var(--accent)', border: 'none',
-                color: '#fff', fontWeight: 700, fontSize: 13,
+                color: 'var(--on-accent)', fontWeight: 700, fontSize: 13,
                 fontFamily: 'Inter,sans-serif', cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 boxShadow: '0 2px 12px rgba(212,145,74,0.35)',
@@ -942,7 +942,7 @@ export default function NoteEditor({ note, books, tags, allNotes: _allNotes, tem
               <p style={{
                 margin: 0, fontSize: '0.93rem', lineHeight: 1.7,
                 color: 'var(--text-secondary)', fontStyle: 'italic',
-                fontFamily: 'Lora, serif',
+                fontFamily: 'var(--font-serif)',
               }}>
                 «{quote}»
               </p>

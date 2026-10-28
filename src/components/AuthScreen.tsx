@@ -16,7 +16,7 @@ const CARDS = [
     text: 'Между стимулом и реакцией есть пространство. В этом пространстве — наша сила.',
     source: 'Виктор Франкл',
     book: 'Человек в поисках смысла',
-    color: '#c4813c',
+    color: 'var(--accent)',
   },
   {
     type: 'insight',
@@ -24,7 +24,7 @@ const CARDS = [
     text: 'Травма — это не то, что произошло с вами, а то, что произошло внутри вас в ответ на произошедшее.',
     source: 'Габор Матэ',
     book: 'Когда тело говорит «нет»',
-    color: '#6a9e8a',
+    color: 'var(--text-secondary)',
   },
   {
     type: 'note',
@@ -40,7 +40,7 @@ const CARDS = [
     text: 'Резилентность — не устойчивость к потрясениям, а способность восстанавливаться и расти после них.',
     source: 'Ключевая идея',
     book: 'Личная запись',
-    color: '#6a8a9a',
+    color: 'var(--text-secondary)',
   },
   {
     type: 'question',
@@ -57,14 +57,14 @@ const ONBOARDING = [
     emoji: '📚',
     title: 'Библиотека знаний',
     desc: 'Собирай книги, следи за прогрессом чтения, добавляй рейтинги',
-    color: '#c4813c',
+    color: 'var(--accent)',
     tag: 'Организация',
   },
   {
     emoji: '✍️',
     title: 'Умные заметки',
     desc: 'Цитаты, инсайты, идеи — с форматированием, тегами и привязкой к книге',
-    color: '#6a9e8a',
+    color: 'var(--text-secondary)',
     tag: 'Записи',
   },
   {
@@ -121,7 +121,7 @@ function AnimatedCard({ card, isActive }: { card: typeof CARDS[0]; isActive: boo
 
       <div style={{
         fontSize: '0.97rem', lineHeight: 1.78,
-        fontFamily: 'Lora, Georgia, serif',
+        fontFamily: 'var(--font-serif)',
         color: 'var(--text-primary)',
         fontStyle: card.type === 'quote' ? 'italic' : 'normal',
       }}>
@@ -447,7 +447,7 @@ export default function AuthScreen({ onAuth }: Props) {
             }}>
               <div style={{
                 width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-                background: 'var(--accent)', color: '#0e0c09',
+                background: 'var(--accent)', color: 'var(--bg-base)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '12px', fontWeight: 700, fontFamily: 'Inter, sans-serif',
               }}>
@@ -475,7 +475,7 @@ export default function AuthScreen({ onAuth }: Props) {
             <div style={{
               width: '100%', maxWidth: '320px',
               padding: '12px 14px', borderRadius: '12px', marginTop: '12px',
-              background: 'rgba(100,180,120,0.12)', color: '#6ab47a',
+              background: 'rgba(100,180,120,0.12)', color: 'var(--green)',
               border: '1px solid rgba(100,180,120,0.25)',
               fontSize: '13px', fontFamily: 'Inter, sans-serif', textAlign: 'left',
             }}>
@@ -492,7 +492,7 @@ export default function AuthScreen({ onAuth }: Props) {
                 width: '100%', padding: '16px',
                 borderRadius: '18px', border: 'none',
                 background: loading ? 'var(--bg-active)' : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
-                color: loading ? 'var(--text-muted)' : '#0e0c09',
+                color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
                 fontWeight: 700, fontSize: '15px', fontFamily: 'Inter, sans-serif',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 cursor: loading ? 'not-allowed' : 'pointer',
@@ -559,7 +559,7 @@ export default function AuthScreen({ onAuth }: Props) {
           <div className="fade-in delay-1" style={{ textAlign: 'center' }}>
             <h1 className="gradient-text" style={{
               fontSize: '2.1rem', fontWeight: 700,
-              fontFamily: 'Lora, Georgia, serif',
+              fontFamily: 'var(--font-serif)',
               margin: 0, lineHeight: 1.2,
             }}>
               Psyche
@@ -580,7 +580,7 @@ export default function AuthScreen({ onAuth }: Props) {
             }}>
               <div style={{
                 width: 6, height: 6, borderRadius: '50%',
-                background: cloudStatus === 'ok' ? '#6ab47a' : '#c4813c',
+                background: cloudStatus === 'ok' ? 'var(--green)' : 'var(--accent)',
               }} />
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
                 {cloudStatus === 'ok' ? 'Облако подключено' : 'Подключение...'}
@@ -674,11 +674,11 @@ export default function AuthScreen({ onAuth }: Props) {
                 {/* icon */}
                 <div style={{
                   width: 58, height: 58, borderRadius: '18px', flexShrink: 0,
-                  background: `${o.color}20`,
-                  border: `1.5px solid ${o.color}40`,
+                  background: `color-mix(in srgb, ${o.color} 13%, transparent)`,
+                  border: `1.5px solid color-mix(in srgb, ${o.color} 25%, transparent)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 28,
-                  boxShadow: `0 4px 16px ${o.color}20`,
+                  boxShadow: `0 4px 16px color-mix(in srgb, ${o.color} 13%, transparent)`,
                 }}>{o.emoji}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
@@ -687,11 +687,11 @@ export default function AuthScreen({ onAuth }: Props) {
                     color: o.color, fontFamily: 'Inter, sans-serif',
                     textTransform: 'uppercase', marginBottom: 6,
                     padding: '2px 8px', borderRadius: 99,
-                    background: `${o.color}15`,
+                    background: `color-mix(in srgb, ${o.color} 8%, transparent)`,
                   }}>{o.tag}</div>
                   <div style={{
                     fontSize: 16, fontWeight: 700,
-                    color: 'var(--text-primary)', fontFamily: 'Lora, serif',
+                    color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
                     marginBottom: 7, lineHeight: 1.3,
                   }}>{o.title}</div>
                   <div style={{
@@ -730,7 +730,7 @@ export default function AuthScreen({ onAuth }: Props) {
               width: '100%', padding: '14px',
               borderRadius: '16px', border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
-              color: '#0e0c09', fontWeight: 700, fontSize: '15px',
+              color: 'var(--bg-base)', fontWeight: 700, fontSize: '15px',
               fontFamily: 'Inter, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
               cursor: 'pointer', boxShadow: '0 4px 20px var(--accent-glow)',
@@ -819,7 +819,7 @@ export default function AuthScreen({ onAuth }: Props) {
         background: 'rgba(100,180,120,0.08)',
         border: '1px solid rgba(100,180,120,0.2)',
       }}>
-        <Cloud size={14} style={{ color: '#6ab47a', flexShrink: 0 }} />
+        <Cloud size={14} style={{ color: 'var(--green)', flexShrink: 0 }} />
         <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
           Ваши данные сохраняются в облаке и доступны на всех устройствах
         </span>
@@ -893,7 +893,7 @@ export default function AuthScreen({ onAuth }: Props) {
         {info && (
           <div style={{
             padding: '12px 14px', borderRadius: '12px', fontSize: '13px',
-            background: 'rgba(100,180,120,0.12)', color: '#6ab47a',
+            background: 'rgba(100,180,120,0.12)', color: 'var(--green)',
             border: '1px solid rgba(100,180,120,0.25)',
             fontFamily: 'Inter, sans-serif',
           }}>
@@ -910,7 +910,7 @@ export default function AuthScreen({ onAuth }: Props) {
             background: loading
               ? 'var(--bg-active)'
               : 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
-            color: loading ? 'var(--text-muted)' : '#0e0c09',
+            color: loading ? 'var(--text-muted)' : 'var(--bg-base)',
             fontWeight: 700, fontSize: '15px', fontFamily: 'Inter, sans-serif',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             cursor: loading ? 'not-allowed' : 'pointer',

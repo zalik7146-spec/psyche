@@ -132,7 +132,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             Выберите книгу
           </span>
           <button onClick={() => setShowBookSheet(false)} style={{
@@ -226,7 +226,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           padding: '10px 16px 12px', borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             Экспорт книги в PDF
           </span>
           <button onClick={() => setShowExportSheet(false)} style={{
@@ -301,7 +301,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           color: 'var(--text-secondary)', cursor: 'pointer',
         }}><ChevronLeft size={18} /></button>
         <div>
-          <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
             Конспекты
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -312,7 +312,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           marginLeft: 'auto', width: 38, height: 38, borderRadius: 12,
           background: 'var(--accent)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', cursor: 'pointer',
+          color: 'var(--on-accent)', cursor: 'pointer',
         }}><Plus size={18} /></button>
       </div>
 
@@ -336,7 +336,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             <BookOpen size={24} color="var(--accent)" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
               Экспорт книги в PDF
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', marginTop: 3 }}>
@@ -378,7 +378,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{
                             fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
-                            fontFamily: 'Lora, serif', marginBottom: 2,
+                            fontFamily: 'var(--font-serif)', marginBottom: 2,
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>{c.title}</div>
                           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -389,8 +389,8 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                           display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px',
                           borderRadius: 99,
                           background: c.isPublic ? 'rgba(106,158,138,0.12)' : 'var(--bg-active)',
-                          border: `1px solid ${c.isPublic ? '#6a9e8a44' : 'var(--border)'}`,
-                          fontSize: 11, color: c.isPublic ? '#6a9e8a' : 'var(--text-muted)', flexShrink: 0,
+                          border: `1px solid ${c.isPublic ? 'color-mix(in srgb, var(--text-secondary) 27%, transparent)' : 'var(--border)'}`,
+                          fontSize: 11, color: c.isPublic ? 'var(--text-secondary)' : 'var(--text-muted)', flexShrink: 0,
                         }}>
                           {c.isPublic ? <Globe size={10} /> : <Lock size={10} />}
                           <span>{c.isPublic ? 'Публ.' : 'Привр.'}</span>
@@ -411,8 +411,8 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                         <button onClick={() => handleCopy(c.shareCode)} style={{
                           flex: 1, padding: '10px', borderRadius: 12,
                           background: copied === c.shareCode ? 'rgba(106,158,138,0.15)' : 'var(--bg-active)',
-                          border: `1px solid ${copied === c.shareCode ? '#6a9e8a44' : 'var(--border)'}`,
-                          color: copied === c.shareCode ? '#6a9e8a' : 'var(--text-secondary)',
+                          border: `1px solid ${copied === c.shareCode ? 'color-mix(in srgb, var(--text-secondary) 27%, transparent)' : 'var(--border)'}`,
+                          color: copied === c.shareCode ? 'var(--text-secondary)' : 'var(--text-secondary)',
                           cursor: 'pointer', fontSize: 13, fontFamily: 'Inter, sans-serif',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           fontWeight: 600,
@@ -429,7 +429,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                         <button onClick={() => handleDelete(c.id)} style={{
                           padding: '10px 14px', borderRadius: 12,
                           background: 'rgba(224,112,112,0.1)', border: '1px solid rgba(224,112,112,0.2)',
-                          color: '#e07070', cursor: 'pointer',
+                          color: 'var(--red)', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}><Trash2 size={15} /></button>
                       </div>
@@ -445,7 +445,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               border: '1px dashed var(--border)',
             }}>
               <div style={{ fontSize: 44, marginBottom: 12 }}>🌐</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Lora, serif', marginBottom: 6 }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', marginBottom: 6 }}>
                 Нет конспектов
               </div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20, fontFamily: 'Inter, sans-serif' }}>
@@ -454,7 +454,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               <button onClick={() => { vibe(8); setMode('create'); }} style={{
                 padding: '11px 24px', borderRadius: 12,
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-                border: 'none', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                border: 'none', color: 'var(--on-accent)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
               }}>Создать конспект</button>
             </div>
@@ -483,7 +483,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           }}><ChevronLeft size={18} /></button>
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <div style={{
-              fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
+              fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>{viewing.title}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{book?.title}</div>
@@ -492,7 +492,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             width: 38, height: 38, borderRadius: 12,
             background: 'var(--bg-raised)', border: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: copied === viewing.shareCode ? '#6a9e8a' : 'var(--text-secondary)', cursor: 'pointer',
+            color: copied === viewing.shareCode ? 'var(--text-secondary)' : 'var(--text-secondary)', cursor: 'pointer',
           }}>
             {copied === viewing.shareCode ? <Check size={16} /> : <Share2 size={16} />}
           </button>
@@ -510,7 +510,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             </div>
             <button onClick={() => handleCopy(viewing.shareCode)} style={{
               padding: '6px 12px', borderRadius: 8, background: 'var(--accent)', border: 'none',
-              color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+              color: 'var(--on-accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
             }}>{copied === viewing.shareCode ? '✓' : 'Копировать'}</button>
           </div>
 
@@ -523,12 +523,12 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
                 <div style={{
                   padding: '10px 12px', borderRadius: 10, marginBottom: 10,
                   background: 'rgba(212,145,74,0.08)', borderLeft: '3px solid var(--accent)',
-                  fontSize: 14, fontFamily: 'Lora, serif', color: 'var(--text-secondary)',
+                  fontSize: 14, fontFamily: 'var(--font-serif)', color: 'var(--text-secondary)',
                   lineHeight: 1.6, fontStyle: 'italic',
                 }}>"{note.quote}"</div>
               )}
               {note.title && (
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif', marginBottom: 8 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', marginBottom: 8 }}>
                   {note.title}
                 </div>
               )}
@@ -575,7 +575,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: 'var(--text-secondary)', cursor: 'pointer',
         }}><ChevronLeft size={18} /></button>
-        <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
           Новый конспект
         </div>
       </div>
@@ -637,7 +637,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
               style={{
                 width: '100%', padding: '16px', background: 'transparent',
                 border: 'none', outline: 'none', color: 'var(--text-primary)',
-                fontSize: 16, fontFamily: 'Lora, serif', boxSizing: 'border-box',
+                fontSize: 16, fontFamily: 'var(--font-serif)', boxSizing: 'border-box',
               }} />
           </div>
         </div>
@@ -666,7 +666,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {isPublic ? <Globe size={18} color="#6a9e8a" /> : <Lock size={18} color="var(--text-muted)" />}
+              {isPublic ? <Globe size={18} color="var(--text-secondary)" /> : <Lock size={18} color="var(--text-muted)" />}
               <div>
                 <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
                   {isPublic ? 'Публичный' : 'Приватный'}
@@ -678,7 +678,7 @@ export default function PublicShareView({ notes, books, onBack, onExportBookPDF 
             </div>
             <button onClick={() => { vibe(6); setIsPublic(!isPublic); }} style={{
               width: 50, height: 28, borderRadius: 14,
-              background: isPublic ? '#6a9e8a' : 'var(--bg-active)',
+              background: isPublic ? 'var(--text-secondary)' : 'var(--bg-active)',
               border: '1px solid var(--border)', cursor: 'pointer', position: 'relative',
               transition: 'background 0.2s ease', flexShrink: 0,
             }}>

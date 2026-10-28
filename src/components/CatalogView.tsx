@@ -137,7 +137,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
       genre: book.genre || '',
       totalPages: book.pages,
       coverEmoji: emoji,
-      color: '#b07d4a',
+      color: 'var(--accent)',
       status: 'want',
       description: book.description || '',
       tags: [],
@@ -180,7 +180,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
             <X size={18} />
           </button>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
               📚 Каталог книг
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
@@ -250,7 +250,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
               borderRadius: 16, padding: 20, textAlign: 'center'
             }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>📖</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'Lora, serif' }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'var(--font-serif)' }}>
                 Найдите свою следующую книгу
               </div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
@@ -301,7 +301,7 @@ export default function CatalogView({ onClose, onAddToLibrary, existingBooks }: 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
-                  fontFamily: 'Lora, serif', marginBottom: 4,
+                  fontFamily: 'var(--font-serif)', marginBottom: 4,
                   display: '-webkit-box', WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical', overflow: 'hidden'
                 }}>

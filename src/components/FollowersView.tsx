@@ -87,7 +87,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
   const avatarEl = (p: Profile) => (
     <div style={{
       width: 48, height: 48, borderRadius: '50%',
-      background: 'linear-gradient(135deg,#d4914a,#8a5220)',
+      background: 'linear-gradient(135deg,var(--accent),var(--accent))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 20, flexShrink: 0, overflow: 'hidden',
       border: '2px solid var(--border)',
@@ -180,7 +180,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', color: 'var(--text-secondary)',
         }}><ArrowLeft size={18} /></button>
-        <h2 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora,serif' }}>
+        <h2 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
           Подписки
         </h2>
       </div>
@@ -215,7 +215,7 @@ export default function FollowersView({ userId, initialTab = 'followers', onBack
         {!loading && list.length === 0 && (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>👥</div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'Lora,serif', marginBottom: 8 }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'var(--font-serif)', marginBottom: 8 }}>
               {tab === 'followers' ? 'Нет читателей' : 'Вы никого не читаете'}
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif' }}>

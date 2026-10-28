@@ -85,7 +85,7 @@ export default function TemplatesModal({ templates, onSelect, onClose }: Props) 
           <div>
             <div style={{
               fontSize: 16, fontWeight: 700,
-              color: 'var(--text-primary)', fontFamily: 'Lora, serif',
+              color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
             }}>Шаблоны</div>
             <div style={{
               fontSize: 11, color: 'var(--text-muted)',

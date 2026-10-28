@@ -29,16 +29,16 @@ interface Level {
 }
 
 const LEVELS: Level[] = [
-  { level: 1,  title: 'Новичок',       emoji: '🌱', minXP: 0,    maxXP: 50,   color: '#72b472' },
-  { level: 2,  title: 'Читатель',      emoji: '📖', minXP: 50,   maxXP: 150,  color: '#7ab4a4' },
+  { level: 1,  title: 'Новичок',       emoji: '🌱', minXP: 0,    maxXP: 50,   color: 'var(--green)' },
+  { level: 2,  title: 'Читатель',      emoji: '📖', minXP: 50,   maxXP: 150,  color: 'var(--text-secondary)' },
   { level: 3,  title: 'Исследователь', emoji: '🔍', minXP: 150,  maxXP: 300,  color: '#7a8ab4' },
   { level: 4,  title: 'Аналитик',      emoji: '🧪', minXP: 300,  maxXP: 500,  color: '#a47ab4' },
   { level: 5,  title: 'Мыслитель',     emoji: '💭', minXP: 500,  maxXP: 800,  color: '#b47a7a' },
-  { level: 6,  title: 'Мудрец',        emoji: '🦉', minXP: 800,  maxXP: 1200, color: '#d4a84e' },
-  { level: 7,  title: 'Философ',       emoji: '⚗️', minXP: 1200, maxXP: 1800, color: '#d4914a' },
+  { level: 6,  title: 'Мудрец',        emoji: '🦉', minXP: 800,  maxXP: 1200, color: 'var(--accent)' },
+  { level: 7,  title: 'Философ',       emoji: '⚗️', minXP: 1200, maxXP: 1800, color: 'var(--accent)' },
   { level: 8,  title: 'Психолог',      emoji: '🧠', minXP: 1800, maxXP: 2500, color: '#c8806a' },
   { level: 9,  title: 'Наставник',     emoji: '🎓', minXP: 2500, maxXP: 3500, color: '#b46a7a' },
-  { level: 10, title: 'Архивариус',    emoji: '📚', minXP: 3500, maxXP: 9999, color: '#d4914a' },
+  { level: 10, title: 'Архивариус',    emoji: '📚', minXP: 3500, maxXP: 9999, color: 'var(--accent)' },
 ];
 
 function getLevel(xp: number): Level {
@@ -107,46 +107,46 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
   const badges: Badge[] = useMemo(() => [
     {
       id: 'first_note',
-      emoji: '✍️', title: 'Первая запись', color: '#72b472',
+      emoji: '✍️', title: 'Первая запись', color: 'var(--green)',
       desc: 'Создай свою первую заметку',
       earned: stats.totalNotes >= 1,
     },
     {
       id: 'ten_notes',
-      emoji: '📝', title: 'Записной', color: '#7ab4a4',
+      emoji: '📝', title: 'Записной', color: 'var(--text-secondary)',
       desc: '10 записей в дневнике',
       earned: stats.totalNotes >= 10,
       progress: Math.min(stats.totalNotes, 10), total: 10,
     },
     {
       id: 'fifty_notes',
-      emoji: '🗂️', title: 'Архивариус', color: '#d4a84e',
+      emoji: '🗂️', title: 'Архивариус', color: 'var(--accent)',
       desc: '50 записей — серьёзный архив',
       earned: stats.totalNotes >= 50,
       progress: Math.min(stats.totalNotes, 50), total: 50,
     },
     {
       id: 'first_book',
-      emoji: '📚', title: 'Библиофил', color: '#d4914a',
+      emoji: '📚', title: 'Библиофил', color: 'var(--accent)',
       desc: 'Добавь первую книгу в библиотеку',
       earned: stats.totalBooks >= 1,
     },
     {
       id: 'finished_book',
-      emoji: '🏆', title: 'Дочитал!', color: '#d4a84e',
+      emoji: '🏆', title: 'Дочитал!', color: 'var(--accent)',
       desc: 'Отметь книгу как прочитанную',
       earned: stats.finishedBooks >= 1,
     },
     {
       id: 'five_books',
-      emoji: '📖', title: 'Читатель', color: '#c8a882',
+      emoji: '📖', title: 'Читатель', color: 'var(--text-secondary)',
       desc: '5 прочитанных книг',
       earned: stats.finishedBooks >= 5,
       progress: Math.min(stats.finishedBooks, 5), total: 5,
     },
     {
       id: 'streak_3',
-      emoji: '🔥', title: 'Три дня подряд', color: '#c86060',
+      emoji: '🔥', title: 'Три дня подряд', color: 'var(--red)',
       desc: '3 дня без перерыва',
       earned: stats.streak >= 3,
       progress: Math.min(stats.streak, 3), total: 3,
@@ -160,7 +160,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
     },
     {
       id: 'streak_30',
-      emoji: '🌟', title: 'Месяц', color: '#d4a84e',
+      emoji: '🌟', title: 'Месяц', color: 'var(--accent)',
       desc: '30 дней без перерыва',
       earned: stats.streak >= 30,
       progress: Math.min(stats.streak, 30), total: 30,
@@ -188,14 +188,14 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
     },
     {
       id: 'journal',
-      emoji: '📔', title: 'Журналист', color: '#7ab4a4',
+      emoji: '📔', title: 'Журналист', color: 'var(--text-secondary)',
       desc: 'Сделай 7 записей в журнале дня',
       earned: stats.totalDailyNotes >= 7,
       progress: Math.min(stats.totalDailyNotes, 7), total: 7,
     },
     {
       id: 'tags',
-      emoji: '🏷️', title: 'Организатор', color: '#72b472',
+      emoji: '🏷️', title: 'Организатор', color: 'var(--green)',
       desc: 'Используй 5 разных тегов',
       earned: stats.uniqueTags >= 5,
       progress: Math.min(stats.uniqueTags, 5), total: 5,
@@ -208,7 +208,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
     },
     {
       id: 'favorites',
-      emoji: '⭐', title: 'Любимчики', color: '#d4a84e',
+      emoji: '⭐', title: 'Любимчики', color: 'var(--accent)',
       desc: 'Добавь 5 записей в избранное',
       earned: stats.totalFavorites >= 5,
       progress: Math.min(stats.totalFavorites, 5), total: 5,
@@ -244,7 +244,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
         </button>
         <div>
           <h2 style={{
-            fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700,
+            fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700,
             color: 'var(--text-primary)', margin: 0,
           }}>Достижения</h2>
           <p style={{
@@ -260,8 +260,8 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
 
         {/* Level card */}
         <div style={{
-          background: `linear-gradient(135deg, ${lv.color}18, ${lv.color}08)`,
-          border: `1.5px solid ${lv.color}40`,
+          background: `linear-gradient(135deg, color-mix(in srgb, ${lv.color} 9%, transparent), color-mix(in srgb, ${lv.color} 3%, transparent))`,
+          border: `1.5px solid color-mix(in srgb, ${lv.color} 25%, transparent)`,
           borderRadius: 20,
           padding: '20px',
           marginBottom: 20,
@@ -270,8 +270,8 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
               width: 64, height: 64, borderRadius: 20,
-              background: `${lv.color}22`,
-              border: `2px solid ${lv.color}60`,
+              background: `color-mix(in srgb, ${lv.color} 13%, transparent)`,
+              border: `2px solid color-mix(in srgb, ${lv.color} 38%, transparent)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 32,
             }}>{lv.emoji}</div>
@@ -282,7 +282,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
                 textTransform: 'uppercase', letterSpacing: '0.08em',
               }}>Уровень {lv.level}</div>
               <div style={{
-                fontFamily: 'Lora, serif', fontSize: 22, fontWeight: 700,
+                fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
                 color: 'var(--text-primary)', lineHeight: 1.2,
               }}>{lv.title}</div>
               <div style={{
@@ -309,7 +309,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
             }}>
               <div style={{
                 height: '100%', width: `${stats.progress * 100}%`,
-                background: `linear-gradient(90deg, ${lv.color}, ${lv.color}aa)`,
+                background: `linear-gradient(90deg, ${lv.color}, color-mix(in srgb, ${lv.color} 67%, transparent))`,
                 borderRadius: 99,
                 transition: 'width 1s cubic-bezier(0.22,1,0.36,1)',
               }} />
@@ -336,7 +336,7 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
             }}>
               <div style={{ fontSize: 24 }}>{s.emoji}</div>
               <div style={{
-                fontFamily: 'Lora, serif', fontSize: 22, fontWeight: 700,
+                fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
                 color: 'var(--text-primary)', lineHeight: 1.2,
               }}>{s.val}</div>
               <div style={{
@@ -371,9 +371,9 @@ export default function GamificationView({ notes, books, dailyNotes, onBack }: P
 function BadgeCard({ badge, index }: { badge: Badge; index: number }) {
   return (
     <div style={{
-      background: badge.earned ? `${badge.color}12` : 'var(--bg-card)',
+      background: badge.earned ? `color-mix(in srgb, ${badge.color} 7%, transparent)` : 'var(--bg-card)',
       border: badge.earned
-        ? `1.5px solid ${badge.color}40`
+        ? `1.5px solid color-mix(in srgb, ${badge.color} 25%, transparent)`
         : 'var(--card-border)',
       borderRadius: 16,
       padding: '14px 12px',

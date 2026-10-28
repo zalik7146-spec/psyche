@@ -336,7 +336,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
           </svg>
         </button>
         <div>
-          <h2 style={{ fontFamily: 'Lora, serif', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             Граф связей
           </h2>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
@@ -444,7 +444,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
               {selected.type === 'book' ? '📚' : selected.type === 'tag' ? '🏷️' : '📝'}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'Lora, serif', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
                 {selected.type === 'book'
                   ? (selected.data as Book).title
                   : (selected.data as Note).title || 'Без названия'}

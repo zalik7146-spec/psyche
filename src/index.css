@@ -6,99 +6,117 @@
 }
 
 /* ══════════════════════════════════════════════
-   DARK THEME (default)
+   ОБЩЕЕ: шрифты и движение
 ══════════════════════════════════════════════ */
-:root, [data-theme="dark"] {
-  --bg-base:        #15120e;
-  --bg-card:        #1e1b15;
-  --bg-raised:      #262219;
-  --bg-hover:       #2e291f;
-  --bg-active:      #363025;
-  --border:         #38332c;
-  --border-mid:     #453e34;
-  --text-primary:   #f0e2c8;
-  --text-secondary: #c8a882;
-  --text-muted:     #8c7660;
-  --accent:         #d4914a;
-  --accent-soft:    #b87840;
-  --accent-dim:     #8a5a28;
-  --accent-glow:    rgba(212,145,74,0.18);
-  --gold:           #d4a84e;
-  --gold-dim:       #8a6a30;
-  --red:            #c86060;
-  --green:          #72b472;
-  --toolbar-bg:     #1a160f;
-  --input-bg:       #221e16;
-  --nav-bg:         #110e0a;
-  --desktop-bg:     #0a0806;
-  --overlay:        rgba(0,0,0,0.78);
-  --shadow:         0 4px 24px rgba(0,0,0,0.50);
-  --shadow-lg:      0 8px 40px rgba(0,0,0,0.65);
-  --card-border:    1px solid #38332c;
+:root {
+  --font-ui:          'Inter', system-ui, sans-serif;
+  --font-serif:       'Newsreader', Georgia, serif;
+  --font-typed:       'Courier Prime', 'Courier New', monospace;
+  --ease-calm:        cubic-bezier(0.2, 0, 0, 1);
+  --dur-screen:       300ms;
+  --dur-quick:        200ms;
 }
 
 /* ══════════════════════════════════════════════
-   LIGHT THEME
+   БУМАГА (по умолчанию): чернила на светлой бумаге
 ══════════════════════════════════════════════ */
-[data-theme="light"] {
-  --bg-base:        #f5ece0;
-  --bg-card:        #ede3d3;
-  --bg-raised:      #e6d8c4;
-  --bg-hover:       #deccb0;
-  --bg-active:      #d4bf9c;
-  --border:         #cbb294;
-  --border-mid:     #bba07e;
-  --text-primary:   #1c0f02;
-  --text-secondary: #5c3e20;
-  --text-muted:     #8c6e48;
-  --accent:         #9e5018;
-  --accent-soft:    #7e3e10;
-  --accent-dim:     #5e2e08;
-  --accent-glow:    rgba(158,80,24,0.15);
-  --gold:           #8c6022;
-  --gold-dim:       #aa7c3a;
-  --red:            #c23232;
-  --green:          #3c7c3c;
-  --toolbar-bg:     #ece0cc;
-  --input-bg:       #f0e6d4;
-  --nav-bg:         #e8dcca;
-  --desktop-bg:     #d8ccb8;
-  --overlay:        rgba(20,10,0,0.55);
-  --shadow:         0 4px 20px rgba(0,0,0,0.12);
-  --shadow-lg:      0 8px 32px rgba(0,0,0,0.18);
-  --card-border:    1px solid #cbb294;
+:root, [data-theme="light"] {
+  --bg-base:          #F1EDE5;
+  --bg-card:          #F9F6EF;
+  --bg-raised:        #F4F0E7;
+  --bg-hover:         #EAE5DA;
+  --bg-active:        #E2DCCF;
+  --border:           #D6CFC1;
+  --border-mid:       #C4BBAA;
+  --text-primary:     #1B1A17;
+  --text-secondary:   #3E3B35;
+  --text-muted:       #6B655B;
+  --accent:           #1B1A17;
+  --accent-soft:      #3E3B35;
+  --accent-dim:       #6B655B;
+  --accent-glow:      rgba(27,26,23,0.08);
+  --on-accent:        #F9F6EF;
+  --ink-bleed:        rgba(27,26,23,0.35);
+  --gold:             #5E5546;
+  --gold-dim:         #8A8273;
+  --red:              #9E3B2F;
+  --green:            #3F6B45;
+  --toolbar-bg:       #F9F6EF;
+  --input-bg:         #FBF9F4;
+  --nav-bg:           #F1EDE5;
+  --desktop-bg:       #DDD7CB;
+  --overlay:          rgba(27,26,23,0.42);
+  --shadow:           0 1px 0 rgba(27,26,23,0.06);
+  --shadow-lg:        0 8px 28px rgba(27,26,23,0.10);
+  --card-border:      1px solid #D6CFC1;
 }
 
 /* ══════════════════════════════════════════════
-   SEPIA THEME  — мягкая, не режет глаз
+   НОЧНАЯ БУМАГА
+══════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg-base:          #12110F;
+  --bg-card:          #1D1B18;
+  --bg-raised:        #23211D;
+  --bg-hover:         #2A2723;
+  --bg-active:        #33302A;
+  --border:           #35312B;
+  --border-mid:       #47423A;
+  --text-primary:     #E9E3D6;
+  --text-secondary:   #C9C2B4;
+  --text-muted:       #A39C8F;
+  --accent:           #E9E3D6;
+  --accent-soft:      #C9C2B4;
+  --accent-dim:       #A39C8F;
+  --accent-glow:      rgba(233,227,214,0.08);
+  --on-accent:        #12110F;
+  --ink-bleed:        rgba(233,227,214,0.22);
+  --gold:             #C9C2B4;
+  --gold-dim:         #8A8376;
+  --red:              #D07A6A;
+  --green:            #8FB592;
+  --toolbar-bg:       #1D1B18;
+  --input-bg:         #1A1815;
+  --nav-bg:           #12110F;
+  --desktop-bg:       #0A0908;
+  --overlay:          rgba(0,0,0,0.6);
+  --shadow:           0 1px 0 rgba(0,0,0,0.3);
+  --shadow-lg:        0 8px 28px rgba(0,0,0,0.45);
+  --card-border:      1px solid #35312B;
+}
+
+/* ══════════════════════════════════════════════
+   СТАРАЯ БУМАГА
 ══════════════════════════════════════════════ */
 [data-theme="sepia"] {
-  --bg-base:        #221c12;
-  --bg-card:        #2a2416;
-  --bg-raised:      #322c1a;
-  --bg-hover:       #3a341e;
-  --bg-active:      #423c24;
-  --border:         #3e3620;
-  --border-mid:     #4e452a;
-  --text-primary:   #ead8b0;
-  --text-secondary: #c4a870;
-  --text-muted:     #907860;
-  --accent:         #cc8c38;
-  --accent-soft:    #aa7228;
-  --accent-dim:     #885818;
-  --accent-glow:    rgba(204,140,56,0.20);
-  --gold:           #d4a448;
-  --gold-dim:       #8c6c30;
-  --red:            #c05848;
-  --green:          #72a860;
-  --toolbar-bg:     #1e180e;
-  --input-bg:       #261e10;
-  --nav-bg:         #18120a;
-  --desktop-bg:     #100e06;
-  --overlay:        rgba(0,0,0,0.72);
-  --shadow:         0 4px 24px rgba(0,0,0,0.48);
-  --shadow-lg:      0 8px 40px rgba(0,0,0,0.62);
-  --card-border:    1px solid #3e3620;
+  --bg-base:          #E8DFCC;
+  --bg-card:          #F2EADA;
+  --bg-raised:        #ECE3D1;
+  --bg-hover:         #E1D6C0;
+  --bg-active:        #D8CBB2;
+  --border:           #CDBFA3;
+  --border-mid:       #B9A986;
+  --text-primary:     #2A2218;
+  --text-secondary:   #4A3F30;
+  --text-muted:       #6A5E4B;
+  --accent:           #2A2218;
+  --accent-soft:      #4A3F30;
+  --accent-dim:       #6A5E4B;
+  --accent-glow:      rgba(42,34,24,0.08);
+  --on-accent:        #F2EADA;
+  --ink-bleed:        rgba(42,34,24,0.38);
+  --gold:             #6A5532;
+  --gold-dim:         #9A8762;
+  --red:              #9A3A28;
+  --green:            #4A6A3C;
+  --toolbar-bg:       #F2EADA;
+  --input-bg:         #F5EEE0;
+  --nav-bg:           #E8DFCC;
+  --desktop-bg:       #D5CAB3;
+  --overlay:          rgba(42,34,24,0.45);
+  --shadow:           0 1px 0 rgba(42,34,24,0.07);
+  --shadow-lg:        0 8px 28px rgba(42,34,24,0.12);
+  --card-border:      1px solid #CDBFA3;
 }
 
 /* ══════════════════════════════════════════════
@@ -114,7 +132,7 @@ body {
   height: 100%;
   height: 100dvh;
   height: -webkit-fill-available;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-ui);
   background-color: var(--bg-base);
   color: var(--text-primary);
   margin: 0;
@@ -175,7 +193,8 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 99px; }
 
 /* Font */
-.font-serif { font-family: 'Lora', Georgia, serif !important; }
+.font-serif { font-family: var(--font-serif) !important; }
+.font-typed { font-family: var(--font-typed) !important; text-shadow: 0 0 0.7px var(--ink-bleed); }
 
 /* ══════════════════════════════════════════════
    ANIMATIONS
@@ -321,11 +340,37 @@ body {
 }
 
 /* View transition */
-.view-enter {
-  animation: slideLeft 0.26s cubic-bezier(0.22,1,0.36,1) both;
+/* Переходы экранов: спокойные, без пружин.
+   Смена раздела — растворение с подъёмом, вглубь — справа, новый лист — снизу. */
+@keyframes calmFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
-.view-enter-back {
-  animation: slideRight 0.26s cubic-bezier(0.22,1,0.36,1) both;
+@keyframes calmPush {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes calmFeed {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes stampPress {
+  from { transform: scale(1.35) rotate(-8deg); }
+  to   { transform: none; }
+}
+.view-enter      { animation: calmFade var(--dur-screen) var(--ease-calm) both; }
+.view-enter-back { animation: calmFade var(--dur-screen) var(--ease-calm) both; }
+.view-push       { animation: calmPush var(--dur-screen) var(--ease-calm) both; }
+.view-feed       { animation: calmFeed var(--dur-screen) var(--ease-calm) both; }
+.stamp-press     { animation: stampPress 260ms var(--ease-calm) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 120ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+  }
+  .view-enter, .view-enter-back, .view-push, .view-feed { animation-name: fadeIn !important; }
 }
 
 /* ══════════════════════════════════════════════
@@ -402,7 +447,7 @@ body {
   transition: all 0.1s;
   font-size: 11px;
   font-weight: 700;
-  font-family: 'Lora', serif;
+  font-family: var(--font-serif);
   padding: 0 4px;
 }
 .tb-btn:active { transform: scale(0.82); }
@@ -431,7 +476,7 @@ body {
    TIPTAP EDITOR
 ══════════════════════════════════════════════ */
 .tiptap-editor {
-  font-family: 'Lora', Georgia, serif;
+  font-family: var(--font-serif);
   font-size: 1rem;
   line-height: 1.9;
   outline: none;
@@ -457,19 +502,19 @@ body {
   margin: 1.1em 0 0.45em;
   color: var(--text-primary);
   letter-spacing: -0.02em;
-  font-family: 'Lora', serif;
+  font-family: var(--font-serif);
 }
 .tiptap-editor h2 {
   font-size: 1.22rem; font-weight: 600;
   margin: 0.9em 0 0.4em;
   color: var(--text-primary);
-  font-family: 'Lora', serif;
+  font-family: var(--font-serif);
 }
 .tiptap-editor h3 {
   font-size: 1.06rem; font-weight: 600;
   margin: 0.8em 0 0.35em;
   color: var(--text-secondary);
-  font-family: 'Lora', serif;
+  font-family: var(--font-serif);
 }
 
 .tiptap-editor blockquote {
@@ -725,7 +770,7 @@ mark.search-hl {
    NOTE CARD — читаемость
 ══════════════════════════════════════════════ */
 .note-title {
-  font-family: 'Lora', serif;
+  font-family: var(--font-serif);
   font-size: 0.98rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -751,7 +796,7 @@ mark.search-hl {
    BOOK CARD
 ══════════════════════════════════════════════ */
 .book-title {
-  font-family: 'Lora', serif;
+  font-family: var(--font-serif);
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);

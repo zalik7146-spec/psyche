@@ -4,8 +4,8 @@
   "description": "Пространство для штудирования книг, мыслей и инсайтов психолога",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1e1810",
-  "theme_color": "#1e1810",
+  "background_color": "#F1EDE5",
+  "theme_color": "#F1EDE5",
   "orientation": "portrait-primary",
   "icons": [
     {

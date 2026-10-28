@@ -38,9 +38,9 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
       {/* Header */}
       <div style={{ padding: '16px 16px 8px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h2 style={{ fontFamily: 'Lora,serif', fontSize: 22, color: 'var(--text-primary)', margin: 0 }}>Библиотека</h2>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)', margin: 0 }}>Библиотека</h2>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => { vibe(); onOpenCatalog() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>📚 Каталог</button>
+            <button onClick={() => { vibe(); onOpenCatalog() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>📚 Каталог</button>
             <button onClick={() => { vibe(); setEditBook(undefined); setShowModal(true) }} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}>+ Книга</button>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
       {showGoal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowGoal(false)}>
           <div style={{ background: 'var(--bg-card)', borderRadius: '20px 20px 0 0', padding: 24, width: '100%', maxWidth: 430 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontFamily: 'Lora,serif', fontSize: 20, color: 'var(--text-primary)', marginBottom: 16 }}>🎯 Цель чтения</h3>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-primary)', marginBottom: 16 }}>🎯 Цель чтения</h3>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>Сколько книг хочешь прочитать в этом году?</p>
             <input
               type="number"
@@ -112,7 +112,7 @@ export default function Library({ books, notes, onSave, onDelete, onOpenCatalog,
               onChange={e => setGoalInput(e.target.value)}
               style={{ width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', color: 'var(--text-primary)', fontSize: 18, textAlign: 'center', boxSizing: 'border-box', outline: 'none', marginBottom: 16 }}
             />
-            <button onClick={() => { const v = Math.max(1, parseInt(goalInput) || 12); setGoal(v); localStorage.setItem('reading_goal', v.toString()); setShowGoal(false); vibe(12) }} style={{ width: '100%', background: 'var(--accent)', border: 'none', borderRadius: 12, padding: 16, color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={() => { const v = Math.max(1, parseInt(goalInput) || 12); setGoal(v); localStorage.setItem('reading_goal', v.toString()); setShowGoal(false); vibe(12) }} style={{ width: '100%', background: 'var(--accent)', border: 'none', borderRadius: 12, padding: 16, color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
               Сохранить
             </button>
           </div>
@@ -144,17 +144,17 @@ function BookCard({ book, notes, index, onEdit, onRead, vibe }: any) {
       onPointerLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
     >
       {/* Cover */}
-      <div style={{ height: 120, background: book.coverUrl ? `url(${book.coverUrl}) center/cover` : `linear-gradient(135deg, ${book.color}33, ${book.color}66)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <div style={{ height: 120, background: book.coverUrl ? `url(${book.coverUrl}) center/cover` : `linear-gradient(135deg, color-mix(in srgb, ${book.color} 20%, transparent), color-mix(in srgb, ${book.color} 40%, transparent))`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         {!book.coverUrl && <span style={{ fontSize: 40 }}>{book.coverEmoji || '📚'}</span>}
-        <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: '3px 8px', fontSize: 11, color: '#fff' }}>
+        <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: '3px 8px', fontSize: 11, color: 'var(--on-accent)' }}>
           {noteCount} заметок
         </div>
-        <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '5px 10px', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ position: 'absolute', bottom: 8, right: 8, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '5px 10px', color: 'var(--on-accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
           📖 Читать
         </button>
       </div>
       <div style={{ padding: '10px 12px 12px' }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3, fontFamily: 'Lora,serif', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3, fontFamily: 'var(--font-serif)', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</div>
         {progress > 0 && (
           <div style={{ marginBottom: 6 }}>
@@ -180,18 +180,18 @@ function BookListItem({ book, notes, index, onEdit, onRead, vibe }: any) {
       onPointerUp={e => (e.currentTarget.style.transform = 'scale(1)')}
       onPointerLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
     >
-      <div style={{ width: 56, height: 72, borderRadius: 8, background: book.coverUrl ? `url(${book.coverUrl}) center/cover` : `linear-gradient(135deg, ${book.color}33, ${book.color}66)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ width: 56, height: 72, borderRadius: 8, background: book.coverUrl ? `url(${book.coverUrl}) center/cover` : `linear-gradient(135deg, color-mix(in srgb, ${book.color} 20%, transparent), color-mix(in srgb, ${book.color} 40%, transparent))`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {!book.coverUrl && <span style={{ fontSize: 24 }}>{book.coverEmoji || '📚'}</span>}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora,serif', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>{book.author}</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{noteCount} заметок</span>
           {book.rating && <span style={{ fontSize: 11, color: '#f59e0b' }}>{'★'.repeat(book.rating)}</span>}
         </div>
       </div>
-      <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+      <button onClick={e => { e.stopPropagation(); vibe(12); onRead() }} style={{ background: 'var(--accent)', border: 'none', borderRadius: 10, padding: '8px 12px', color: 'var(--on-accent)', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
         📖
       </button>
     </div>

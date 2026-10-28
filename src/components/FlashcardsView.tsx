@@ -116,7 +116,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
             <Brain size={20} color="var(--accent)" />
             <span style={{
               fontSize: '18px', fontWeight: 700,
-              fontFamily: 'Lora, serif', color: 'var(--text-primary)',
+              fontFamily: 'var(--font-serif)', color: 'var(--text-primary)',
             }}>Карточки</span>
           </div>
         )}
@@ -128,7 +128,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
               width: 36, height: 36, borderRadius: '10px',
               background: 'var(--accent)', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: '#fff',
+              cursor: 'pointer', color: 'var(--on-accent)',
             }}
           >
             <Plus size={18} />
@@ -174,7 +174,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                   <div style={{ color: s.color, marginBottom: '6px', display: 'flex', justifyContent: 'center' }}>
                     {s.icon}
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora,serif' }}>
+                  <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
                     {s.value}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: 'Inter,sans-serif' }}>
@@ -192,7 +192,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                   width: '100%', padding: '16px',
                   background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
                   border: 'none', borderRadius: '16px', cursor: 'pointer',
-                  color: '#fff', fontSize: '16px', fontWeight: 600,
+                  color: 'var(--on-accent)', fontSize: '16px', fontWeight: 600,
                   fontFamily: 'Inter,sans-serif',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
                   marginBottom: '20px',
@@ -427,7 +427,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                 <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
                 <p style={{
                   fontSize: '20px', fontWeight: 700,
-                  color: 'var(--text-primary)', fontFamily: 'Lora,serif',
+                  color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
                   marginBottom: '10px',
                 }}>
                   Сессия завершена!
@@ -443,7 +443,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                   style={{
                     padding: '14px 32px',
                     background: 'var(--accent)', border: 'none',
-                    borderRadius: '14px', color: '#fff',
+                    borderRadius: '14px', color: 'var(--on-accent)',
                     fontSize: '15px', fontWeight: 600,
                     fontFamily: 'Inter,sans-serif', cursor: 'pointer',
                   }}
@@ -508,7 +508,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                       </div>
                       <p style={{
                         fontSize: '18px', fontWeight: 600,
-                        color: 'var(--text-primary)', fontFamily: 'Lora,serif',
+                        color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
                         lineHeight: '1.5',
                       }}>
                         {current?.front}
@@ -555,7 +555,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                         style={{
                           padding: '14px 8px',
                           background: 'var(--bg-card)',
-                          border: `1px solid ${r.color}40`,
+                          border: `1px solid color-mix(in srgb, ${r.color} 25%, transparent)`,
                           borderRadius: '14px', cursor: 'pointer',
                           display: 'flex', flexDirection: 'column',
                           alignItems: 'center', gap: '6px',
@@ -578,7 +578,7 @@ export default function FlashcardsView({ flashcards, notes, onSave, onDelete, on
                       width: '100%', padding: '16px',
                       background: 'var(--accent)', border: 'none',
                       borderRadius: '14px', cursor: 'pointer',
-                      color: '#fff', fontSize: '16px', fontWeight: 600,
+                      color: 'var(--on-accent)', fontSize: '16px', fontWeight: 600,
                       fontFamily: 'Inter,sans-serif',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                     }}

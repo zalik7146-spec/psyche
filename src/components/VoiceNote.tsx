@@ -151,7 +151,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
         {/* Handle */}
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--border)', margin: '0 auto 24px' }} />
 
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif', textAlign: 'center', marginBottom: 8 }}>
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', textAlign: 'center', marginBottom: 8 }}>
           Голосовая заметка
         </h3>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 32 }}>
@@ -228,8 +228,8 @@ export default function VoiceNote({ onSave, onClose }: Props) {
               </button>
               <button onClick={startRecording} style={{
                 flex: 2, padding: '14px', borderRadius: 14,
-                background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
-                border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                background: 'linear-gradient(135deg, var(--red), var(--red))',
+                border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <Mic size={18} /> Начать запись
@@ -240,8 +240,8 @@ export default function VoiceNote({ onSave, onClose }: Props) {
           {mode === 'recording' && (
             <button onClick={stopRecording} style={{
               flex: 1, padding: '14px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
-              border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              background: 'linear-gradient(135deg, var(--red), var(--red))',
+              border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
               <Square size={18} fill="white" /> Остановить
@@ -254,7 +254,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
                 width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                 background: 'var(--bg-card)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#e74c3c', cursor: 'pointer',
+                color: 'var(--red)', cursor: 'pointer',
               }}>
                 <Trash2 size={18} />
               </button>
@@ -269,7 +269,7 @@ export default function VoiceNote({ onSave, onClose }: Props) {
               <button onClick={handleSave} style={{
                 flex: 1, padding: '14px', borderRadius: 14,
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
-                border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
                 <Check size={18} /> Сохранить

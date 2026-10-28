@@ -32,9 +32,9 @@ function Avatar({ profile, size = 36 }: { profile?: SocialProfile | null; size?:
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, #d4a060, #8a5220)',
+      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.4, fontWeight: 700, color: '#fff', flexShrink: 0,
+      fontSize: size * 0.4, fontWeight: 700, color: 'var(--on-accent)', flexShrink: 0,
       overflow: 'hidden', border: '2px solid var(--border)',
     }}>
       {av ? av.startsWith('data:')
@@ -122,7 +122,7 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
         }}>
           <Avatar profile={story.profile} size={36} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-accent)' }}>
               {story.profile?.displayName || story.profile?.username || 'Читатель'}
             </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>
@@ -131,12 +131,12 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
           </div>
           {story.userId === userId && (
             <button onClick={() => { vibe(8); onDelete(story.id); onClose(); }}
-              style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '6px 10px', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+              style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '6px 10px', color: 'var(--on-accent)', cursor: 'pointer', fontSize: 12 }}>
               Удалить
             </button>
           )}
           <button onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4 }}>
+            style={{ background: 'none', border: 'none', color: 'var(--on-accent)', cursor: 'pointer', padding: 4 }}>
             <X size={22} />
           </button>
         </div>
@@ -148,7 +148,7 @@ function StoryViewer({ stories, startIndex, userId, onClose, onDelete }: {
         }}>
           <div style={{ fontSize: 64, marginBottom: 24 }}>{story.emoji}</div>
           <p style={{
-            fontSize: 22, color: '#fff', fontFamily: 'Lora, serif',
+            fontSize: 22, color: 'var(--on-accent)', fontFamily: 'var(--font-serif)',
             textAlign: 'center', lineHeight: 1.5, fontWeight: 500,
           }}>{story.text}</p>
         </div>
@@ -203,7 +203,7 @@ function CreateStorySheet({ onClose, onCreate }: {
           <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2 }} />
         </div>
         <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Новая история</span>
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Новая история</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
         </div>
 
@@ -216,7 +216,7 @@ function CreateStorySheet({ onClose, onCreate }: {
           }}>
             <span style={{ fontSize: 40 }}>{emoji}</span>
             <p style={{
-              fontSize: 16, color: '#fff', fontFamily: 'Lora, serif',
+              fontSize: 16, color: 'var(--on-accent)', fontFamily: 'var(--font-serif)',
               textAlign: 'center', lineHeight: 1.5, margin: 0,
               opacity: text ? 1 : 0.4,
             }}>{text || 'Ваша мысль...'}</p>
@@ -232,7 +232,7 @@ function CreateStorySheet({ onClose, onCreate }: {
             style={{
               width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)',
               borderRadius: 12, padding: '12px 14px', fontSize: 15,
-              color: 'var(--text-primary)', fontFamily: 'Lora, serif',
+              color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
               outline: 'none', resize: 'none', boxSizing: 'border-box',
               lineHeight: 1.6,
             }}
@@ -275,7 +275,7 @@ function CreateStorySheet({ onClose, onCreate }: {
           <button onClick={handleCreate} disabled={!text.trim()}
             style={{
               width: '100%', padding: '14px', borderRadius: 14,
-              background: text.trim() ? 'linear-gradient(135deg, #d4a060, #8a5220)' : 'var(--bg-raised)',
+              background: text.trim() ? 'linear-gradient(135deg, var(--accent), var(--accent))' : 'var(--bg-raised)',
               border: 'none', color: text.trim() ? '#fff' : 'var(--text-muted)',
               fontSize: 15, fontWeight: 600, cursor: text.trim() ? 'pointer' : 'not-allowed',
               fontFamily: 'Inter, sans-serif',
@@ -299,6 +299,21 @@ function formatTime(iso: string): string {
 }
 
 // ── Main StoriesRow ───────────────────────────────────────────────────────
+const storyBtn: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+  background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 0,
+};
+const storyName: React.CSSProperties = { fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+// Свежая мысль обведена двойным чернильным кольцом
+const storyRing = (fresh: boolean): React.CSSProperties => ({
+  width: 52, height: 52, borderRadius: '50%', boxSizing: 'border-box',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  background: 'var(--bg-card)',
+  border: fresh ? '1.5px solid var(--text-primary)' : '1px solid var(--border)',
+  boxShadow: fresh ? '0 0 0 3px var(--bg-base), 0 0 0 4px var(--text-primary)' : 'none',
+  margin: 4,
+});
+
 export default function StoriesRow({ userId, profile }: {
   userId: string;
   profile?: SocialProfile | null;
@@ -343,84 +358,42 @@ export default function StoriesRow({ userId, profile }: {
   return (
     <>
       <div style={{
-        display: 'flex', gap: 12, padding: '0 16px 16px',
+        display: 'flex', gap: 14, padding: '0 16px 14px',
         overflowX: 'auto', scrollbarWidth: 'none',
       }}>
-        {/* Add story button */}
-        <button onClick={() => { vibe(8); setShowCreate(true); }}
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-            background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
-          }}>
-          <div style={{
-            width: 60, height: 60, borderRadius: '50%',
-            background: 'var(--bg-raised)', border: '2px dashed var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative',
-          }}>
-            <Avatar profile={profile} size={56} />
-            <div style={{
-              position: 'absolute', bottom: -2, right: -2,
-              width: 22, height: 22, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #d4a060, #8a5220)',
+        {/* Своя мысль дня */}
+        <button onClick={() => { vibe(8); setShowCreate(true); }} aria-label="Добавить мысль дня" style={storyBtn}>
+          <span style={{ ...storyRing(false), position: 'relative' }}>
+            <Avatar profile={profile} size={46} />
+            <span style={{
+              position: 'absolute', bottom: -3, right: -3, width: 20, height: 20,
+              background: 'var(--accent)', color: 'var(--on-accent)', border: '2px solid var(--bg-base)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '2px solid var(--bg-card)',
             }}>
-              <Plus size={12} color="#fff" strokeWidth={3} />
-            </div>
-          </div>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>Моя история</span>
+              <Plus size={11} strokeWidth={2} />
+            </span>
+          </span>
+          <span style={storyName}>Ваша</span>
         </button>
 
-        {/* My stories */}
         {myStories.length > 0 && (
-          <button onClick={() => { vibe(8); setViewerIndex(0); }}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
-            }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: '50%',
-              background: myStories[0].bg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '2px solid var(--accent)',
-              fontSize: 28,
-            }}>
-              {myStories[0].emoji}
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>Ваши</span>
+          <button onClick={() => { vibe(8); setViewerIndex(0); }} aria-label="Ваши мысли дня" style={storyBtn}>
+            <span style={storyRing(true)}><span style={{ fontSize: 24 }}>{myStories[0].emoji}</span></span>
+            <span style={{ ...storyName, color: 'var(--text-primary)' }}>Ваши</span>
           </button>
         )}
 
-        {/* Other stories */}
-        {otherStories.map((s, i) => (
-          <button key={s.id} onClick={() => { vibe(8); setViewerIndex(myStories.length + i); }}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0,
-            }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: '50%',
-              background: s.bg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '2px solid var(--accent)',
-              fontSize: 28,
-            }}>
-              {s.emoji}
-            </div>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-              {s.profile?.username || 'reader'}
-            </span>
+        {otherStories.map((st, i) => (
+          <button key={st.id} onClick={() => { vibe(8); setViewerIndex(myStories.length + i); }} style={storyBtn}>
+            <span style={storyRing(true)}><span style={{ fontSize: 24 }}>{st.emoji}</span></span>
+            <span style={storyName}>{st.profile?.username || 'reader'}</span>
           </button>
         ))}
 
         {grouped.length === 0 && otherStories.length === 0 && myStories.length === 0 && (
-          <div style={{
-            display: 'flex', alignItems: 'center', padding: '8px 0',
-            color: 'var(--text-muted)', fontSize: 13, fontFamily: 'Inter, sans-serif',
-          }}>
-            Истории появятся здесь
-          </div>
+          <span style={{ alignSelf: 'center', paddingBottom: 18, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 15, color: 'var(--text-muted)' }}>
+            Мысли дня появятся здесь
+          </span>
         )}
       </div>
 

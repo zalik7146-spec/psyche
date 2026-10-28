@@ -21,10 +21,10 @@ interface Props {
 }
 
 const TYPE_CONFIG = {
-  like:         { icon: <Heart size={16} fill="currentColor" />, color: '#e74c3c', label: 'лайкнул(а) вашу запись' },
+  like:         { icon: <Heart size={16} fill="currentColor" />, color: 'var(--red)', label: 'лайкнул(а) вашу запись' },
   comment:      { icon: <MessageCircle size={16} />, color: '#3498db', label: 'прокомментировал(а)' },
   follow:       { icon: <UserPlus size={16} />, color: '#2ecc71', label: 'подписался(лась) на вас' },
-  daily_review: { icon: <BookOpen size={16} />, color: '#d4a060', label: 'Daily Review' },
+  daily_review: { icon: <BookOpen size={16} />, color: 'var(--accent)', label: 'Daily Review' },
 };
 
 function timeAgo(iso: string): string {
@@ -138,7 +138,7 @@ export default function NotificationsView({ user, onBack }: Props) {
           <ArrowLeft size={18} />
         </button>
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif', margin: 0 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', margin: 0 }}>
             Уведомления
           </h2>
           {unreadCount > 0 && (
@@ -171,7 +171,7 @@ export default function NotificationsView({ user, onBack }: Props) {
         {isEmpty && (
           <div style={{ padding: 40, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🔔</div>
-            <p style={{ fontSize: 16, color: 'var(--text-primary)', fontFamily: 'Lora, serif', fontWeight: 600, marginBottom: 8 }}>
+            <p style={{ fontSize: 16, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', fontWeight: 600, marginBottom: 8 }}>
               Пока тихо
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
@@ -203,9 +203,9 @@ export default function NotificationsView({ user, onBack }: Props) {
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%',
-                  background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, #d4a060, #8a5220)',
+                  background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, fontWeight: 700, color: '#fff', overflow: 'hidden',
+                  fontSize: 18, fontWeight: 700, color: 'var(--on-accent)', overflow: 'hidden',
                   border: '2px solid var(--border)',
                 }}>
                   {av
@@ -223,7 +223,7 @@ export default function NotificationsView({ user, onBack }: Props) {
                 }}>
                   <div style={{
                     width: 16, height: 16, borderRadius: '50%',
-                    background: conf.color + '22',
+                    background: `color-mix(in srgb, ${conf.color} 13%, transparent)`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: conf.color,
                   }}>

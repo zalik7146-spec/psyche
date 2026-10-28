@@ -20,9 +20,9 @@ type Mode = 'home' | 'review' | 'create' | 'browse';
 type Rating = 1 | 2 | 3 | 4;
 
 const RATING_CONFIG: Record<Rating, { label: string; color: string; icon: string; desc: string }> = {
-  1: { label: 'Снова',    color: '#e07070', icon: '✕', desc: 'Не помню совсем' },
-  2: { label: 'Сложно',   color: '#d4914a', icon: '~', desc: 'С трудом' },
-  3: { label: 'Хорошо',   color: '#6a9e8a', icon: '✓', desc: 'Вспомнил' },
+  1: { label: 'Снова',    color: 'var(--red)', icon: '✕', desc: 'Не помню совсем' },
+  2: { label: 'Сложно',   color: 'var(--accent)', icon: '~', desc: 'С трудом' },
+  3: { label: 'Хорошо',   color: 'var(--text-secondary)', icon: '✓', desc: 'Вспомнил' },
   4: { label: 'Легко',    color: '#78c8a0', icon: '⚡', desc: 'Моментально' },
 };
 
@@ -169,7 +169,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           <ChevronLeft size={18} />
         </button>
         <div>
-          <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700,
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
             color: 'var(--text-primary)' }}>Повторение</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
             Алгоритм SM-2
@@ -179,7 +179,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           marginLeft: 'auto', width: 38, height: 38, borderRadius: 12,
           background: 'var(--accent)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', cursor: 'pointer',
+          color: 'var(--on-accent)', cursor: 'pointer',
         }}>
           <Plus size={18} />
         </button>
@@ -201,7 +201,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <div style={{ fontSize: 32 }}>{dueCards.length > 0 ? '🧠' : '✅'}</div>
               <div>
-                <div style={{ fontFamily: 'Lora, serif', fontSize: 22, fontWeight: 700,
+                <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 700,
                   color: dueCards.length > 0 ? '#fff' : 'var(--text-primary)' }}>
                   {dueCards.length > 0 ? `${dueCards.length} к повторению` : 'Всё повторено!'}
                 </div>
@@ -215,7 +215,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               <button onClick={() => startSession(dueCards)} style={{
                 width: '100%', padding: '14px', borderRadius: 14,
                 background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
-                color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+                color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif', backdropFilter: 'blur(8px)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}>
@@ -231,7 +231,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           {[
             { label: 'Всего', value: flashcards.length, icon: <BookOpen size={16} />, color: 'var(--accent)' },
             { label: 'Скоро', value: futureCards.length, icon: <Clock size={16} />, color: '#a090c0' },
-            { label: 'Сегодня', value: dueCards.length, icon: <Target size={16} />, color: '#6a9e8a' },
+            { label: 'Сегодня', value: dueCards.length, icon: <Target size={16} />, color: 'var(--text-secondary)' },
           ].map(s => (
             <div key={s.label} style={{ borderRadius: 16, padding: '14px 12px',
               background: 'var(--bg-raised)', border: '1px solid var(--border)',
@@ -285,14 +285,14 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             animation: 'fadeSlideUp 0.4s ease 0.1s both' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🃏</div>
             <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)',
-              fontFamily: 'Lora, serif', marginBottom: 8 }}>Нет карточек</div>
+              fontFamily: 'var(--font-serif)', marginBottom: 8 }}>Нет карточек</div>
             <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
               Создайте первую карточку или сделайте карточку из любой записи — кнопка 🃏 в редакторе
             </div>
             <button onClick={() => { vibe(8); setMode('create'); }} style={{
               padding: '13px 28px', borderRadius: 14,
               background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-              border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
             }}>
               Создать карточку
@@ -346,7 +346,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           }}>
             <ChevronLeft size={18} />
           </button>
-          <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700,
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
             color: 'var(--text-primary)' }}>Сессия завершена</div>
         </div>
 
@@ -358,7 +358,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             {accuracy >= 80 ? '🏆' : accuracy >= 60 ? '⭐' : '💪'}
           </div>
 
-          <div style={{ textAlign: 'center', fontFamily: 'Lora, serif' }}>
+          <div style={{ textAlign: 'center', fontFamily: 'var(--font-serif)' }}>
             <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
               {accuracy >= 80 ? 'Отлично!' : accuracy >= 60 ? 'Хорошо!' : 'Продолжай!'}
             </div>
@@ -370,9 +370,9 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
           {/* Stats grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, width: '100%' }}>
             {[
-              { label: 'Верно', value: sessionStats.correct, color: '#6a9e8a', icon: '✓' },
-              { label: 'Сложно', value: sessionStats.hard, color: '#d4914a', icon: '~' },
-              { label: 'Снова', value: sessionStats.again, color: '#e07070', icon: '✕' },
+              { label: 'Верно', value: sessionStats.correct, color: 'var(--text-secondary)', icon: '✓' },
+              { label: 'Сложно', value: sessionStats.hard, color: 'var(--accent)', icon: '~' },
+              { label: 'Снова', value: sessionStats.again, color: 'var(--red)', icon: '✕' },
             ].map(s => (
               <div key={s.label} style={{ borderRadius: 16, padding: '16px 12px',
                 background: 'var(--bg-raised)', border: '1px solid var(--border)',
@@ -395,10 +395,10 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               <div style={{
                 height: '100%', borderRadius: 99,
                 background: accuracy >= 80
-                  ? 'linear-gradient(90deg, #6a9e8a, #78c8a0)'
+                  ? 'linear-gradient(90deg, var(--text-secondary), #78c8a0)'
                   : accuracy >= 60
                   ? 'linear-gradient(90deg, var(--accent), var(--accent-warm))'
-                  : 'linear-gradient(90deg, #d4914a, #e07070)',
+                  : 'linear-gradient(90deg, var(--accent), var(--red))',
                 width: `${accuracy}%`,
                 transition: 'width 1s ease',
               }} />
@@ -418,7 +418,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               <button onClick={() => startSession(dueCards)} style={{
                 flex: 1, padding: '14px', borderRadius: 14,
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-                border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                border: 'none', color: 'var(--on-accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
               }}>
                 Ещё раз
@@ -443,18 +443,18 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             <ChevronLeft size={18} />
           </button>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700,
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700,
               color: 'var(--text-primary)' }}>Повторение</div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px',
               borderRadius: 99, background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              fontSize: 12, color: '#6a9e8a', fontFamily: 'Inter, sans-serif' }}>
+              fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif' }}>
               <Check size={11} /> {sessionStats.correct}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px',
               borderRadius: 99, background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              fontSize: 12, color: '#e07070', fontFamily: 'Inter, sans-serif' }}>
+              fontSize: 12, color: 'var(--red)', fontFamily: 'Inter, sans-serif' }}>
               <X size={11} /> {sessionStats.again}
             </div>
           </div>
@@ -499,7 +499,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                   textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontWeight: 600 }}>
                   {showAnswer ? 'ВОПРОС' : 'ВОПРОС — нажми чтобы увидеть ответ'}
                 </div>
-                <div style={{ fontSize: 20, fontFamily: 'Lora, serif', color: 'var(--text-primary)',
+                <div style={{ fontSize: 20, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)',
                   lineHeight: 1.5, fontWeight: 600, flex: 1 }}>
                   {current.front}
                 </div>
@@ -527,7 +527,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                     textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontWeight: 600 }}>
                     ОТВЕТ
                   </div>
-                  <div style={{ fontSize: 17, fontFamily: 'Lora, serif', color: 'var(--text-primary)',
+                  <div style={{ fontSize: 17, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)',
                     lineHeight: 1.6 }}>
                     {current.back}
                   </div>
@@ -554,7 +554,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
                 return (
                   <button key={r} onClick={() => handleRate(r)} style={{
                     padding: '12px 8px', borderRadius: 14,
-                    background: 'var(--bg-raised)', border: `1px solid ${cfg.color}33`,
+                    background: 'var(--bg-raised)', border: `1px solid color-mix(in srgb, ${cfg.color} 20%, transparent)`,
                     color: cfg.color, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                     transition: 'all 0.15s ease',
@@ -575,7 +575,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
               marginTop: 16, width: '100%', padding: '16px',
               borderRadius: 16, border: 'none',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-warm))',
-              color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer',
+              color: 'var(--on-accent)', fontSize: 16, fontWeight: 700, cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
@@ -600,13 +600,13 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         }}>
           <ChevronLeft size={18} />
         </button>
-        <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700,
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
           color: 'var(--text-primary)' }}>Все карточки</div>
         <button onClick={() => { vibe(6); setMode('create'); }} style={{
           marginLeft: 'auto', width: 38, height: 38, borderRadius: 12,
           background: 'var(--accent)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', cursor: 'pointer',
+          color: 'var(--on-accent)', cursor: 'pointer',
         }}>
           <Plus size={18} />
         </button>
@@ -661,7 +661,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         }}>
           <ChevronLeft size={18} />
         </button>
-        <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700,
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700,
           color: 'var(--text-primary)' }}>Новая карточка</div>
       </div>
 
@@ -679,7 +679,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
             placeholder="Что нужно запомнить?"
             style={{ width: '100%', minHeight: 100, padding: '14px 16px',
               background: 'transparent', border: 'none', outline: 'none',
-              color: 'var(--text-primary)', fontSize: 16, fontFamily: 'Lora, serif',
+              color: 'var(--text-primary)', fontSize: 16, fontFamily: 'var(--font-serif)',
               lineHeight: 1.6, resize: 'none', boxSizing: 'border-box' }}
           />
         </div>
@@ -687,7 +687,7 @@ export default function AnkiView({ flashcards, notes, onSave, onDelete, onBack }
         <div style={{ borderRadius: 16, background: 'var(--bg-raised)', border: '1px solid var(--border)',
           overflow: 'hidden', animation: 'fadeSlideUp 0.35s ease 0.05s both' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)',
-            fontSize: 11, color: '#6a9e8a', fontFamily: 'Inter, sans-serif',
+            fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif',
             fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Ответ / Определение
           </div>

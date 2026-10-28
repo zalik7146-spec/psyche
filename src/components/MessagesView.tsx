@@ -57,7 +57,7 @@ const Avatar = ({ p, size=44 }: { p: Profile; size?: number }) => (
     width:size, height:size, borderRadius:'50%', flexShrink:0,
     background:'linear-gradient(135deg,var(--accent),#5a3e2a)',
     display:'flex', alignItems:'center', justifyContent:'center',
-    color:'#fff', fontWeight:700, fontSize:size*0.38,
+    color: 'var(--on-accent)', fontWeight:700, fontSize:size*0.38,
     overflow:'hidden', border:'2px solid var(--border)'
   }}>
     {p.avatar?.startsWith('http')
@@ -407,7 +407,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               <ArrowLeft size={20} />
             </button>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'Lora,serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
                 Сообщения
               </div>
             </div>
@@ -491,7 +491,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                           {c.lastMsg}
                         </span>
                         {c.unread > 0 && (
-                          <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '2px 7px', flexShrink: 0 }}>
+                          <span style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '2px 7px', flexShrink: 0 }}>
                             {c.unread}
                           </span>
                         )}
@@ -511,11 +511,11 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                     style={{
                       position: 'absolute', right: 0, top: 0, bottom: 0,
                       width: 88,
-                      background: 'linear-gradient(135deg,#c0392b,#a93226)',
+                      background: 'linear-gradient(135deg,var(--red),#a93226)',
                       border: 'none', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column',
                       alignItems: 'center', justifyContent: 'center',
-                      gap: 4, color: '#fff',
+                      gap: 4, color: 'var(--on-accent)',
                       opacity: deletingConv === c.partner.id ? 0.5 : 1,
                     }}
                   >
@@ -562,7 +562,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               style={{
                 background: 'var(--bg-raised)', border: 'none',
                 borderRadius: 12, padding: 10, cursor: 'pointer',
-                color: '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
               <Trash2 size={18} />
@@ -620,7 +620,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                             <button onClick={() => setEditingId(null)} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13 }}>
                               Отмена
                             </button>
-                            <button onClick={saveEdit} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: '#fff', fontSize: 13, fontWeight: 600 }}>
+                            <button onClick={saveEdit} style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600 }}>
                               Сохранить
                             </button>
                           </div>
@@ -632,7 +632,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                             padding: '10px 14px',
                             borderRadius: mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                             background: mine
-                              ? 'linear-gradient(135deg,#c49a6c,#8a5c30)'
+                              ? 'linear-gradient(135deg,var(--accent),#8a5c30)'
                               : 'var(--bg-raised)',
                             color: mine ? '#fff' : 'var(--text-primary)',
                             fontSize: 15, lineHeight: 1.55,
@@ -687,7 +687,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                                   display: 'flex', alignItems: 'center', gap: 10,
                                   width: '100%', padding: '12px 16px',
                                   background: 'none', border: 'none', cursor: 'pointer',
-                                  color: '#e74c3c', fontSize: 14,
+                                  color: 'var(--red)', fontSize: 14,
                                 }}>
                                   <Trash2 size={15} /> Удалить
                                 </button>

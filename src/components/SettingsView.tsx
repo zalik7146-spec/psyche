@@ -26,10 +26,10 @@ interface Props {
 }
 
 const THEMES: { id: Theme | 'auto'; label: string; icon: React.ReactNode; bg: string; text: string }[] = [
-  { id: 'dark',  label: 'Тёмная',     icon: <Moon size={16} />,       bg: '#15120e', text: '#c8a882' },
-  { id: 'light', label: 'Светлая',    icon: <Sun size={16} />,        bg: '#f5ece0', text: '#5c3e20' },
-  { id: 'sepia', label: 'Сепия',      icon: <BookMarked size={16} />, bg: '#221c12', text: '#c4a870' },
-  { id: 'auto',  label: 'Авто',       icon: <span style={{fontSize:14}}>🌗</span>, bg: '#1a1410', text: '#c8a882' },
+  { id: 'light', label: 'Бумага',        icon: <Sun size={16} />,        bg: '#F9F6EF', text: '#1B1A17' },
+  { id: 'dark',  label: 'Ночная бумага', icon: <Moon size={16} />,       bg: '#1D1B18', text: '#E9E3D6' },
+  { id: 'sepia', label: 'Старая бумага', icon: <BookMarked size={16} />, bg: '#F2EADA', text: '#2A2218' },
+  { id: 'auto',  label: 'По времени',    icon: <Moon size={16} />,       bg: '#E2DCCF', text: '#1B1A17' },
 ];
 
 const AVATAR_EMOJIS = [
@@ -172,7 +172,7 @@ export default function SettingsView({
               style={{
                 padding: '6px 12px', borderRadius: 10,
                 background: 'rgba(180,50,50,0.15)', border: '1px solid rgba(180,50,50,0.3)',
-                color: '#d45858', cursor: 'pointer', fontSize: 12,
+                color: 'var(--red)', cursor: 'pointer', fontSize: 12,
                 fontFamily: 'Inter, sans-serif', fontWeight: 600,
                 display: 'flex', alignItems: 'center', gap: 5,
               }}
@@ -186,7 +186,7 @@ export default function SettingsView({
           {deletedNotes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', animation: 'fadeUp 0.4s ease-out both' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🗑</div>
-              <p style={{ color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontSize: 15 }}>Корзина пуста</p>
+              <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-serif)', fontSize: 15 }}>Корзина пуста</p>
               <p style={{ color: 'var(--text-muted)', fontSize: 12, fontFamily: 'Inter, sans-serif', marginTop: 6 }}>
                 Удалённые записи появятся здесь
               </p>
@@ -206,7 +206,7 @@ export default function SettingsView({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
                       margin: 0, fontSize: 14, fontWeight: 600,
-                      color: 'var(--text-primary)', fontFamily: 'Lora, serif',
+                      color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {note.title || 'Без заголовка'}
@@ -234,7 +234,7 @@ export default function SettingsView({
                     style={{
                       padding: '8px 14px', borderRadius: 10,
                       background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
-                      color: '#d45858', cursor: 'pointer', fontSize: 12,
+                      color: 'var(--red)', cursor: 'pointer', fontSize: 12,
                       fontFamily: 'Inter, sans-serif', fontWeight: 600,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                     }}
@@ -284,7 +284,7 @@ export default function SettingsView({
           padding: '8px 16px 12px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             Изменить аватар
           </span>
           <button
@@ -378,7 +378,7 @@ export default function SettingsView({
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
           </button>
-          <span style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
             Настройки
           </span>
         </div>
@@ -428,7 +428,7 @@ export default function SettingsView({
             </button>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+              <p style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
                 {user.name}
               </p>
               <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif' }}>
@@ -479,7 +479,7 @@ export default function SettingsView({
                 animationDelay: `${0.05 + i * 0.03}s`,
               }}>
                 <div style={{ color: 'var(--accent)', marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
-                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
                   {s.val.toLocaleString()}
                 </p>
                 <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -546,7 +546,7 @@ export default function SettingsView({
                   {t.label}
                 </span>
                 {state.theme === t.id && (
-                  <span style={{ fontSize: 10, color: '#d4914a' }}>✓ Активна</span>
+                  <span style={{ fontSize: 10, color: 'var(--accent)' }}>✓ Активна</span>
                 )}
               </button>
             ))}
@@ -585,7 +585,7 @@ export default function SettingsView({
                   border: `1px solid ${syncStatus === 'done' ? 'rgba(100,180,120,0.4)'
                     : syncStatus === 'error' ? 'rgba(180,80,80,0.4)' : 'var(--border)'}`,
                   color: syncStatus === 'done' ? 'var(--green)'
-                    : syncStatus === 'error' ? '#d45858' : 'var(--text-secondary)',
+                    : syncStatus === 'error' ? 'var(--red)' : 'var(--text-secondary)',
                   cursor: 'pointer', fontSize: 12, fontFamily: 'Inter, sans-serif', fontWeight: 600,
                   display: 'flex', alignItems: 'center', gap: 5,
                   transition: 'all 0.2s',
@@ -653,7 +653,7 @@ export default function SettingsView({
                 width: 36, height: 36, borderRadius: 10,
                 background: 'rgba(180,100,50,0.12)', border: '1px solid rgba(180,100,50,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                color: '#d4914a',
+                color: 'var(--accent)',
               }}>
                 <Trash2 size={16} />
               </div>
@@ -689,12 +689,12 @@ export default function SettingsView({
                 width: 36, height: 36, borderRadius: 10,
                 background: 'rgba(180,50,50,0.12)', border: '1px solid rgba(180,50,50,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                color: '#d45858',
+                color: 'var(--red)',
               }}>
                 <LogOut size={16} />
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 14, color: '#d45858', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--red)', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
                   Выйти из аккаунта
                 </p>
                 <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -716,7 +716,7 @@ export default function SettingsView({
             style={{
               width: '100%', padding: '13px 16px', borderRadius: 14,
               background: 'rgba(180,50,50,0.08)', border: '1px solid rgba(180,50,50,0.2)',
-              color: '#d45858', cursor: 'pointer', fontSize: 14,
+              color: 'var(--red)', cursor: 'pointer', fontSize: 14,
               fontFamily: 'Inter, sans-serif', fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 8,
               transition: 'all 0.15s',
@@ -732,7 +732,7 @@ export default function SettingsView({
 
         {/* ── Version ───────────────────────────────────────────────── */}
         <div style={{ padding: '24px 0 12px', textAlign: 'center', animation: 'fadeIn 0.6s ease-out 0.3s both' }}>
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontStyle: 'italic' }}>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-serif)', fontStyle: 'italic' }}>
             Psyche · Дневник Разума
           </p>
           <p style={{ margin: '3px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', opacity: 0.5 }}>

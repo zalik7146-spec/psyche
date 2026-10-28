@@ -181,7 +181,7 @@ const defaultState: AppState = {
   flashcards: [],
   dailyNotes: [],
   templates: BUILTIN_TEMPLATES,
-  theme: 'dark',
+  theme: 'light',
   fontSize: 'md',
   lineHeight: 'normal',
 };

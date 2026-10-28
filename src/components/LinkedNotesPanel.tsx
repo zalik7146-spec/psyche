@@ -76,7 +76,7 @@ export default function LinkedNotesPanel({ currentNoteId, linkedNoteIds, allNote
                     width: 24, height: 24, borderRadius: 8,
                     background: 'rgba(224,112,112,0.12)', border: '1px solid rgba(224,112,112,0.2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#e07070', cursor: 'pointer', flexShrink: 0,
+                    color: 'var(--red)', cursor: 'pointer', flexShrink: 0,
                   }}>
                     <X size={12} />
                   </button>

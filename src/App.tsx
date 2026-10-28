@@ -56,22 +56,22 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100%', gap: 20,
-          background: '#12100d', color: '#eeddc4', padding: 32,
+          background: 'var(--bg-base)', color: 'var(--text-primary)', padding: 32,
           fontFamily: 'Inter, sans-serif', textAlign: 'center',
         }}>
           <div style={{ fontSize: 48 }}>🪶</div>
-          <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Lora, serif' }}>
+          <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>
             Что-то пошло не так
           </div>
-          <div style={{ fontSize: 13, color: '#8a7258', maxWidth: 300, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', maxWidth: 300, lineHeight: 1.6 }}>
             {this.state.error}
           </div>
           <button
             onClick={() => { this.setState({ hasError: false, error: '' }); window.location.reload(); }}
             style={{
               padding: '12px 28px', borderRadius: 12,
-              background: 'linear-gradient(135deg, #d4a060, #8a5220)',
-              border: 'none', color: '#fff', cursor: 'pointer',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent))',
+              border: 'none', color: 'var(--on-accent)', cursor: 'pointer',
               fontSize: 15, fontWeight: 600,
             }}
           >
@@ -114,13 +114,14 @@ function AppInner() {
   const [followersTab, setFollowersTab] = useState<'followers' | 'following'>('followers');
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const syncedRef = useRef(false);
-  const tabOrder: TabId[] = ['notes', 'library', 'daily', 'cards', 'settings', 'stats', 'graph', 'achievements', 'anki', 'share', 'feed', 'profile'];
-  const [tabDir, setTabDir] = useState<'left' | 'right'>('left');
+  // Разделы нижней панели сменяются растворением, вложенные экраны приходят справа
+  const sectionTabs: TabId[] = ['feed', 'library', 'notes', 'profile'];
+  const [tabMotion, setTabMotion] = useState<'view-enter' | 'view-push'>('view-enter');
   const [tabKey, setTabKey] = useState(0);
 
   // ── Apply theme immediately ───────────────────────────────────────────────
   useEffect(() => {
-    const saved = localStorage.getItem('psyche_theme') || 'dark';
+    const saved = localStorage.getItem('psyche_theme') || 'light';
     document.documentElement.setAttribute('data-theme', saved);
     // Hide splash
     const s = document.getElementById('splash');
@@ -497,8 +498,8 @@ function AppInner() {
     t.textContent = text;
     Object.assign(t.style, {
       position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
-      background: '#262219', color: '#eeddc4',
-      padding: '10px 20px', borderRadius: '12px', border: '1px solid #38332c',
+      background: 'var(--bg-raised)', color: 'var(--text-primary)',
+      padding: '10px 20px', borderRadius: '12px', border: '1px solid var(--border)',
       fontFamily: 'Inter, sans-serif', fontSize: '13px', zIndex: '99999',
       boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
       whiteSpace: 'nowrap',
@@ -521,7 +522,8 @@ function AppInner() {
   };
 
   // ── Tab navigation ─────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab]         = useState<TabId>('notes');
+  const [activeTab, setActiveTab]         = useState<TabId>('feed');
+  const [composeRequest, setComposeRequest] = useState(0);
   const [editingNote, setEditingNote]     = useState<Note | null | 'new'>(null);
   const [newNoteBookId, setNewNoteBookId] = useState<string | undefined>(undefined);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -552,9 +554,7 @@ function AppInner() {
       try { navigator.vibrate?.(10); } catch {}
       setShowTemplates(true);
     } else {
-      const cur  = tabOrder.indexOf(activeTab);
-      const next = tabOrder.indexOf(tab);
-      setTabDir(next >= cur ? 'left' : 'right');
+      setTabMotion(sectionTabs.includes(tab) ? 'view-enter' : 'view-push');
       setTabKey(k => k + 1);
       setActiveTab(tab);
     }
@@ -587,8 +587,8 @@ function AppInner() {
       t.innerHTML = `<div style="font-weight:600;margin-bottom:4px">📚 Из прошлого</div><div style="font-size:12px;opacity:0.8">${pick.title || '...'}...</div>`;
       Object.assign(t.style, {
         position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
-        background: '#262219', color: '#eeddc4',
-        padding: '12px 20px', borderRadius: '14px', border: '1px solid #38332c',
+        background: 'var(--bg-raised)', color: 'var(--text-primary)',
+        padding: '12px 20px', borderRadius: '14px', border: '1px solid var(--border)',
         fontFamily: 'Inter, sans-serif', fontSize: '13px',
         zIndex: '99999', maxWidth: '320px', width: '90%',
         boxShadow: '0 4px 24px rgba(0,0,0,0.5)', cursor: 'pointer', lineHeight: '1.5',
@@ -654,9 +654,9 @@ function AppInner() {
           left: '50%', transform: 'translateX(-50%)',
           zIndex: 9999, display: 'flex', alignItems: 'center', gap: 7,
           padding: '6px 14px', borderRadius: 99,
-          background: '#262219', border: '1px solid #38332c',
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
           boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-          fontSize: 12, color: '#a09070', fontFamily: 'Inter, sans-serif',
+          fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif',
         }}>
           <div className="spinner" style={{ width: 12, height: 12, borderWidth: 2 }} />
           Синхронизация...
@@ -667,7 +667,7 @@ function AppInner() {
       <div
         key={tabKey}
         style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}
-        className={tabDir === 'left' ? 'view-enter' : 'view-enter-back'}
+        className={tabMotion}
       >
         {activeTab === 'notes' && (
           <NotesList
@@ -761,6 +761,9 @@ function AppInner() {
             user={auth.user}
             notes={state.notes}
             books={state.books}
+            composeRequest={composeRequest}
+            onOpenNotifications={() => { setUnreadNotifs(0); setShowNotifications(true); }}
+            onOpenMessages={() => setShowMessages(true)}
           />
         )}
 
@@ -804,6 +807,7 @@ function AppInner() {
         onChange={handleTabChange}
         unreadNotifs={unreadNotifs}
         onNotifications={() => { setUnreadNotifs(0); setShowNotifications(true); }}
+        onComposePost={() => { handleTabChange('feed'); setComposeRequest(n => n + 1); }}
       />
 
       {/* Modals */}
@@ -857,7 +861,7 @@ function AppInner() {
                 author: book.author,
                 coverUrl: book.coverUrl,
                 coverEmoji: '📚',
-                color: '#3d2a1a',
+                color: 'var(--on-accent)',
                 status: 'reading',
                 currentPage: 0,
                 tags: [],

@@ -153,7 +153,7 @@ export default function BookModal({ book, onSave, onDelete, onClose }: Props) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 16px' }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
             {book ? 'Редактировать книгу' : 'Добавить книгу'}
           </div>
           <button onClick={onClose} style={{

@@ -112,7 +112,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
       </div>
 
       <h2 style={{
-        fontFamily: 'Lora, serif', fontSize: 24, fontWeight: 700,
+        fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 700,
         color: 'var(--text-primary)', marginBottom: 8, textAlign: 'center',
       }}>
         {steps[step].title}
@@ -136,14 +136,14 @@ export default function OnboardingView({ user, onComplete }: Props) {
               autoFocus
               style={{
                 width: '100%', padding: '14px 16px 14px 32px',
-                background: 'var(--bg-raised)', border: `1px solid ${usernameError ? '#c0392b' : 'var(--border)'}`,
+                background: 'var(--bg-raised)', border: `1px solid ${usernameError ? 'var(--red)' : 'var(--border)'}`,
                 borderRadius: 12, color: 'var(--text-primary)', fontSize: 16,
                 fontFamily: 'Inter, sans-serif', outline: 'none', boxSizing: 'border-box',
               }}
             />
           </div>
           {usernameError && (
-            <p style={{ fontSize: 12, color: '#c0392b', marginTop: 6, textAlign: 'center' }}>{usernameError}</p>
+            <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 6, textAlign: 'center' }}>{usernameError}</p>
           )}
           <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
             psyche.app/@{username || 'you'}
@@ -233,7 +233,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
             style={{
               width: '100%', padding: '16px',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
-              border: 'none', borderRadius: 16, color: '#fff',
+              border: 'none', borderRadius: 16, color: 'var(--on-accent)',
               fontSize: 16, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               opacity: (step === 0 && (!!usernameError || !username)) ? 0.5 : 1,
@@ -249,7 +249,7 @@ export default function OnboardingView({ user, onComplete }: Props) {
             style={{
               width: '100%', padding: '16px',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
-              border: 'none', borderRadius: 16, color: '#fff',
+              border: 'none', borderRadius: 16, color: 'var(--on-accent)',
               fontSize: 16, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               fontFamily: 'Inter, sans-serif',

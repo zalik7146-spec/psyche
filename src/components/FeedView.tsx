@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Heart, MessageCircle, Bookmark, Share2, Search, Users, Send, X, Plus, BookOpen, Sparkles, Quote, Lightbulb, FileText, MoreHorizontal, Trash2, Edit3, Check } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
+import { Bookmark, Share2, Search, Send, X, MoreHorizontal, Trash2, Edit3, Bell, Mail, PenLine, ChevronLeft } from 'lucide-react';
 import type { SocialPost, SocialComment, SocialProfile, User, Book, PostType } from '../types';
 import { getFeed, toggleLike, toggleSave, getComments, addComment, toggleCommentLike, searchProfiles, createPost, toggleFollow, getUserPosts, isFollowing, getMyProfile, upsertProfile, deletePost, updatePost } from '../socialStore';
 import { supabase } from '../supabase';
@@ -7,38 +8,82 @@ import StoriesRow from './StoriesView';
 
 const vibe = (ms = 8) => navigator.vibrate?.(ms);
 
-const TYPE_CONFIG: Record<PostType, { icon: React.ReactNode; label: string; color: string }> = {
-  note:        { icon: <FileText size={12}/>,   label: 'Заметка',   color: '#b07d4a' },
-  quote:       { icon: <Quote size={12}/>,       label: 'Цитата',    color: '#8a6a9a' },
-  insight:     { icon: <Lightbulb size={12}/>,   label: 'Инсайт',    color: '#5a8a6a' },
-  summary:     { icon: <BookOpen size={12}/>,    label: 'Конспект',  color: '#4a7a9a' },
-  flashcard:   { icon: <Sparkles size={12}/>,    label: 'Карточка',  color: '#9a6a4a' },
-  book_review: { icon: <BookOpen size={12}/>,    label: 'Рецензия',  color: '#7a5a8a' },
+const TYPE_LABEL: Record<PostType, string> = {
+  note:        'Мысль',
+  quote:       'Цитата',
+  insight:     'Инсайт',
+  summary:     'Конспект',
+  flashcard:   'Карточка',
+  book_review: 'Рецензия',
+};
+
+// ── Общие стили бумаги и чернил ──────────────────────────────────────────────
+const label: CSSProperties = { fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' };
+const typed: CSSProperties = {
+  fontFamily: 'var(--font-typed)', color: 'var(--text-primary)', textShadow: '0 0 0.7px var(--ink-bleed)',
+  fontSize: 16, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0,
+};
+const iconBtn: CSSProperties = {
+  width: 44, height: 44, background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)', position: 'relative',
+};
+const sheet: CSSProperties = { background: 'var(--bg-card)', border: '1px solid var(--border)' };
+const inkButton = (enabled = true): CSSProperties => ({
+  height: 36, padding: '0 14px', border: 'none', cursor: enabled ? 'pointer' : 'not-allowed',
+  background: enabled ? 'var(--accent)' : 'var(--bg-active)', color: enabled ? 'var(--on-accent)' : 'var(--text-muted)',
+  fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-ui)',
+  transition: 'background var(--dur-quick) var(--ease-calm)',
+});
+const screen: CSSProperties = {
+  position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--bg-base)',
+  display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)',
+};
+const screenHead: CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  minHeight: 52, padding: '0 10px', flexShrink: 0,
 };
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
-  const now = new Date();
-  const diff = (now.getTime() - d.getTime()) / 1000;
+  const diff = (Date.now() - d.getTime()) / 1000;
   if (diff < 60) return 'только что';
-  if (diff < 3600) return `${Math.floor(diff / 60)}м`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}ч`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}д`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} мин`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} ч`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)} д`;
   return d.toLocaleDateString('ru', { day: 'numeric', month: 'short' });
 }
 
+const plainText = (html: string) => html.replace(/<[^>]+>/g, '');
+
+// Честные правки: ~~текст~~ в листе показывается зачёркнутым
+const STRIKE = /~~([\s\S]+?)~~/g;
+const stripStrikes = (s: string) => s.replace(STRIKE, '').replace(/[ \t]{2,}/g, ' ');
+
+function TypedText({ text, style }: { text: string; style?: CSSProperties }) {
+  const parts: ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(STRIKE)) {
+    if (m.index! > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <s key={m.index} style={{ color: 'var(--text-muted)', textDecorationThickness: 1.5, textDecorationColor: 'var(--text-primary)' }}>{m[1]}</s>,
+    );
+    last = m.index! + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return <p style={{ ...typed, ...style }}>{parts}</p>;
+}
+
 // ── Avatar ──────────────────────────────────────────────────────────────────
-function Avatar({ profile, size = 36 }: { profile?: SocialProfile | null; size?: number }) {
+function Avatar({ profile, size = 32 }: { profile?: SocialProfile | null; size?: number }) {
   const av = profile?.avatar;
   const name = profile?.displayName || profile?.username || '?';
   const initial = name[0]?.toUpperCase() || '?';
   return (
     <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, #d4a060, #8a5220)',
+      width: size, height: size, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
+      border: '1px solid var(--text-primary)', background: 'var(--bg-card)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.4, fontWeight: 700, color: '#fff', flexShrink: 0,
-      overflow: 'hidden', border: '2px solid var(--border)',
+      fontSize: size * 0.4, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)',
     }}>
       {av ? av.startsWith('data:')
         ? <img src={av} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -48,85 +93,36 @@ function Avatar({ profile, size = 36 }: { profile?: SocialProfile | null; size?:
   );
 }
 
-// ── ReactionBtn ─────────────────────────────────────────────────────────────
-const REACTIONS = ['❤️','🔥','💡','🙏','😮'];
-function ReactionBtn({ post, onLike }: { post: SocialPost; onLike: (p: SocialPost) => void }) {
-  const [showPicker, setShowPicker] = useState(false);
-  const [myReaction, setMyReaction] = useState(post.isLiked ? '❤️' : '');
-
-  const handleReact = (emoji: string) => {
-    vibe(10);
-    setShowPicker(false);
-    if (myReaction === emoji) {
-      setMyReaction('');
-      onLike({ ...post, isLiked: false });
-    } else {
-      setMyReaction(emoji);
-      onLike({ ...post, isLiked: true });
-    }
-  };
-
+// ── Оттиск: чернильная печать вместо лайка ───────────────────────────────────
+function StampIcon({ filled }: { filled: boolean }) {
   return (
-    <div style={{ position: 'relative' }}>
-      {showPicker && (
-        <div style={{
-          position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
-          background: 'var(--bg-raised)', border: '1px solid var(--border)',
-          borderRadius: 24, padding: '6px 8px', display: 'flex', gap: 4,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-          animation: 'scaleIn 0.15s cubic-bezier(0.22,1,0.36,1)',
-          zIndex: 50,
-        }}>
-          {REACTIONS.map(r => (
-            <button key={r} onClick={() => handleReact(r)} style={{
-              background: myReaction === r ? 'var(--accent-muted)' : 'none',
-              border: 'none', cursor: 'pointer', fontSize: 20, padding: '4px 6px',
-              borderRadius: 12, transition: 'all 0.15s',
-            }}>{r}</button>
-          ))}
-        </div>
-      )}
-      <button
-        onClick={() => { vibe(6); setShowPicker(v => !v); }}
-        onBlur={() => setTimeout(() => setShowPicker(false), 200)}
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
-          color: myReaction ? 'var(--accent)' : 'var(--text-muted)',
-          borderRadius: 10, transition: 'all 0.15s', fontSize: 14,
-        }}
-      >
-        <span style={{ fontSize: 18 }}>{myReaction || '🤍'}</span>
-        <span style={{ fontSize: 13, fontFamily: 'Inter,sans-serif', fontWeight: 500 }}>
-          {post.likesCount || 0}
-        </span>
-      </button>
-    </div>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <path fillRule="evenodd" d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M12 7.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 1 0 0-9" />
+    </svg>
   );
 }
 
-// ── ActionBtn ───────────────────────────────────────────────────────────────
-function ActionBtn({ icon, label, active, color, onClick }: {
-  icon: React.ReactNode; label: string | number; active?: boolean;
-  color: string; onClick: () => void;
-}) {
+function StampButton({ stamped, count, onToggle, small }: { stamped: boolean; count: number; onToggle: () => void; small?: boolean }) {
+  const [pressKey, setPressKey] = useState(0);
   return (
-    <button onClick={onClick} style={{
-      background: 'none', border: 'none', cursor: 'pointer',
-      display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px',
-      color, borderRadius: 10, transition: 'all 0.15s',
-    }}
-      onPointerDown={e => (e.currentTarget.style.transform = 'scale(0.92)')}
-      onPointerUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-      onPointerLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+    <button
+      aria-pressed={stamped}
+      onClick={() => { vibe(stamped ? 6 : 14); if (!stamped) setPressKey(k => k + 1); onToggle(); }}
+      style={{
+        height: small ? 32 : 44, padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', gap: 8, fontSize: small ? 12 : 13,
+        color: stamped ? 'var(--text-primary)' : 'var(--text-muted)', fontFamily: 'var(--font-ui)',
+      }}
     >
-      {icon}
-      {label !== '' && <span style={{ fontSize: 13, fontWeight: active ? 700 : 400 }}>{label}</span>}
+      <span key={pressKey} className={pressKey ? 'stamp-press' : undefined} style={{ display: 'flex' }}>
+        <StampIcon filled={stamped} />
+      </span>
+      Оттиск · {count}
     </button>
   );
 }
 
-// ── PostCard ─────────────────────────────────────────────────────────────────
+// ── Лист в ленте ─────────────────────────────────────────────────────────────
 function PostCard({ post, userId, onLike, onSave, onComment, onProfile, onDelete, onEdit }: {
   post: SocialPost; userId: string;
   onLike: (p: SocialPost) => void;
@@ -138,91 +134,53 @@ function PostCard({ post, userId, onLike, onSave, onComment, onProfile, onDelete
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const isOwn = post.userId === userId;
-  const typeConf = TYPE_CONFIG[post.type] || TYPE_CONFIG.note;
-  const plain = post.content.replace(/<[^>]+>/g, '').slice(0, 280);
+  const text = plainText(post.content);
+  const showTitle = post.title && !stripStrikes(text).startsWith(post.title.slice(0, 40));
 
   const handleShare = async () => {
     vibe(6);
+    const shareText = stripStrikes(text);
     try {
-      await navigator.share({ title: post.title, text: plain, url: window.location.href });
+      await navigator.share({ title: post.title, text: shareText, url: window.location.href });
     } catch {
-      try { await navigator.clipboard.writeText(plain); } catch { /* ignore */ }
+      try { await navigator.clipboard.writeText(shareText); } catch { /* ignore */ }
     }
   };
 
   return (
-    <div style={{
-      background: 'var(--bg-card)', borderRadius: 16,
-      border: '1px solid var(--border)', overflow: 'hidden',
-      marginBottom: 12, animation: 'fadeSlideUp 0.4s ease both',
-      position: 'relative',
-    }}>
-      {/* Header */}
-      <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+    <article className="view-enter" style={{ ...sheet, padding: '16px 18px 0', marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <button onClick={() => { vibe(); post.profile && onProfile(post.profile); }}
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          <Avatar profile={post.profile} size={40} />
+          aria-label="Открыть профиль"
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textAlign: 'left' }}>
+          <Avatar profile={post.profile} size={32} />
+          <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+              {post.profile?.displayName || post.profile?.username || 'Читатель'}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {TYPE_LABEL[post.type] || 'Мысль'} · {formatTime(post.createdAt)}
+            </span>
+          </span>
         </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-            {post.profile?.displayName || post.profile?.username || 'Читатель'}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>
-            @{post.profile?.username || 'user'} · {formatTime(post.createdAt)}
-          </div>
-        </div>
 
-        {/* Type badge */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          background: `${typeConf.color}22`, borderRadius: 20, padding: '3px 10px',
-          border: `1px solid ${typeConf.color}44`,
-        }}>
-          <span style={{ color: typeConf.color }}>{typeConf.icon}</span>
-          <span style={{ fontSize: 11, color: typeConf.color, fontWeight: 600 }}>{typeConf.label}</span>
-        </div>
-
-        {/* Menu button */}
         {isOwn && (
           <div style={{ position: 'relative' }}>
-            <button onClick={() => { vibe(6); setShowMenu(m => !m); }}
-              style={{
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 8, width: 32, height: 32, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-muted)',
-              }}>
-              <MoreHorizontal size={16} />
+            <button aria-label="Действия с листом" onClick={() => { vibe(6); setShowMenu(m => !m); }} style={{ ...iconBtn, color: 'var(--text-muted)', marginRight: -12 }}>
+              <MoreHorizontal size={18} strokeWidth={1.5} />
             </button>
             {showMenu && (
               <>
-                <div onClick={() => setShowMenu(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
-                <div style={{
-                  position: 'absolute', right: 0, top: 36, zIndex: 101,
-                  background: 'var(--bg-card)', border: '1px solid var(--border)',
-                  borderRadius: 12, overflow: 'hidden', minWidth: 160,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-                }}>
-                  <button onClick={() => { vibe(8); setShowMenu(false); onEdit(post); }}
-                    style={{
-                      width: '100%', padding: '12px 16px', background: 'none', border: 'none',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
-                      color: 'var(--text-primary)', fontSize: 14, fontFamily: 'Inter, sans-serif',
-                      borderBottom: '1px solid var(--border)',
-                    }}>
-                    <Edit3 size={15} /> Редактировать
+                <div onClick={() => setShowMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
+                <div className="fade-in" style={{ ...sheet, position: 'absolute', right: 0, top: 40, zIndex: 101, minWidth: 180, boxShadow: 'var(--shadow-lg)' }}>
+                  <button onClick={() => { vibe(8); setShowMenu(false); onEdit(post); }} style={menuItem}>
+                    <Edit3 size={15} strokeWidth={1.5} /> Править
                   </button>
                   <button onClick={() => {
                     vibe(12); setShowMenu(false);
-                    if (window.confirm('Удалить этот пост?')) onDelete(post.id);
-                  }}
-                    style={{
-                      width: '100%', padding: '12px 16px', background: 'none', border: 'none',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
-                      color: '#e74c3c', fontSize: 14, fontFamily: 'Inter, sans-serif',
-                    }}>
-                    <Trash2 size={15} /> Удалить пост
+                    if (window.confirm('Удалить этот лист?')) onDelete(post.id);
+                  }} style={{ ...menuItem, color: 'var(--red)', borderBottom: 'none' }}>
+                    <Trash2 size={15} strokeWidth={1.5} /> Удалить
                   </button>
                 </div>
               </>
@@ -231,173 +189,159 @@ function PostCard({ post, userId, onLike, onSave, onComment, onProfile, onDelete
         )}
       </div>
 
-      {/* Book ref */}
-      {post.bookTitle && (
-        <div style={{
-          margin: '0 16px 10px', background: 'var(--bg-raised)',
-          borderRadius: 10, padding: '8px 12px',
-          display: 'flex', alignItems: 'center', gap: 8,
-          border: '1px solid var(--border)',
-        }}>
-          <span style={{ fontSize: 20 }}>{post.bookEmoji || '📖'}</span>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{post.bookTitle}</div>
-            {post.bookAuthor && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{post.bookAuthor}</div>}
-          </div>
-        </div>
+      {showTitle && (
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 19, lineHeight: 1.3, color: 'var(--text-primary)' }}>{post.title}</div>
       )}
 
-      {/* Content */}
-      <div style={{ padding: '0 16px 12px' }}>
-        {post.title && (
-          <div style={{
-            fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
-            fontFamily: 'Lora, serif', marginBottom: 8, lineHeight: 1.3,
-          }}>{post.title}</div>
+      <button onClick={() => { vibe(); onComment(post); }} aria-label="Открыть обсуждение"
+        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+        {post.type === 'quote' ? (
+          <blockquote style={{ margin: 0, paddingLeft: 14, borderLeft: '1px solid var(--text-primary)', fontFamily: 'var(--font-serif)', fontSize: 18, lineHeight: 1.45, color: 'var(--text-primary)', display: '-webkit-box', WebkitLineClamp: 8, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {stripStrikes(text)}
+          </blockquote>
+        ) : (
+          <TypedText text={text.length > 600 ? text.slice(0, 600) + '…' : text} />
         )}
-        <div style={{
-          fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7,
-          fontFamily: 'Inter, sans-serif',
-          display: '-webkit-box', WebkitLineClamp: 6,
-          WebkitBoxOrient: 'vertical', overflow: 'hidden',
-        }}>{plain}</div>
-      </div>
+      </button>
 
-      {/* Tags — кликабельные хэштеги */}
-      {post.tags.length > 0 && (
-        <div style={{ padding: '0 16px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      {(post.bookTitle || post.tags.length > 0) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', alignItems: 'baseline' }}>
+          {post.bookTitle && (
+            <span style={{ ...label, letterSpacing: '0.08em' }}>
+              {post.bookTitle}{post.bookAuthor ? ` · ${post.bookAuthor}` : ''}
+            </span>
+          )}
           {post.tags.slice(0, 4).map(t => (
-            <button key={t} onClick={() => { vibe(6); }} style={{
-              fontSize: 11, color: 'var(--accent)', background: 'var(--accent-muted)',
-              borderRadius: 20, padding: '3px 10px', fontFamily: 'Inter, sans-serif',
-              border: 'none', cursor: 'pointer', transition: 'all 0.15s',
-              fontWeight: 600,
-            }}>#{t}</button>
+            <span key={t} style={{ fontSize: 12, color: 'var(--text-muted)' }}>#{t}</span>
           ))}
         </div>
       )}
 
-      {/* Actions */}
-      <div style={{
-        padding: '10px 16px 14px', display: 'flex', alignItems: 'center', gap: 4,
-        borderTop: '1px solid var(--border)',
-      }}>
-        {/* Реакции */}
-        <ReactionBtn post={post} onLike={onLike} />
-        <ActionBtn icon={<MessageCircle size={18} />} label={post.commentsCount || 0}
-          color='var(--text-muted)' onClick={() => { vibe(); onComment(post); }} />
-        <ActionBtn
-          icon={<Bookmark size={18} fill={post.isSaved ? 'var(--accent)' : 'none'} />}
-          label='' active={!!post.isSaved}
-          color={post.isSaved ? 'var(--accent)' : 'var(--text-muted)'}
-          onClick={() => { vibe(); onSave(post); }} />
+      <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px dashed var(--border)', margin: '0 -10px' }}>
+        <StampButton stamped={!!post.isLiked} count={post.likesCount || 0} onToggle={() => onLike(post)} />
+        <button onClick={() => { vibe(); onComment(post); }}
+          style={{ height: 44, padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+          <MarginsIcon /> На полях · {post.commentsCount || 0}
+        </button>
         <div style={{ flex: 1 }} />
-        <ActionBtn icon={<Share2 size={18} />} label='' color='var(--text-muted)' onClick={handleShare} />
+        <button aria-label={post.isSaved ? 'Убрать из сохранённого' : 'Сохранить'} aria-pressed={!!post.isSaved}
+          onClick={() => { vibe(); onSave(post); }} style={{ ...iconBtn, color: post.isSaved ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+          <Bookmark size={19} strokeWidth={1.5} fill={post.isSaved ? 'currentColor' : 'none'} />
+        </button>
+        <button aria-label="Поделиться" onClick={handleShare} style={{ ...iconBtn, color: 'var(--text-muted)' }}>
+          <Share2 size={18} strokeWidth={1.5} />
+        </button>
       </div>
-    </div>
+    </article>
   );
 }
 
-// ── CommentsSheet ────────────────────────────────────────────────────────────
-function CommentsSheet({ post, userId, onClose }: {
-  post: SocialPost; userId: string; onClose: () => void;
+const menuItem: CSSProperties = {
+  width: '100%', minHeight: 44, padding: '0 16px', background: 'none', border: 'none', cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-primary)', fontSize: 14,
+  fontFamily: 'var(--font-ui)', borderBottom: '1px solid var(--border)',
+};
+
+function MarginsIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <path d="M4 4v16M8 8h12M8 12h12M8 16h7" />
+    </svg>
+  );
+}
+
+async function ensureProfile(userId: string) {
+  const existingProfile = await getMyProfile(userId);
+  if (existingProfile) return;
+  const { data: userData } = await supabase.auth.getUser();
+  const email = userData?.user?.email || '';
+  const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
+  await upsertProfile(userId, { username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
+}
+
+// ── Обсуждение на полях ──────────────────────────────────────────────────────
+function MarginsView({ post, userId, onClose, onCommented }: {
+  post: SocialPost; userId: string; onClose: () => void; onCommented: () => void;
 }) {
   const [comments, setComments] = useState<SocialComment[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const body = plainText(post.content);
 
   useEffect(() => {
     getComments(post.id).then(setComments);
-    setTimeout(() => inputRef.current?.focus(), 300);
   }, [post.id, userId]);
 
   const handleSend = async () => {
     if (!text.trim() || sending) return;
     setSending(true); vibe(8);
     try {
-      const existingProfile = await getMyProfile(userId);
-      if (!existingProfile) {
-        const { data: userData } = await supabase.auth.getUser();
-        const email = userData?.user?.email || '';
-        const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
-        await upsertProfile(userId, { username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
-      }
+      await ensureProfile(userId);
       const comment = await addComment(post.id, userId, text.trim());
-      if (comment) { setComments(prev => [...prev, comment]); setText(''); }
+      if (comment) { setComments(prev => [...prev, comment]); setText(''); onCommented(); }
     } catch (e) { console.error('Comment error:', e); }
     setSending(false);
   };
 
+  const handleCommentStamp = (c: SocialComment) => {
+    toggleCommentLike(c.id, userId, !!c.isLiked);
+    setComments(prev => prev.map(x => x.id === c.id
+      ? { ...x, isLiked: !x.isLiked, likesCount: Math.max(0, (x.likesCount || 0) + (x.isLiked ? -1 : 1)) }
+      : x));
+  };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
-      <div style={{
-        position: 'relative', background: 'var(--bg-card)',
-        borderRadius: '20px 20px 0 0', maxHeight: '75vh',
-        display: 'flex', flexDirection: 'column',
-        border: '1px solid var(--border)', borderBottom: 'none',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2 }} />
-        </div>
-        <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
-            Комментарии {comments.length > 0 && `(${comments.length})`}
-          </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div role="dialog" aria-label="Обсуждение" className="view-push" style={screen}>
+      <div style={screenHead}>
+        <button aria-label="Назад" onClick={onClose} style={iconBtn}><ChevronLeft size={22} strokeWidth={1.5} /></button>
+        <span style={label}>Обсуждение</span>
+        <span style={{ width: 44 }} />
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 12px 24px' }}>
+        <article style={{ ...sheet, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Avatar profile={post.profile} size={32} />
+            <span style={{ fontSize: 14, fontWeight: 500 }}>{post.profile?.displayName || post.profile?.username || 'Читатель'}</span>
+          </div>
+          {post.type === 'quote'
+            ? <blockquote style={{ margin: 0, paddingLeft: 14, borderLeft: '1px solid var(--text-primary)', fontFamily: 'var(--font-serif)', fontSize: 18, lineHeight: 1.45 }}>{stripStrikes(body)}</blockquote>
+            : <TypedText text={body} />}
+          {post.bookTitle && <span style={label}>{post.bookTitle}{post.bookAuthor ? ` · ${post.bookAuthor}` : ''}</span>}
+        </article>
+
+        <div style={{ padding: '22px 12px 0', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <span style={label}>На полях · {comments.length}</span>
           {comments.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 14 }}>
-              Будьте первым — напишите комментарий
-            </div>
+            <p style={{ margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 17, color: 'var(--text-muted)' }}>
+              Поля пока чистые. Оставьте первую пометку.
+            </p>
           )}
           {comments.map(c => (
-            <div key={c.id} style={{ display: 'flex', gap: 10 }}>
-              <Avatar profile={c.profile} size={32} />
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {c.profile?.displayName || c.profile?.username || 'Читатель'}
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatTime(c.createdAt)}</span>
-                </div>
-                <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{c.content}</div>
-                <button onClick={() => { vibe(6); toggleCommentLike(c.id, userId, !!c.isLiked); }}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', marginTop: 6,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    color: c.isLiked ? 'var(--accent)' : 'var(--text-muted)', fontSize: 12,
-                  }}>
-                  <Heart size={13} fill={c.isLiked ? 'var(--accent)' : 'none'} /> {c.likesCount || 0}
-                </button>
+            <div key={c.id} className="view-enter" style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 14, borderLeft: `1px solid ${c.userId === post.userId ? 'var(--border-mid)' : 'var(--text-primary)'}` }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                {c.profile?.displayName || c.profile?.username || 'Читатель'} · {formatTime(c.createdAt)}
+              </span>
+              <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.45, color: 'var(--text-primary)' }}>{c.content}</span>
+              <div style={{ marginLeft: -8 }}>
+                <StampButton small stamped={!!c.isLiked} count={c.likesCount || 0} onToggle={() => handleCommentStamp(c)} />
               </div>
             </div>
           ))}
         </div>
-        <div style={{
-          padding: '12px 16px',
-          borderTop: '1px solid var(--border)',
-          display: 'flex', gap: 10, alignItems: 'center',
-          paddingBottom: `calc(12px + env(safe-area-inset-bottom))`,
-        }}>
+      </div>
+
+      <div style={{ padding: '8px 12px', paddingBottom: 'calc(8px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--border)' }}>
+        <div style={{ ...sheet, display: 'flex', alignItems: 'center', height: 52, padding: '0 4px 0 16px' }}>
           <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder='Написать комментарий...'
-            style={{
-              flex: 1, background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              borderRadius: 12, padding: '10px 14px', fontSize: 14,
-              color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif', outline: 'none',
-            }} />
-          <button onClick={handleSend} disabled={!text.trim() || sending}
-            style={{
-              width: 40, height: 40, borderRadius: 12, border: 'none', cursor: 'pointer',
-              background: text.trim() ? 'linear-gradient(135deg, #d4a060, #8a5220)' : 'var(--bg-raised)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: text.trim() ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s',
-            }}>
-            <Send size={16} />
+            aria-label="Заметка на полях"
+            placeholder="Заметка на полях…"
+            style={{ ...typed, fontSize: 15, flex: 1, background: 'none', border: 'none', outline: 'none', minWidth: 0 }} />
+          <button aria-label="Отправить" onClick={handleSend} disabled={!text.trim() || sending}
+            style={{ ...iconBtn, color: text.trim() ? 'var(--text-primary)' : 'var(--text-muted)', cursor: text.trim() ? 'pointer' : 'default' }}>
+            <Send size={18} strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -405,12 +349,13 @@ function CommentsSheet({ post, userId, onClose }: {
   );
 }
 
-// ── EditPostSheet ─────────────────────────────────────────────────────────────
+// ── Правка листа ─────────────────────────────────────────────────────────────
 function EditPostSheet({ post, onClose, onSaved }: {
   post: SocialPost; onClose: () => void; onSaved: (p: SocialPost) => void;
 }) {
-  const [content, setContent] = useState(post.content.replace(/<[^>]+>/g, ''));
+  const [content, setContent] = useState(plainText(post.content));
   const [saving, setSaving] = useState(false);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSave = async () => {
     if (!content.trim() || saving) return;
@@ -423,51 +368,65 @@ function EditPostSheet({ post, onClose, onSaved }: {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
-      <div style={{
-        position: 'relative', background: 'var(--bg-card)',
-        borderRadius: '20px 20px 0 0', maxHeight: '85vh',
-        display: 'flex', flexDirection: 'column',
-        border: '1px solid var(--border)', borderBottom: 'none',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2 }} />
-        </div>
-        <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Редактировать</span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleSave} disabled={saving}
-              style={{
-                background: 'linear-gradient(135deg, #d4a060, #8a5220)',
-                border: 'none', borderRadius: 10, padding: '8px 16px',
-                color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-              <Check size={14} /> {saving ? 'Сохранение...' : 'Сохранить'}
-            </button>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-          </div>
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-          <textarea
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            style={{
-              width: '100%', minHeight: 200, background: 'var(--bg-raised)',
-              border: '1px solid var(--border)', borderRadius: 12,
-              padding: '14px', fontSize: 15, color: 'var(--text-primary)',
-              fontFamily: 'Lora, serif', outline: 'none', resize: 'vertical',
-              lineHeight: 1.7, boxSizing: 'border-box',
-            }}
-          />
-        </div>
+    <div role="dialog" aria-label="Правка листа" className="view-feed" style={screen}>
+      <div style={screenHead}>
+        <button onClick={onClose} style={{ ...iconBtn, width: 'auto', padding: '0 8px', fontSize: 15, color: 'var(--text-muted)' }}>Отмена</button>
+        <span style={label}>Правка</span>
+        <button onClick={handleSave} disabled={saving || !content.trim()} style={inkButton(!!content.trim() && !saving)}>
+          {saving ? 'Сохраняю…' : 'Сохранить'}
+        </button>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <PaperArea areaRef={areaRef} value={content} onChange={setContent} />
+        <StrikeButton areaRef={areaRef} value={content} onChange={setContent} />
       </div>
     </div>
   );
 }
 
-// ── CreatePostSheet ───────────────────────────────────────────────────────────
+// Разлинованный лист для набора
+function PaperArea({ areaRef, value, onChange, placeholder }: {
+  areaRef: React.RefObject<HTMLTextAreaElement | null>; value: string; onChange: (v: string) => void; placeholder?: string;
+}) {
+  return (
+    <textarea
+      ref={areaRef}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      aria-label="Текст листа"
+      placeholder={placeholder}
+      style={{
+        ...typed, fontSize: 17, lineHeight: '30px', width: '100%', minHeight: 300, flex: 1,
+        ...sheet, padding: '14px 20px', outline: 'none', resize: 'none', boxSizing: 'border-box',
+        backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 29px, var(--border) 29px, var(--border) 30px)',
+        backgroundPosition: '0 14px', backgroundAttachment: 'local',
+      }}
+    />
+  );
+}
+
+// Зачёркивает выделенный фрагмент: ~~так~~
+function StrikeButton({ areaRef, value, onChange }: {
+  areaRef: React.RefObject<HTMLTextAreaElement | null>; value: string; onChange: (v: string) => void;
+}) {
+  const strike = () => {
+    const el = areaRef.current;
+    if (!el) return;
+    const { selectionStart: a, selectionEnd: b } = el;
+    if (a === b) return;
+    vibe(10);
+    onChange(value.slice(0, a) + '~~' + value.slice(a, b) + '~~' + value.slice(b));
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(b + 4, b + 4); });
+  };
+  return (
+    <button onClick={strike} onMouseDown={e => e.preventDefault()}
+      style={{ alignSelf: 'flex-start', height: 36, padding: '0 12px', background: 'none', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+      <s>Зачеркнуть</s> выделенное
+    </button>
+  );
+}
+
+// ── Новый лист ───────────────────────────────────────────────────────────────
 function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
   userId: string;
   notes: import('../types').Note[];
@@ -478,11 +437,13 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
   const [type, setType] = useState<PostType>('note');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [honest, setHonest] = useState(true);
   const [selectedBookId, setSelectedBookId] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState('');
   const [publishing, setPublishing] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const areaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedBook = books.find(b => b.id === selectedBookId);
   const selectedNote = notes.find(n => n.id === selectedNoteId);
@@ -490,7 +451,7 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
   useEffect(() => {
     if (selectedNote) {
       setTitle(selectedNote.title);
-      setContent(selectedNote.content.replace(/<[^>]+>/g, ''));
+      setContent(plainText(selectedNote.content));
       setSelectedTags(selectedNote.tags);
       if (selectedNote.bookId) setSelectedBookId(selectedNote.bookId);
       setType(selectedNote.type as PostType);
@@ -501,24 +462,19 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
     if (!content.trim()) return;
     setPublishing(true); vibe(10);
     try {
-      const existingProfile = await getMyProfile(userId);
-      if (!existingProfile) {
-        const { data: userData } = await supabase.auth.getUser();
-        const email = userData?.user?.email || '';
-        const baseUsername = email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase() || 'reader';
-        await upsertProfile(userId, { username: baseUsername + Math.floor(Math.random() * 9999), displayName: baseUsername, isPublic: true });
-      }
+      await ensureProfile(userId);
+      const finalContent = (honest ? content : stripStrikes(content)).trim();
       const post = await createPost(userId, {
         type,
-        title: title || content.replace(/<[^>]+>/g, '').slice(0, 60),
-        content,
+        title: title || stripStrikes(content).slice(0, 60),
+        content: finalContent,
         bookTitle: selectedBook?.title,
         bookAuthor: selectedBook?.author,
         bookEmoji: selectedBook?.coverEmoji,
         tags: selectedTags,
       });
       if (post) { onCreated(post); onClose(); }
-      else { alert('Ошибка публикации. Проверьте подключение.'); }
+      else { alert('Не удалось опубликовать. Проверьте подключение.'); }
     } catch (e) {
       console.error('Publish error:', e);
       alert('Ошибка: ' + (e instanceof Error ? e.message : String(e)));
@@ -527,159 +483,101 @@ function CreatePostSheet({ userId, notes, books, onClose, onCreated }: {
   };
 
   const addTag = () => {
-    const t = tagInput.trim().toLowerCase();
-    if (t && !selectedTags.includes(t)) { setSelectedTags(prev => [...prev, t]); }
+    const t = tagInput.trim().toLowerCase().replace(/^#/, '');
+    if (t && !selectedTags.includes(t)) setSelectedTags(prev => [...prev, t]);
     setTagInput('');
   };
 
+  const canPublish = !!content.trim() && !publishing;
+  const optionRow: CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, borderBottom: '1px solid var(--border)' };
+  const selectStyle: CSSProperties = { background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)', maxWidth: '60%', textAlign: 'right' };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
-      <div style={{
-        position: 'relative', background: 'var(--bg-card)',
-        borderRadius: '20px 20px 0 0', maxHeight: '92vh',
-        display: 'flex', flexDirection: 'column',
-        border: '1px solid var(--border)', borderBottom: 'none',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2 }} />
-        </div>
-        <div style={{ padding: '8px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Новая публикация</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+    <div role="dialog" aria-label="Новый лист" className="view-feed" style={screen}>
+      <div style={screenHead}>
+        <button onClick={onClose} style={{ ...iconBtn, width: 'auto', padding: '0 8px', fontSize: 15, color: 'var(--text-muted)' }}>Отмена</button>
+        <span style={label}>Новый лист</span>
+        <button onClick={handlePublish} disabled={!canPublish} style={inkButton(canPublish)}>
+          {publishing ? 'Публикую…' : 'Опубликовать'}
+        </button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', gap: 8, padding: '8px 16px 14px', overflowX: 'auto', flexShrink: 0 }}>
+          {(Object.keys(TYPE_LABEL) as PostType[]).filter(t => t !== 'flashcard').map(t => {
+            const on = type === t;
+            return (
+              <button key={t} aria-pressed={on} onClick={() => { vibe(6); setType(t); }}
+                style={{
+                  height: 34, padding: '0 14px', flexShrink: 0, cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-ui)',
+                  border: on ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  background: on ? 'var(--accent)' : 'none', color: on ? 'var(--on-accent)' : 'var(--text-primary)',
+                  transition: 'background var(--dur-quick) var(--ease-calm), color var(--dur-quick) var(--ease-calm)',
+                }}>{TYPE_LABEL[t]}</button>
+            );
+          })}
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Import from notes */}
+        <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Заголовок, если нужен"
+            aria-label="Заголовок"
+            style={{ ...sheet, borderBottom: 'none', padding: '14px 20px 6px', fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--text-primary)', outline: 'none', marginBottom: -10 }} />
+          <PaperArea areaRef={areaRef} value={content} onChange={setContent} placeholder="Что в вашей власти сегодня?" />
+          <StrikeButton areaRef={areaRef} value={content} onChange={setContent} />
+        </div>
+
+        <div style={{ padding: '8px 24px 24px', display: 'flex', flexDirection: 'column' }}>
+          <button role="switch" aria-checked={honest} onClick={() => { vibe(6); setHonest(h => !h); }}
+            style={{ ...optionRow, minHeight: 60, background: 'none', borderLeft: 'none', borderRight: 'none', borderTop: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+            <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>Честные правки</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{honest ? 'Зачёркнутое останется видно читателям' : 'Зачёркнутое уберём перед публикацией'}</span>
+            </span>
+            <span style={{ width: 40, height: 22, flexShrink: 0, boxSizing: 'border-box', border: '1px solid var(--accent)', padding: 2, display: 'flex', background: honest ? 'var(--accent)' : 'none', transition: 'background var(--dur-quick) var(--ease-calm)' }}>
+              <span style={{ width: 16, height: 16, background: honest ? 'var(--on-accent)' : 'var(--accent)', transform: `translateX(${honest ? 16 : 0}px)`, transition: 'transform var(--dur-quick) var(--ease-calm)' }} />
+            </span>
+          </button>
+
+          {books.length > 0 && (
+            <label style={optionRow}>
+              <span style={{ flex: 1, fontSize: 14 }}>Книга</span>
+              <select value={selectedBookId} onChange={e => setSelectedBookId(e.target.value)} style={selectStyle}>
+                <option value="">Без книги</option>
+                {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+              </select>
+            </label>
+          )}
+
           {notes.length > 0 && (
-            <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>ИМПОРТ ИЗ ЗАПИСЕЙ</label>
-              <select value={selectedNoteId} onChange={e => setSelectedNoteId(e.target.value)}
-                style={{
-                  width: '100%', padding: '10px 14px', borderRadius: 12,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  color: selectedNoteId ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none',
-                }}>
-                <option value=''>Выбрать запись...</option>
+            <label style={optionRow}>
+              <span style={{ flex: 1, fontSize: 14 }}>Из моих записей</span>
+              <select value={selectedNoteId} onChange={e => setSelectedNoteId(e.target.value)} style={selectStyle}>
+                <option value="">Не брать</option>
                 {notes.map(n => <option key={n.id} value={n.id}>{n.title || 'Без названия'}</option>)}
               </select>
-            </div>
+            </label>
           )}
 
-          {/* Type selector */}
-          <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>ТИП</label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {(Object.entries(TYPE_CONFIG) as [PostType, typeof TYPE_CONFIG[PostType]][]).map(([t, conf]) => (
-                <button key={t} onClick={() => { vibe(6); setType(t); }}
-                  style={{
-                    padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                    border: `1px solid ${type === t ? conf.color : 'var(--border)'}`,
-                    background: type === t ? `${conf.color}22` : 'var(--bg-raised)',
-                    color: type === t ? conf.color : 'var(--text-muted)',
-                    cursor: 'pointer', transition: 'all 0.15s',
-                    display: 'flex', alignItems: 'center', gap: 4,
-                  }}>
-                  {conf.icon} {conf.label}
-                </button>
-              ))}
-            </div>
+          <div style={{ ...optionRow, flexWrap: 'wrap', padding: '10px 0' }}>
+            <span style={{ fontSize: 14 }}>Темы</span>
+            {selectedTags.map(t => (
+              <button key={t} onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))} aria-label={`Убрать тему ${t}`}
+                style={{ height: 28, padding: '0 8px', background: 'none', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 12, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                #{t} <X size={11} />
+              </button>
+            ))}
+            <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addTag()} onBlur={addTag}
+              aria-label="Добавить тему" placeholder="+ тема"
+              style={{ flex: 1, minWidth: 80, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary)', textAlign: 'right' }} />
           </div>
-
-          {/* Title */}
-          <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>ЗАГОЛОВОК</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder='Заголовок публикации...'
-              style={{
-                width: '100%', padding: '10px 14px', borderRadius: 12, boxSizing: 'border-box',
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                color: 'var(--text-primary)', fontSize: 14, fontFamily: 'Lora, serif', outline: 'none',
-              }} />
-          </div>
-
-          {/* Content */}
-          <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>СОДЕРЖАНИЕ *</label>
-            <textarea value={content} onChange={e => setContent(e.target.value)}
-              placeholder='Поделитесь мыслью, инсайтом или цитатой...'
-              rows={5}
-              style={{
-                width: '100%', padding: '12px 14px', borderRadius: 12, boxSizing: 'border-box',
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                color: 'var(--text-primary)', fontSize: 14, fontFamily: 'Lora, serif',
-                outline: 'none', resize: 'vertical', lineHeight: 1.7,
-              }} />
-          </div>
-
-          {/* Book */}
-          {books.length > 0 && (
-            <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>КНИГА</label>
-              <select value={selectedBookId} onChange={e => setSelectedBookId(e.target.value)}
-                style={{
-                  width: '100%', padding: '10px 14px', borderRadius: 12,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  color: selectedBookId ? 'var(--text-primary)' : 'var(--text-muted)',
-                  fontSize: 14, fontFamily: 'Inter, sans-serif', outline: 'none',
-                }}>
-                <option value=''>Выбрать книгу...</option>
-                {books.map(b => <option key={b.id} value={b.id}>{b.coverEmoji} {b.title}</option>)}
-              </select>
-            </div>
-          )}
-
-          {/* Tags */}
-          <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>ТЕГИ</label>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addTag()}
-                placeholder='Добавить тег...'
-                style={{
-                  flex: 1, padding: '8px 12px', borderRadius: 10,
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  color: 'var(--text-primary)', fontSize: 13, outline: 'none',
-                }} />
-              <button onClick={addTag}
-                style={{
-                  padding: '8px 14px', borderRadius: 10, border: 'none',
-                  background: 'var(--accent-muted)', color: 'var(--accent)',
-                  cursor: 'pointer', fontSize: 13,
-                }}>+ Добавить</button>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {selectedTags.map(t => (
-                <span key={t} style={{
-                  fontSize: 12, color: 'var(--accent)', background: 'var(--accent-muted)',
-                  borderRadius: 20, padding: '3px 10px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }} onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>
-                  #{t} <X size={10} />
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', paddingBottom: `calc(12px + env(safe-area-inset-bottom))` }}>
-          <button onClick={handlePublish} disabled={!content.trim() || publishing}
-            style={{
-              width: '100%', padding: '14px', borderRadius: 14,
-              background: content.trim() ? 'linear-gradient(135deg, #d4a060, #8a5220)' : 'var(--bg-raised)',
-              border: 'none', color: content.trim() ? '#fff' : 'var(--text-muted)',
-              fontSize: 15, fontWeight: 600, cursor: content.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: 'Inter, sans-serif',
-            }}>
-            {publishing ? 'Публикация...' : 'Опубликовать'}
-          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── ProfileSheet ──────────────────────────────────────────────────────────────
+// ── Профиль читателя ─────────────────────────────────────────────────────────
 function ProfileSheet({ profile, userId, onClose }: {
   profile: SocialProfile; userId: string; onClose: () => void;
 }) {
@@ -699,79 +597,59 @@ function ProfileSheet({ profile, userId, onClose }: {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
-      <div style={{
-        position: 'relative', background: 'var(--bg-card)',
-        borderRadius: '20px 20px 0 0', maxHeight: '85vh',
-        display: 'flex', flexDirection: 'column',
-        border: '1px solid var(--border)', borderBottom: 'none',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2 }} />
-        </div>
-        <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Avatar profile={profile} size={56} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>
-              {profile.displayName || profile.username}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>@{profile.username}</div>
-            {profile.bio && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>{profile.bio}</div>}
-            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                <b style={{ color: 'var(--text-primary)' }}>{profile.followersCount || 0}</b> читателей
+    <div role="dialog" aria-label="Профиль" className="view-push" style={screen}>
+      <div style={screenHead}>
+        <button aria-label="Назад" onClick={onClose} style={iconBtn}><ChevronLeft size={22} strokeWidth={1.5} /></button>
+        <span style={{ fontSize: 15, fontWeight: 600 }}>{profile.username}</span>
+        <span style={{ width: 44 }} />
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 22, padding: '4px 24px 0' }}>
+          <Avatar profile={profile} size={76} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', flex: 1 }}>
+            {[[profile.postsCount || posts.length, 'листов'], [profile.followersCount || 0, 'читателей'], [profile.followingCount || 0, 'читает']].map(([v, l]) => (
+              <span key={l as string} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22 }}>{v}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{l}</span>
               </span>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                <b style={{ color: 'var(--text-primary)' }}>{profile.postsCount || 0}</b> публикаций
-              </span>
-            </div>
+            ))}
           </div>
-          {!isOwn && (
+        </div>
+        <div style={{ padding: '14px 24px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 15, fontWeight: 600 }}>{profile.displayName || profile.username}</span>
+          {profile.bio && <TypedText text={profile.bio} style={{ fontSize: 14, lineHeight: 1.5 }} />}
+        </div>
+        {!isOwn && (
+          <div style={{ padding: '14px 24px 0' }}>
             <button onClick={handleFollow}
               style={{
-                padding: '8px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
-                border: following ? '1px solid var(--border)' : 'none',
-                background: following ? 'var(--bg-raised)' : 'linear-gradient(135deg, #d4a060, #8a5220)',
-                color: following ? 'var(--text-muted)' : '#fff', cursor: 'pointer',
+                width: '100%', height: 38, cursor: 'pointer', fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-ui)',
+                border: '1px solid var(--accent)', background: following ? 'none' : 'var(--accent)',
+                color: following ? 'var(--text-primary)' : 'var(--on-accent)',
+                transition: 'background var(--dur-quick) var(--ease-calm), color var(--dur-quick) var(--ease-calm)',
               }}>
-              {following ? 'Читаю' : '+ Читать'}
+              {following ? 'Вы читаете' : 'Читать'}
             </button>
-          )}
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {posts.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 14 }}>
-              Нет публикаций
-            </div>
-          )}
+          </div>
+        )}
+        <div style={{ marginTop: 18, borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 2, padding: 2 }}>
           {posts.map(p => (
-            <div key={p.id} style={{
-              background: 'var(--bg-raised)', borderRadius: 12, padding: '12px 14px',
-              border: '1px solid var(--border)',
-            }}>
-              {p.title && <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4, fontFamily: 'Lora, serif' }}>{p.title}</div>}
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {p.content.replace(/<[^>]+>/g, '').slice(0, 120)}
-              </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Heart size={12} /> {p.likesCount || 0}
-                </span>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <MessageCircle size={12} /> {p.commentsCount || 0}
-                </span>
-              </div>
+            <div key={p.id} style={{ aspectRatio: '3 / 4', background: 'var(--bg-card)', padding: 10, overflow: 'hidden' }}>
+              <TypedText text={plainText(p.content).slice(0, 160)} style={{ fontSize: 9.5, lineHeight: 1.45 }} />
             </div>
           ))}
         </div>
+        {posts.length === 0 && (
+          <p style={{ textAlign: 'center', padding: '40px 24px', margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+            Листов пока нет
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-// ── SearchTab ─────────────────────────────────────────────────────────────────
+// ── Поиск людей ──────────────────────────────────────────────────────────────
 function SearchTab({ userId }: { userId: string }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SocialProfile[]>([]);
@@ -790,53 +668,39 @@ function SearchTab({ userId }: { userId: string }) {
   }, [query, userId]);
 
   return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        background: 'var(--bg-raised)', border: '1px solid var(--border)',
-        borderRadius: 14, padding: '10px 14px',
-      }}>
-        <Search size={16} color='var(--text-muted)' />
+    <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column' }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 10, height: 48, borderBottom: '1px solid var(--text-primary)' }}>
+        <Search size={17} strokeWidth={1.5} color="var(--text-muted)" />
         <input value={query} onChange={e => setQuery(e.target.value)}
-          placeholder='Поиск по имени или @username...'
-          style={{
-            flex: 1, background: 'none', border: 'none', outline: 'none',
-            color: 'var(--text-primary)', fontSize: 15, fontFamily: 'Inter, sans-serif',
-          }} />
-        {query && <button onClick={() => setQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={14} /></button>}
-      </div>
+          aria-label="Поиск читателей"
+          placeholder="Имя или @username"
+          style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: 15, fontFamily: 'var(--font-ui)' }} />
+        {query && <button aria-label="Очистить" onClick={() => setQuery('')} style={{ ...iconBtn, color: 'var(--text-muted)' }}><X size={15} /></button>}
+      </label>
 
-      {loading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, padding: '20px 0' }}>Поиск...</div>}
+      {loading && <p style={{ ...label, padding: '20px 0', margin: 0 }}>Ищу…</p>}
 
       {!loading && results.length === 0 && query && (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, padding: '20px 0' }}>
-          Никого не найдено по «{query}»
-        </div>
+        <p style={{ margin: 0, padding: '24px 0', fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+          Никого не нашлось по «{query}»
+        </p>
       )}
 
       {!query && (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Найдите читателей по имени</div>
-        </div>
+        <p style={{ margin: 0, padding: '32px 0', fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 17, color: 'var(--text-muted)' }}>
+          Найдите тех, кто читает то же, что и вы.
+        </p>
       )}
 
       {results.map(p => (
         <button key={p.id} onClick={() => setSelectedProfile(p)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-            background: 'var(--bg-raised)', borderRadius: 14, border: '1px solid var(--border)',
-            cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.15s',
-          }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 0', background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
           <Avatar profile={p} size={44} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {p.displayName || p.username}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>@{p.username}</div>
-            {p.bio && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{p.bio.slice(0, 60)}</div>}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.followersCount || 0} читателей</div>
+          <span style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+            <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>{p.displayName || p.username}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>@{p.username}</span>
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.followersCount || 0} читателей</span>
         </button>
       ))}
 
@@ -847,30 +711,30 @@ function SearchTab({ userId }: { userId: string }) {
   );
 }
 
-// ── SavedTab ──────────────────────────────────────────────────────────────────
-function SavedTab({ savedPosts, userId, onLike, onComment }: {
+// ── Сохранённое ──────────────────────────────────────────────────────────────
+function SavedTab({ savedPosts, userId, onLike, onSave, onComment }: {
   savedPosts: SocialPost[];
   userId: string;
   onLike: (p: SocialPost) => void;
+  onSave: (p: SocialPost) => void;
   onComment: (p: SocialPost) => void;
 }) {
   const [selectedProfile, setSelectedProfile] = useState<SocialProfile | null>(null);
 
   if (savedPosts.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>🔖</div>
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'Lora, serif' }}>Нет сохранённых</div>
-        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Нажмите 🔖 на любом посте чтобы сохранить</div>
+      <div style={{ padding: '56px 28px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22 }}>Здесь пусто</span>
+        <TypedText text="Сохраняйте листы закладкой — они соберутся здесь." style={{ fontSize: 14, color: 'var(--text-muted)' }} />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+    <div style={{ padding: '14px 12px' }}>
       {savedPosts.map(post => (
         <PostCard key={post.id} post={post} userId={userId}
-          onLike={onLike} onSave={() => { }} onComment={onComment}
+          onLike={onLike} onSave={onSave} onComment={onComment}
           onProfile={setSelectedProfile}
           onDelete={() => { }} onEdit={() => { }} />
       ))}
@@ -879,11 +743,14 @@ function SavedTab({ savedPosts, userId, onLike, onComment }: {
   );
 }
 
-// ── Main FeedView ─────────────────────────────────────────────────────────────
-export default function FeedView({ user, notes, books }: {
+// ── Агора ────────────────────────────────────────────────────────────────────
+export default function FeedView({ user, notes, books, composeRequest = 0, onOpenNotifications, onOpenMessages }: {
   user: User;
   notes: import('../types').Note[];
   books: Book[];
+  composeRequest?: number;
+  onOpenNotifications?: () => void;
+  onOpenMessages?: () => void;
 }) {
   const [tab, setTab] = useState<'feed' | 'search' | 'saved'>('feed');
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -918,6 +785,11 @@ export default function FeedView({ user, notes, books }: {
     getMyProfile(user.id).then(setMyProfile);
   }, [user.id]); // eslint-disable-line
 
+  // «Мысль в Агору» из меню «+» открывает новый лист
+  useEffect(() => {
+    if (composeRequest > 0) { setTab('feed'); setShowCreate(true); }
+  }, [composeRequest]);
+
   const handleLike = async (post: SocialPost) => {
     const newLiked = await toggleLike(post.id, user.id, !!post.isLiked);
     setPosts(prev => prev.map(p => p.id === post.id
@@ -936,95 +808,66 @@ export default function FeedView({ user, notes, books }: {
     setPosts(prev => prev.filter(p => p.id !== postId));
   };
 
-  const handleEdit = (post: SocialPost) => {
-    setEditPost(post);
-  };
-
   const handleEditSaved = (updated: SocialPost) => {
     setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
   };
 
   const savedPosts = posts.filter(p => p.isSaved);
+  const tabs = [['feed', 'Лента'], ['search', 'Люди'], ['saved', 'Сохранённое']] as const;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{
-        padding: '16px 16px 0',
-        paddingTop: `calc(16px + env(safe-area-inset-top))`,
-        background: 'var(--bg-base)', borderBottom: '1px solid var(--border)',
-        flexShrink: 0,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif', margin: 0 }}>
-            Сообщество
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--bg-base)' }}>
+      <header style={{ paddingTop: 'env(safe-area-inset-top)', flexShrink: 0, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 56, padding: '0 8px 0 20px' }}>
+          <h1 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 28, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>
+            Агора
           </h1>
-          <button onClick={() => { vibe(8); setShowCreate(true); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-              background: 'linear-gradient(135deg, #d4a060, #8a5220)',
-              border: 'none', borderRadius: 12, color: '#fff',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            }}>
-            <Plus size={15} strokeWidth={2.5} /> Публикация
-          </button>
+          <div style={{ display: 'flex' }}>
+            <button aria-label="Новый лист" onClick={() => { vibe(8); setShowCreate(true); }} style={iconBtn}>
+              <PenLine size={21} strokeWidth={1.5} />
+            </button>
+            {onOpenNotifications && (
+              <button aria-label="Отклики" onClick={() => { vibe(6); onOpenNotifications(); }} style={iconBtn}>
+                <Bell size={21} strokeWidth={1.5} />
+              </button>
+            )}
+            {onOpenMessages && (
+              <button aria-label="Письма" onClick={() => { vibe(6); onOpenMessages(); }} style={iconBtn}>
+                <Mail size={21} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
         </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 0, marginBottom: -1 }}>
-          {([['feed', '🌍 Лента'], ['search', '🔍 Поиск'], ['saved', '🔖 Сохранённые']] as const).map(([t, label]) => (
-            <button key={t} onClick={() => { vibe(6); setTab(t); }}
+        <div role="tablist" aria-label="Агора" style={{ display: 'flex', padding: '0 12px', marginBottom: -1 }}>
+          {tabs.map(([t, name]) => (
+            <button key={t} role="tab" aria-selected={tab === t} onClick={() => { vibe(6); setTab(t); }}
               style={{
-                flex: 1, padding: '10px 6px', background: 'none', border: 'none',
-                borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-                color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-                fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer',
-                fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
-              }}>{label}</button>
+                flex: 1, height: 44, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-ui)',
+                borderBottom: tab === t ? '1px solid var(--text-primary)' : '1px solid transparent',
+                color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)',
+                transition: 'color var(--dur-quick) var(--ease-calm), border-color var(--dur-quick) var(--ease-calm)',
+              }}>{name}</button>
           ))}
         </div>
-      </div>
+      </header>
 
-      {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div key={tab} className="view-enter" style={{ flex: 1, overflowY: 'auto' }}>
         {tab === 'feed' && (
           <>
-            {/* Stories */}
-            <div style={{ paddingTop: 16 }}>
+            <div style={{ paddingTop: 14, borderBottom: '1px solid var(--border)' }}>
               <StoriesRow userId={user.id} profile={myProfile} />
             </div>
-            <div style={{ borderBottom: '1px solid var(--border)', marginBottom: 12 }} />
 
-            {/* Posts */}
-            <div style={{ padding: '0 16px' }}>
-              {loading && posts.length === 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {[1, 2, 3].map(i => (
-                    <div key={i} style={{
-                      height: 200, background: 'var(--bg-raised)', borderRadius: 16,
-                      border: '1px solid var(--border)', animation: 'pulse 1.5s ease infinite',
-                    }} />
-                  ))}
-                </div>
-              )}
+            <div style={{ padding: '14px 12px 8px' }}>
+              {loading && posts.length === 0 && [1, 2, 3].map(i => (
+                <div key={i} style={{ ...sheet, height: 180, marginBottom: 14, animation: 'pulse-soft 1.6s ease infinite' }} />
+              ))}
 
               {!loading && posts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>🌱</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8, fontFamily: 'Lora, serif' }}>
-                    Лента пуста
-                  </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20 }}>
-                    Опубликуйте первую запись или найдите читателей
-                  </div>
-                  <button onClick={() => { vibe(8); setShowCreate(true); }}
-                    style={{
-                      padding: '12px 24px', borderRadius: 14,
-                      background: 'linear-gradient(135deg, #d4a060, #8a5220)',
-                      border: 'none', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                    }}>
-                    Первая публикация
-                  </button>
+                <div style={{ padding: '48px 16px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: 24 }}>Агора пока молчит</span>
+                  <TypedText text="Напишите первый лист: мысль, цитату или вопрос." style={{ fontSize: 15, color: 'var(--text-muted)' }} />
+                  <button onClick={() => { vibe(8); setShowCreate(true); }} style={{ ...inkButton(), height: 40, marginTop: 8 }}>Новый лист</button>
                 </div>
               )}
 
@@ -1032,17 +875,13 @@ export default function FeedView({ user, notes, books }: {
                 <PostCard key={post.id} post={post} userId={user.id}
                   onLike={handleLike} onSave={handleSave}
                   onComment={setCommentPost} onProfile={setSelectedProfile}
-                  onDelete={handleDelete} onEdit={handleEdit} />
+                  onDelete={handleDelete} onEdit={setEditPost} />
               ))}
 
               {hasMore && posts.length > 0 && (
                 <button onClick={() => loadPosts(false)} disabled={loading}
-                  style={{
-                    width: '100%', padding: '14px', background: 'var(--bg-raised)',
-                    border: '1px solid var(--border)', borderRadius: 14, marginBottom: 16,
-                    color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer',
-                  }}>
-                  {loading ? 'Загрузка...' : 'Загрузить ещё'}
+                  style={{ width: '100%', height: 48, marginBottom: 12, background: 'none', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+                  {loading ? 'Загружаю…' : 'Ещё листы'}
                 </button>
               )}
             </div>
@@ -1052,24 +891,21 @@ export default function FeedView({ user, notes, books }: {
         {tab === 'search' && <SearchTab userId={user.id} />}
         {tab === 'saved' && (
           <SavedTab savedPosts={savedPosts} userId={user.id}
-            onLike={handleLike} onComment={setCommentPost} />
+            onLike={handleLike} onSave={handleSave} onComment={setCommentPost} />
         )}
       </div>
 
-      {/* Sheets */}
       {showCreate && (
         <CreatePostSheet userId={user.id} notes={notes} books={books}
           onClose={() => setShowCreate(false)}
           onCreated={post => { setPosts(prev => [post, ...prev]); }} />
       )}
       {commentPost && (
-        <CommentsSheet post={commentPost} userId={user.id}
-          onClose={() => {
-            setCommentPost(null);
-            setPosts(prev => prev.map(p => p.id === commentPost.id
-              ? { ...p, commentsCount: (p.commentsCount || 0) }
-              : p));
-          }} />
+        <MarginsView post={commentPost} userId={user.id}
+          onClose={() => setCommentPost(null)}
+          onCommented={() => setPosts(prev => prev.map(p => p.id === commentPost.id
+            ? { ...p, commentsCount: (p.commentsCount || 0) + 1 }
+            : p))} />
       )}
       {editPost && (
         <EditPostSheet post={editPost}
@@ -1080,28 +916,6 @@ export default function FeedView({ user, notes, books }: {
         <ProfileSheet profile={selectedProfile} userId={user.id}
           onClose={() => setSelectedProfile(null)} />
       )}
-
-      {/* FAB for non-feed tabs */}
-      {tab !== 'feed' && (
-        <button onClick={() => { vibe(10); setTab('feed'); setShowCreate(true); }}
-          style={{
-            position: 'fixed', bottom: `calc(80px + env(safe-area-inset-bottom))`,
-            right: 20, width: 52, height: 52, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #d4a060, #8a5220)',
-            border: 'none', boxShadow: '0 4px 16px rgba(180,120,60,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', zIndex: 50, color: '#fff',
-          }}>
-          <Plus size={22} strokeWidth={2.5} />
-        </button>
-      )}
-
-      {/* Pull to refresh */}
-      <div style={{ display: 'none' }}>
-        <button onClick={() => loadPosts(true)}>
-          <Users size={16} />
-        </button>
-      </div>
     </div>
   );
 }

@@ -15,12 +15,12 @@ interface Props {
 
 const NOTE_TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
   note:     { label: 'Заметки',  icon: '📝', color: '#8a6e50' },
-  quote:    { label: 'Цитаты',   icon: '❝',  color: '#c4813c' },
-  insight:  { label: 'Инсайты', icon: '💡', color: '#6a9e8a' },
-  question: { label: 'Вопросы', icon: '🔍', color: '#8a7a9a' },
-  summary:  { label: 'Резюме',  icon: '📋', color: '#7a8a6a' },
-  idea:     { label: 'Идеи',    icon: '🌱', color: '#9a8a4a' },
-  task:     { label: 'Задачи',  icon: '✓',  color: '#6a7a9a' },
+  quote:    { label: 'Цитаты',   icon: '❝',  color: 'var(--accent)' },
+  insight:  { label: 'Инсайты', icon: '💡', color: 'var(--text-secondary)' },
+  question: { label: 'Вопросы', icon: '🔍', color: 'var(--text-secondary)' },
+  summary:  { label: 'Резюме',  icon: '📋', color: 'var(--text-secondary)' },
+  idea:     { label: 'Идеи',    icon: '🌱', color: 'var(--accent)' },
+  task:     { label: 'Задачи',  icon: '✓',  color: 'var(--text-secondary)' },
 };
 
 const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
@@ -145,7 +145,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BarChart2 size={18} color="var(--accent)" />
-            <h1 style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'Lora, serif', color: 'var(--text-primary)', margin: 0 }}>
+            <h1 style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', margin: 0 }}>
               Прогресс
             </h1>
           </div>
@@ -213,10 +213,10 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                         <span style={{ fontSize: 13 }}>{meta?.icon}</span>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'Lora, serif', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {note.title}
                         </span>
-                        {note.isFavorite && <Star size={12} fill="#d4914a" color="#d4914a" />}
+                        {note.isFavorite && <Star size={12} fill="var(--accent)" color="var(--accent)" />}
                       </div>
                       {preview && (
                         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif', margin: '0 0 6px', lineHeight: 1.5 }}>
@@ -311,7 +311,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                 >
                   <h3 style={{
                     fontSize: '1.15rem', fontWeight: 700,
-                    fontFamily: 'Lora, serif', color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-serif)', color: 'var(--text-primary)',
                     margin: '0 0 12px', lineHeight: 1.4,
                   }}>
                     {dailyNote.title || 'Без заголовка'}
@@ -324,7 +324,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                     }}>
                       <p style={{
                         fontSize: '0.95rem', fontStyle: 'italic',
-                        color: 'var(--text-secondary)', fontFamily: 'Lora, serif',
+                        color: 'var(--text-secondary)', fontFamily: 'var(--font-serif)',
                         margin: 0, lineHeight: 1.7,
                       }}>
                         «{dailyNote.quote.length > 200 ? dailyNote.quote.slice(0, 200) + '…' : dailyNote.quote}»
@@ -376,7 +376,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                 alignItems: 'center', justifyContent: 'center',
               }}>
                 <Sparkles size={32} color="var(--accent)" style={{ opacity: 0.4, marginBottom: '12px' }} />
-                <p style={{ fontSize: '15px', color: 'var(--text-muted)', fontFamily: 'Lora, serif', margin: '0 0 6px' }}>
+                <p style={{ fontSize: '15px', color: 'var(--text-muted)', fontFamily: 'var(--font-serif)', margin: '0 0 6px' }}>
                   Создайте первые записи
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', margin: 0 }}>
@@ -391,12 +391,12 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
               animation: 'fadeUp 0.4s ease-out 0.08s both',
             }}>
               {[
-                { icon: <Flame size={16} color="#d45858" />,     value: streak,       label: 'дней подряд', accent: '#d45858' },
+                { icon: <Flame size={16} color="var(--red)" />,     value: streak,       label: 'дней подряд', accent: 'var(--red)' },
                 { icon: <FileText size={16} color="var(--accent)" />, value: notes.length,  label: 'записей',     accent: 'var(--accent)' },
-                { icon: <BookOpen size={16} color="#6a9e8a" />,  value: booksReading, label: 'читаю',        accent: '#6a9e8a' },
-                { icon: <Target size={16} color="#8a7a9a" />,    value: booksFinished,label: 'прочитано',    accent: '#8a7a9a' },
-                { icon: <Star size={16} color="#d4914a" />,      value: favorites,    label: 'избранных',    accent: '#d4914a' },
-                { icon: <TrendingUp size={16} color="#9a8a4a" />,value: totalWords,   label: 'слов',         accent: '#9a8a4a' },
+                { icon: <BookOpen size={16} color="var(--text-secondary)" />,  value: booksReading, label: 'читаю',        accent: 'var(--text-secondary)' },
+                { icon: <Target size={16} color="var(--text-secondary)" />,    value: booksFinished,label: 'прочитано',    accent: 'var(--text-secondary)' },
+                { icon: <Star size={16} color="var(--accent)" />,      value: favorites,    label: 'избранных',    accent: 'var(--accent)' },
+                { icon: <TrendingUp size={16} color="var(--accent)" />,value: totalWords,   label: 'слов',         accent: 'var(--accent)' },
               ].map((m, i) => (
                 <div key={i}
                   className="card-enter"
@@ -523,7 +523,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '7px' }}>
                           <span style={{ fontSize: 18 }}>{b.coverEmoji}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Lora, serif', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {b.title}
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
@@ -568,11 +568,11 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
                       display: 'inline-flex', alignItems: 'center', gap: '5px',
                       padding: '5px 10px', borderRadius: '99px',
                       background: 'var(--bg-raised)',
-                      border: `1px solid ${tag.color}40`,
+                      border: `1px solid color-mix(in srgb, ${tag.color} 25%, transparent)`,
                       color: tag.color, fontSize: '12px', fontFamily: 'Inter, sans-serif',
                     }}>
                       #{tag.name}
-                      <span style={{ fontSize: '10px', opacity: 0.7, background: `${tag.color}20`, borderRadius: '99px', padding: '1px 5px' }}>
+                      <span style={{ fontSize: '10px', opacity: 0.7, background: `color-mix(in srgb, ${tag.color} 13%, transparent)`, borderRadius: '99px', padding: '1px 5px' }}>
                         {count}
                       </span>
                     </div>
@@ -584,7 +584,7 @@ export default function StatsView({ notes, books, tags, onOpen }: Props) {
             {notes.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', animation: 'fadeUp 0.4s ease-out both' }}>
                 <BarChart2 size={40} style={{ opacity: 0.2, marginBottom: '12px' }} />
-                <p style={{ fontSize: '15px', fontFamily: 'Lora, serif', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: '15px', fontFamily: 'var(--font-serif)', marginBottom: '6px', color: 'var(--text-secondary)' }}>
                   Начните вести записи
                 </p>
                 <p style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif' }}>

@@ -15,9 +15,9 @@ function Avatar({ profile, size = 64 }: { profile?: SocialProfile | null; size?:
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, #d4a060, #8a5220)',
+      background: av && av.startsWith('data:') ? 'none' : 'linear-gradient(135deg, var(--accent), var(--accent))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.4, fontWeight: 700, color: '#fff',
+      fontSize: size * 0.4, fontWeight: 700, color: 'var(--on-accent)',
       overflow: 'hidden', border: '3px solid var(--accent)',
       flexShrink: 0,
     }}>
@@ -179,7 +179,7 @@ export default function ProfileView({
       }}>
         {/* Title row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
             Профиль
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -223,7 +223,7 @@ export default function ProfileView({
                   placeholder='Имя' style={{
                     background: 'var(--bg-raised)', border: '1px solid var(--border)',
                     borderRadius: 10, padding: '8px 12px', fontSize: 15, fontWeight: 700,
-                    color: 'var(--text-primary)', fontFamily: 'Lora, serif', outline: 'none',
+                    color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', outline: 'none',
                     width: '100%', boxSizing: 'border-box',
                   }}/>
                 <input value={editUsername} onChange={e => setEditUsername(e.target.value)}
@@ -260,8 +260,8 @@ export default function ProfileView({
                   </button>
                   <button onClick={handleSave} disabled={saving}
                     style={{
-                      background: 'linear-gradient(135deg, #d4a060, #8a5220)', border: 'none',
-                      borderRadius: 10, padding: '6px 14px', cursor: 'pointer', color: '#fff',
+                      background: 'linear-gradient(135deg, var(--accent), var(--accent))', border: 'none',
+                      borderRadius: 10, padding: '6px 14px', cursor: 'pointer', color: 'var(--on-accent)',
                       fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
                     }}>
                     <Check size={14}/> {saving ? '...' : 'Готово'}
@@ -271,7 +271,7 @@ export default function ProfileView({
             ) : (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <div style={{ fontFamily: 'Lora, serif', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
                     {profile?.displayName || editName || user.name}
                   </div>
                   {profile?.isPublic
@@ -317,7 +317,7 @@ export default function ProfileView({
                 onClick={s.onClick}
                 style={{ textAlign: 'center', cursor: s.onClick ? 'pointer' : 'default', padding: '4px 0', borderRadius: 8 }}
               >
-                <div style={{ fontSize: 18, fontWeight: 700, color: s.onClick ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{s.v}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: s.onClick ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{s.v}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
               </div>
             ))}
@@ -511,7 +511,7 @@ export default function ProfileView({
                 animation: 'fadeSlideUp 0.3s ease 0.36s both',
               }}>
                 <div style={{ fontSize: 20, marginBottom: 8 }}>✦</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', fontFamily: 'Lora, serif', marginBottom: 6 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-serif)', marginBottom: 6 }}>
                   Настройте публичный профиль
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
@@ -520,7 +520,7 @@ export default function ProfileView({
                 <button onClick={() => { vibe(8); setEditing(true); }}
                   style={{
                     padding: '8px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #d4a060, #8a5220)', color: '#fff',
+                    background: 'linear-gradient(135deg, var(--accent), var(--accent))', color: 'var(--on-accent)',
                     fontSize: 13, fontWeight: 700,
                   }}>
                   Настроить
@@ -535,7 +535,7 @@ export default function ProfileView({
           posts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', animation: 'fadeSlideUp 0.4s ease both' }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>✦</div>
-              <div style={{ fontFamily: 'Lora, serif', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
                 Нет публикаций
               </div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
@@ -552,7 +552,7 @@ export default function ProfileView({
                 }}>
                   <div style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                      <div style={{ fontFamily: 'Lora, serif', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>
+                      <div style={{ fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>
                         {post.title || post.content.replace(/<[^>]+>/g,'').slice(0, 60)}
                       </div>
                       <button onClick={() => handleDeletePost(post.id)}
@@ -607,7 +607,7 @@ export default function ProfileView({
                     textAlign: 'center', border: '1px solid var(--border)',
                   }}>
                     <div style={{ color: 'var(--accent)', marginBottom: 6 }}>{s.icon}</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Lora, serif' }}>{s.v}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>{s.v}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{s.l}</div>
                   </div>
                 ))}
@@ -631,7 +631,7 @@ export default function ProfileView({
                     <div style={{ height: 6, background: 'var(--bg-raised)', borderRadius: 3, overflow: 'hidden' }}>
                       <div style={{
                         height: '100%', borderRadius: 3,
-                        background: 'linear-gradient(90deg, #d4a060, #8a5220)',
+                        background: 'linear-gradient(90deg, var(--accent), var(--accent))',
                         width: `${Math.min((s.v / s.max) * 100, 100)}%`,
                         transition: 'width 0.6s ease',
                       }}/>

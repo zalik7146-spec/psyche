@@ -56,7 +56,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '7 дней подряд',
       description: 'Делай записи 7 дней без пропусков',
       target: 7, current: Math.min(streak, 7),
-      color: '#e87a7a', bg: 'rgba(232,122,122,0.12)',
+      color: 'var(--red)', bg: 'rgba(232,122,122,0.12)',
       badge: '🔥 Стрик-мастер',
       completed: streak >= 7,
     },
@@ -66,7 +66,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '30 дней подряд',
       description: 'Месяц ежедневных записей — настоящий подвиг',
       target: 30, current: Math.min(streak, 30),
-      color: '#e87a7a', bg: 'rgba(232,122,122,0.12)',
+      color: 'var(--red)', bg: 'rgba(232,122,122,0.12)',
       badge: '🔥 Легенда стрика',
       completed: streak >= 30,
     },
@@ -76,7 +76,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '5 книг прочитано',
       description: 'Прочитай и отметь 5 книг как прочитанные',
       target: 5, current: Math.min(finishedBooks, 5),
-      color: '#7ac997', bg: 'rgba(122,201,151,0.12)',
+      color: 'var(--green)', bg: 'rgba(122,201,151,0.12)',
       badge: '📚 Книжный червь',
       completed: finishedBooks >= 5,
     },
@@ -86,7 +86,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '10 книг прочитано',
       description: 'Стань настоящим читателем — 10 книг!',
       target: 10, current: Math.min(finishedBooks, 10),
-      color: '#7ac997', bg: 'rgba(122,201,151,0.12)',
+      color: 'var(--green)', bg: 'rgba(122,201,151,0.12)',
       badge: '📚 Библиофил',
       completed: finishedBooks >= 10,
     },
@@ -96,7 +96,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '50 записей',
       description: 'Сделай 50 заметок — идеи, инсайты, цитаты',
       target: 50, current: Math.min(notes.length, 50),
-      color: '#e8c97a', bg: 'rgba(232,201,122,0.12)',
+      color: 'var(--accent)', bg: 'rgba(232,201,122,0.12)',
       badge: '✍️ Летописец',
       completed: notes.length >= 50,
     },
@@ -106,7 +106,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '100 записей',
       description: 'Достигни отметки в 100 записей!',
       target: 100, current: Math.min(notes.length, 100),
-      color: '#e8c97a', bg: 'rgba(232,201,122,0.12)',
+      color: 'var(--accent)', bg: 'rgba(232,201,122,0.12)',
       badge: '✍️ Мастер пера',
       completed: notes.length >= 100,
     },
@@ -146,7 +146,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: `50 записей в ${year}`,
       description: `Сделай 50 записей в ${year} году`,
       target: 50, current: Math.min(yearNotes.length, 50),
-      color: '#e8c97a', bg: 'rgba(232,201,122,0.12)',
+      color: 'var(--accent)', bg: 'rgba(232,201,122,0.12)',
       badge: `🏆 Рекордсмен ${year}`,
       completed: yearNotes.length >= 50,
     },
@@ -156,7 +156,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '10 избранных',
       description: 'Добавь 10 записей в избранное',
       target: 10, current: Math.min(favorites, 10),
-      color: '#e8c97a', bg: 'rgba(232,201,122,0.12)',
+      color: 'var(--accent)', bg: 'rgba(232,201,122,0.12)',
       badge: '⭐ Коллекционер',
       completed: favorites >= 10,
     },
@@ -166,7 +166,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
       title: '5 закреплённых',
       description: 'Закрепи 5 важных записей',
       target: 5, current: Math.min(pinned, 5),
-      color: '#7ac997', bg: 'rgba(122,201,151,0.12)',
+      color: 'var(--green)', bg: 'rgba(122,201,151,0.12)',
       badge: '📌 Организатор',
       completed: pinned >= 5,
     },
@@ -199,7 +199,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
             <X size={18} />
           </button>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0, fontFamily: 'Lora, serif' }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0, fontFamily: 'var(--font-serif)' }}>
               🏆 Челленджи
             </h1>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
@@ -215,7 +215,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
               flex: 1, padding: '8px', borderRadius: 10,
               background: tab === t ? 'var(--accent)' : 'var(--bg-raised)',
               border: `1px solid ${tab === t ? 'var(--accent)' : 'var(--border)'}`,
-              color: tab === t ? '#0e0c09' : 'var(--text-muted)',
+              color: tab === t ? 'var(--bg-base)' : 'var(--text-muted)',
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}>
               {t === 'active' ? `Активные (${active.length})` : `Выполнено (${completed.length})`}
@@ -254,7 +254,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
             <div style={{ fontSize: 48, marginBottom: 16 }}>
               {tab === 'completed' ? '🎯' : '🏆'}
             </div>
-            <p style={{ fontSize: 16, color: 'var(--text-secondary)', fontFamily: 'Lora, serif' }}>
+            <p style={{ fontSize: 16, color: 'var(--text-secondary)', fontFamily: 'var(--font-serif)' }}>
               {tab === 'completed' ? 'Выполни первый челлендж!' : 'Все челленджи выполнены!'}
             </p>
           </div>
@@ -264,7 +264,7 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
           {shown.map((c, i) => (
             <div key={c.id} style={{
               background: c.completed ? 'var(--bg-raised)' : 'var(--bg-card)',
-              border: `1px solid ${c.completed ? c.color + '40' : 'var(--border)'}`,
+              border: `1px solid ${c.completed ? `color-mix(in srgb, ${c.color} 25%, transparent)` : 'var(--border)'}`,
               borderRadius: 16, padding: '16px',
               animation: `fadeSlideUp 0.4s ease-out ${i * 0.06}s both`,
               position: 'relative', overflow: 'hidden',
@@ -275,14 +275,14 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
                   width: 28, height: 28, borderRadius: '50%',
                   background: c.color, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <Check size={14} color="#0e0c09" strokeWidth={3} />
+                  <Check size={14} color="var(--bg-base)" strokeWidth={3} />
                 </div>
               )}
 
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: 14,
-                  background: c.bg, border: `1px solid ${c.color}30`,
+                  background: c.bg, border: `1px solid color-mix(in srgb, ${c.color} 19%, transparent)`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: c.color, flexShrink: 0,
                 }}>
@@ -322,8 +322,8 @@ export default function ChallengesView({ notes, books, onClose }: Props) {
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '4px 10px', borderRadius: 8,
-                background: c.completed ? `${c.color}20` : 'var(--bg-raised)',
-                border: `1px solid ${c.completed ? c.color + '40' : 'var(--border)'}`,
+                background: c.completed ? `color-mix(in srgb, ${c.color} 13%, transparent)` : 'var(--bg-raised)',
+                border: `1px solid ${c.completed ? `color-mix(in srgb, ${c.color} 25%, transparent)` : 'var(--border)'}`,
               }}>
                 <span style={{ fontSize: 11, color: c.completed ? c.color : 'var(--text-muted)', fontWeight: 600 }}>
                   {c.completed ? c.badge : `🎯 ${c.badge}`}

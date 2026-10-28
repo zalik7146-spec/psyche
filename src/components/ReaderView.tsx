@@ -19,8 +19,8 @@ interface Props {
   onProgress?: (page: number, totalPages: number) => void
 }
 
-const FONTS = ['Lora, serif', 'Inter, sans-serif', 'Georgia, serif', "'Courier New', monospace"]
-const FONT_NAMES = ['Lora', 'Inter', 'Georgia', 'Mono']
+const FONTS = ['var(--font-serif)', 'var(--font-ui)', 'Georgia, serif', 'var(--font-typed)']
+const FONT_NAMES = ['Книжный', 'Простой', 'Georgia', 'Машинка']
 const THEMES = {
   dark: { bg: '#15120e', text: '#eedfc4', panel: '#1e1b15' },
   light: { bg: '#faf6f0', text: '#2c2416', panel: '#f0ebe0' },

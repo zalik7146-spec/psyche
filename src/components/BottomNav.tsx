@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { BookOpen, FileText, Plus, Users, UserCircle, X, Sparkles, PenLine, Brain, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BookOpen, Plus, UserCircle, Landmark, NotebookPen, X } from 'lucide-react';
 import { TabId } from '../types';
 
 interface Props {
@@ -7,139 +7,107 @@ interface Props {
   onChange: (tab: TabId) => void;
   unreadNotifs?: number;
   onNotifications?: () => void;
+  onComposePost?: () => void;
 }
 
 const vibe = (ms = 8) => { try { navigator.vibrate?.(ms); } catch {} };
 
-export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifications }: Props) {
+// Какой пункт панели подсвечивать для каждого экрана
+const SECTION: Partial<Record<TabId, TabId>> = {
+  feed: 'feed',
+  library: 'library',
+  notes: 'notes', daily: 'notes', cards: 'notes', graph: 'notes', stats: 'notes',
+  profile: 'profile', achievements: 'profile', anki: 'profile', share: 'profile', settings: 'profile',
+};
+
+export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifications, onComposePost }: Props) {
   const [showNewMenu, setShowNewMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!showNewMenu) return;
-    const handler = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.new-menu-sheet') && !target.closest('.fab-btn')) {
-        setShowNewMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    document.addEventListener('touchstart', handler);
-    return () => {
-      document.removeEventListener('mousedown', handler);
-      document.removeEventListener('touchstart', handler);
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowNewMenu(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, [showNewMenu]);
 
   const tabs = [
-    { id: 'notes'   as TabId, icon: <FileText size={22} />,   label: 'Записи'  },
-    { id: 'library' as TabId, icon: <BookOpen size={22} />,   label: 'Книги'   },
+    { id: 'feed'    as TabId, icon: <Landmark size={23} strokeWidth={1.5} />,    label: 'Агора'   },
+    { id: 'library' as TabId, icon: <BookOpen size={23} strokeWidth={1.5} />,    label: 'Книги'   },
     null,
-    { id: 'feed'    as TabId, icon: <Users size={22} />,      label: 'Люди'    },
-    { id: 'profile' as TabId, icon: <UserCircle size={22} />, label: 'Профиль' },
+    { id: 'notes'   as TabId, icon: <NotebookPen size={23} strokeWidth={1.5} />, label: 'Дневник' },
+    { id: 'profile' as TabId, icon: <UserCircle size={23} strokeWidth={1.5} />,  label: 'Профиль' },
   ];
 
-  const NAV_H = 60;
+  const current = SECTION[active];
+  const NAV_H = 58;
+
+  const pick = (tab: TabId) => { vibe(10); setShowNewMenu(false); onChange(tab); };
 
   return (
     <>
-      <nav style={{
+      <nav aria-label="Разделы" style={{
         flexShrink: 0, width: '100%',
         background: 'var(--nav-bg)',
         borderTop: '1px solid var(--border)',
         display: 'flex', alignItems: 'center',
         position: 'relative', zIndex: 50,
-        height: NAV_H,
+        height: `calc(${NAV_H}px + env(safe-area-inset-bottom, 0px))`,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        {tabs.map((tab, _i) => {
+        {tabs.map(tab => {
           if (tab === null) {
             return (
-              <div key="fab" style={{
-                flex: 1, display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                position: 'relative', height: '100%',
-              }}>
+              <div key="new" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <button
                   className="fab-btn"
+                  aria-label="Новый лист"
+                  aria-expanded={showNewMenu}
                   onClick={() => { vibe(14); setShowNewMenu(v => !v); }}
                   style={{
-                    width: 50, height: 50, borderRadius: 15,
-                    background: showNewMenu
-                      ? 'linear-gradient(145deg,#7a4518,#4a2808)'
-                      : 'linear-gradient(145deg,#d4914a,#8a5220)',
-                    border: '2px solid var(--nav-bg)',
-                    boxShadow: showNewMenu
-                      ? '0 2px 10px rgba(180,110,40,0.3)'
-                      : '0 3px 16px rgba(180,110,40,0.5),0 1px 6px rgba(0,0,0,0.4)',
-                    cursor: 'pointer', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center',
-                    color: '#fff',
-                    WebkitTapHighlightColor: 'transparent',
-                    transition: 'background 0.2s, box-shadow 0.2s',
-                    animation: 'fab-pop 0.45s cubic-bezier(0.34,1.4,0.64,1) both',
-                    flexShrink: 0,
-                  }}
-                  onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.88)'; }}
-                  onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                  onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <div style={{
-                    transform: showNewMenu ? 'rotate(45deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.25s cubic-bezier(0.34,1.4,0.64,1)',
+                    width: 44, height: 44,
+                    background: 'var(--accent)', color: 'var(--on-accent)',
+                    border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Plus size={24} strokeWidth={2.5} />
-                  </div>
+                    transition: 'transform var(--dur-quick) var(--ease-calm)',
+                    transform: showNewMenu ? 'rotate(45deg)' : 'none',
+                  }}
+                >
+                  <Plus size={22} strokeWidth={1.75} />
                 </button>
               </div>
             );
           }
 
-          const isActive = active === tab.id;
+          const isActive = current === tab.id;
           return (
             <button
               key={tab.id}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => { vibe(6); onChange(tab.id); }}
               style={{
-                flex: 1, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                gap: 4, background: 'none', border: 'none', cursor: 'pointer',
-                color: isActive ? 'var(--accent)' : 'var(--text-muted)',
-                transition: 'color 0.18s',
-                WebkitTapHighlightColor: 'transparent',
-                padding: '6px 4px', position: 'relative', height: NAV_H,
+                flex: 1, height: NAV_H,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                transition: 'color var(--dur-quick) var(--ease-calm)',
+                position: 'relative',
               }}
-              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.85)'; }}
-              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              <div style={{ position: 'relative' }}>
+              <span style={{ position: 'relative', display: 'flex' }}>
                 {tab.icon}
-                {tab.id === 'profile' && unreadNotifs > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -4, right: -4,
-                    width: 14, height: 14, borderRadius: '50%',
-                    background: '#e74c3c', border: '2px solid var(--nav-bg)',
-                    fontSize: 8, fontWeight: 700, color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'Inter,sans-serif',
-                  }}>
-                    {unreadNotifs > 9 ? '9+' : unreadNotifs}
-                  </span>
+                {tab.id === 'feed' && unreadNotifs > 0 && (
+                  <span aria-hidden="true" style={{
+                    position: 'absolute', top: -1, right: -3,
+                    width: 7, height: 7, borderRadius: '50%',
+                    background: 'var(--accent)', border: '1.5px solid var(--nav-bg)',
+                  }} />
                 )}
-              </div>
-              <span style={{
-                fontSize: 10, fontWeight: isActive ? 700 : 400,
-                fontFamily: 'Inter,sans-serif', lineHeight: 1,
-                letterSpacing: isActive ? '0.02em' : 0,
-              }}>{tab.label}</span>
+              </span>
               {isActive && (
-                <span style={{
-                  position: 'absolute', bottom: 6,
-                  width: 18, height: 3, borderRadius: 99,
-                  background: 'var(--accent)',
-                  animation: 'tab-indicator 0.22s cubic-bezier(0.22,1,0.36,1) both',
+                <span aria-hidden="true" style={{
+                  position: 'absolute', top: -1, left: '50%', marginLeft: -12,
+                  width: 24, height: 1, background: 'var(--text-primary)',
                 }} />
               )}
             </button>
@@ -147,105 +115,53 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
         })}
       </nav>
 
-      {/* FAB Menu */}
       {showNewMenu && (
         <>
           <div
             onClick={() => setShowNewMenu(false)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 90,
-              background: 'rgba(0,0,0,0.5)',
-              animation: 'fadeIn 0.18s ease',
-            }}
+            style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'var(--overlay)', animation: 'fadeIn var(--dur-quick) var(--ease-calm)' }}
           />
           <div
-            ref={menuRef}
-            className="new-menu-sheet"
+            role="dialog"
+            aria-label="Новый лист"
+            className="new-menu-sheet view-feed"
             style={{
               position: 'fixed',
               bottom: `calc(${NAV_H}px + env(safe-area-inset-bottom,0px) + 10px)`,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 'min(calc(100vw - 32px), 398px)',
+              left: 0, right: 0, margin: '0 auto',
+              width: 'min(calc(100vw - 24px), 406px)',
               background: 'var(--bg-card)',
-              borderRadius: 20,
-              border: '1px solid var(--border-mid)',
-              boxShadow: '0 -4px 40px rgba(0,0,0,0.55)',
-              zIndex: 100, overflow: 'hidden',
-              animation: 'menuSlideUp 0.28s cubic-bezier(0.34,1.2,0.64,1)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+              zIndex: 100,
             }}
           >
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '13px 16px 10px',
-              borderBottom: '1px solid var(--border)',
+              padding: '6px 6px 6px 18px', borderBottom: '1px solid var(--border)',
             }}>
-              <span style={{
-                fontSize: 11, fontWeight: 700,
-                color: 'var(--text-muted)', fontFamily: 'Inter,sans-serif',
-                letterSpacing: '0.08em', textTransform: 'uppercase',
-              }}>Новая запись</span>
+              <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Новый лист</span>
               <button
+                aria-label="Закрыть"
                 onClick={() => setShowNewMenu(false)}
-                style={{
-                  width: 26, height: 26, borderRadius: 8,
-                  background: 'var(--bg-raised)', border: 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', color: 'var(--text-muted)',
-                }}
-              ><X size={14} /></button>
+                style={{ width: 44, height: 44, background: 'none', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-muted)' }}
+              ><X size={18} strokeWidth={1.5} /></button>
             </div>
 
-            <div style={{ padding: '10px 12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <MenuOption
-                icon={<PenLine size={20} color="var(--accent)" />}
-                iconBg="linear-gradient(135deg,#d4a06030,#8a522020)"
-                title="Свободная запись"
-                desc="Чистый лист — пиши что думаешь"
-                delay={0.05}
-                onClick={() => { vibe(10); setShowNewMenu(false); onChange('new'); }}
-              />
-              <MenuOption
-                icon={<Sparkles size={20} color="#6a9e8a" />}
-                iconBg="linear-gradient(135deg,#6a9e8a30,#4a7a6a20)"
-                title="Из шаблона"
-                desc="Готовая структура для разбора книги"
-                delay={0.10}
-                onClick={() => { vibe(10); setShowNewMenu(false); onChange('template'); }}
-              />
-              <MenuOption
-                icon={<Brain size={20} color="#8a7a9a" />}
-                iconBg="linear-gradient(135deg,#8a7a9a30,#6a5a8a20)"
-                title="Карточка памяти"
-                desc="Создать карточку для повторения"
-                delay={0.15}
-                onClick={() => { vibe(10); setShowNewMenu(false); onChange('cards'); }}
-              />
-              <MenuOption
-                icon={<Users size={20} color="#6a8a9a" />}
-                iconBg="linear-gradient(135deg,#6a8a9a30,#4a6a7a20)"
-                title="Поделиться в сообществе"
-                desc="Опубликовать мысль или инсайт"
-                delay={0.20}
-                onClick={() => { vibe(10); setShowNewMenu(false); onChange('feed'); }}
-              />
-              <MenuOption
-                icon={<BookOpen size={20} color="#9a8a6a" />}
-                iconBg="linear-gradient(135deg,#9a8a6a30,#7a6a4a20)"
-                title="Запись в журнал"
-                desc="Дневниковая запись сегодняшнего дня"
-                delay={0.25}
-                onClick={() => { vibe(10); setShowNewMenu(false); onChange('daily'); }}
-              />
-              <MenuOption
-                icon={<Bell size={20} color="#6a9a8a" />}
-                iconBg="linear-gradient(135deg,#6a9a8a30,#4a7a6a20)"
-                title={`Уведомления${unreadNotifs > 0 ? ` (${unreadNotifs})` : ''}`}
-                desc="Лайки, комментарии, Daily Review"
-                delay={0.30}
-                onClick={() => { vibe(10); setShowNewMenu(false); onNotifications?.(); }}
-              />
-            </div>
+            <MenuOption title="Мысль в Агору" desc="Лист, который увидят читатели" onClick={() => {
+              vibe(10); setShowNewMenu(false);
+              if (onComposePost) onComposePost(); else onChange('feed');
+            }} />
+            <MenuOption title="Запись" desc="Чистый лист для себя" onClick={() => pick('new')} />
+            <MenuOption title="Из шаблона" desc="Готовая структура для разбора книги" onClick={() => pick('template')} />
+            <MenuOption title="Запись дня" desc="Утреннее намерение, вечерние итоги" onClick={() => pick('daily')} />
+            <MenuOption title="Карточка памяти" desc="Для повторения" onClick={() => pick('cards')} />
+            <MenuOption
+              title={`Отклики${unreadNotifs > 0 ? ` · ${unreadNotifs}` : ''}`}
+              desc="Оттиски, пометки на полях, новые читатели"
+              onClick={() => { vibe(10); setShowNewMenu(false); onNotifications?.(); }}
+              last
+            />
           </div>
         </>
       )}
@@ -253,45 +169,25 @@ export default function BottomNav({ active, onChange, unreadNotifs = 0, onNotifi
   );
 }
 
-function MenuOption({ icon, iconBg, title, desc, delay, onClick }: {
-  icon: React.ReactNode; iconBg: string; title: string;
-  desc: string; delay: number; onClick: () => void;
+function MenuOption({ title, desc, onClick, last }: {
+  title: string; desc: string; onClick: () => void; last?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
-        padding: '13px 14px', borderRadius: 14,
-        background: 'var(--bg-raised)',
-        border: '1px solid var(--border)',
-        cursor: 'pointer', textAlign: 'left', width: '100%',
-        transition: 'background 0.15s',
-        animation: `fadeSlideUp 0.25s ease ${delay}s both`,
+        display: 'flex', flexDirection: 'column', gap: 3,
+        padding: '13px 18px', width: '100%', textAlign: 'left',
+        background: 'none', border: 'none', cursor: 'pointer',
+        borderBottom: last ? 'none' : '1px solid var(--border)',
+        transition: 'background var(--dur-quick) var(--ease-calm)',
       }}
-      onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-active)')}
-      onPointerUp={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
-      onPointerLeave={e => (e.currentTarget.style.background = 'var(--bg-raised)')}
+      onPointerDown={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+      onPointerUp={e => (e.currentTarget.style.background = 'none')}
+      onPointerLeave={e => (e.currentTarget.style.background = 'none')}
     >
-      <div style={{
-        width: 42, height: 42, borderRadius: 12,
-        background: iconBg, border: '1px solid var(--border-mid)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        {icon}
-      </div>
-      <div>
-        <div style={{
-          fontSize: 15, fontWeight: 600,
-          color: 'var(--text-primary)', fontFamily: 'Inter,sans-serif',
-          marginBottom: 2,
-        }}>{title}</div>
-        <div style={{
-          fontSize: 12, color: 'var(--text-muted)',
-          fontFamily: 'Inter,sans-serif', lineHeight: 1.4,
-        }}>{desc}</div>
-      </div>
+      <span style={{ fontSize: 15, color: 'var(--text-primary)' }}>{title}</span>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{desc}</span>
     </button>
   );
 }

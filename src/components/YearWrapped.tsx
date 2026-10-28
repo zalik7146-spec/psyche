@@ -61,7 +61,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
       value: yearNotes.length,
       sub: 'записей сделано за год',
       bg: 'linear-gradient(135deg, #2a1f14 0%, #3d2b1a 100%)',
-      color: '#e8c97a',
+      color: 'var(--accent)',
     },
     {
       emoji: '📚',
@@ -69,7 +69,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
       value: yearBooks.length,
       sub: `книг добавлено в библиотеку в ${year}`,
       bg: 'linear-gradient(135deg, #1a2a1f 0%, #1a3d2b 100%)',
-      color: '#7ac997',
+      color: 'var(--green)',
     },
     {
       emoji: '✍️',
@@ -93,7 +93,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
       value: `${streak} дней`,
       sub: 'максимальная серия записей подряд',
       bg: 'linear-gradient(135deg, #2a1414 0%, #3d1a1a 100%)',
-      color: '#e87a7a',
+      color: 'var(--red)',
     },
     {
       emoji: '🏆',
@@ -164,7 +164,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           width: 36, height: 36, borderRadius: '50%',
           background: 'rgba(255,255,255,0.1)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', cursor: 'pointer', zIndex: 10,
+          color: 'var(--on-accent)', cursor: 'pointer', zIndex: 10,
         }}>
           <X size={18} />
         </button>
@@ -203,10 +203,10 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           </p>
           <p style={{
             fontSize: typeof slide.value === 'string' && slide.value.length > 10 ? 28 : 64,
-            fontWeight: 800, color: '#fff',
-            fontFamily: 'Lora, serif', textAlign: 'center',
+            fontWeight: 800, color: 'var(--on-accent)',
+            fontFamily: 'var(--font-serif)', textAlign: 'center',
             lineHeight: 1.1, marginBottom: 16,
-            textShadow: `0 0 40px ${slide.color}60`,
+            textShadow: `0 0 40px color-mix(in srgb, ${slide.color} 38%, transparent)`,
           }}>
             {slide.value}
           </p>
@@ -228,7 +228,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
             width: 48, height: 48, borderRadius: '50%',
             background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', cursor: 'pointer', opacity: idx === 0 ? 0.3 : 1,
+            color: 'var(--on-accent)', cursor: 'pointer', opacity: idx === 0 ? 0.3 : 1,
           }}>
             <ChevronLeft size={24} />
           </button>
@@ -236,7 +236,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
           <button onClick={handleShare} style={{
             padding: '12px 24px', borderRadius: 24,
             background: slide.color, border: 'none',
-            color: '#0e0c09', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            color: 'var(--bg-base)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <Share2 size={16} /> Поделиться
@@ -246,7 +246,7 @@ export default function YearWrapped({ notes, books, onClose }: Props) {
             width: 48, height: 48, borderRadius: '50%',
             background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', cursor: 'pointer', opacity: idx === slides.length - 1 ? 0.3 : 1,
+            color: 'var(--on-accent)', cursor: 'pointer', opacity: idx === slides.length - 1 ? 0.3 : 1,
           }}>
             <ChevronRight size={24} />
           </button>

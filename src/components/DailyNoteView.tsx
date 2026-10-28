@@ -18,7 +18,7 @@ const MOODS = [
   { value: 2, emoji: '😕', label: 'Сложно',     color: '#8a7a5a' },
   { value: 3, emoji: '😐', label: 'Нейтрально', color: '#7a8a7a' },
   { value: 4, emoji: '🙂', label: 'Хорошо',     color: '#6a8a7a' },
-  { value: 5, emoji: '😊', label: 'Отлично',    color: '#5a8a6a' },
+  { value: 5, emoji: '😊', label: 'Отлично',    color: 'var(--green)' },
 ];
 
 // Вдохновляющие вопросы-подсказки для психолога
@@ -239,7 +239,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
           <div style={{ textAlign: 'center' }}>
             <div style={{
               fontSize: 20, fontWeight: 700,
-              fontFamily: 'Lora, serif',
+              fontFamily: 'var(--font-serif)',
               color: 'var(--text-primary)',
               lineHeight: 1.2,
             }}>
@@ -320,7 +320,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
                 <p style={{
                   fontSize: 13, lineHeight: 1.55,
                   color: 'var(--text-secondary)',
-                  fontFamily: 'Lora, serif',
+                  fontFamily: 'var(--font-serif)',
                   fontStyle: 'italic',
                   margin: 0, marginBottom: 4,
                 }}>{QUOTES[quoteIdx].text}</p>
@@ -388,7 +388,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               fontSize: 15.5,
               lineHeight: 1.78,
               color: 'var(--text-primary)',
-              fontFamily: 'Lora, Georgia, serif',
+              fontFamily: 'var(--font-serif)',
               boxSizing: 'border-box',
               caretColor: 'var(--accent)',
               minHeight: 200,
@@ -408,7 +408,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
               {isSaved && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 11, color: '#6a9e8a',
+                  fontSize: 11, color: 'var(--text-secondary)',
                   fontFamily: 'Inter,sans-serif',
                   animation: 'fadeIn 0.2s ease',
                 }}>
@@ -423,7 +423,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
                     ? 'linear-gradient(135deg, var(--accent), var(--accent-soft))'
                     : 'var(--bg-raised)',
                   border: textValue.trim() ? 'none' : '1px solid var(--border)',
-                  color: textValue.trim() ? '#0e0c09' : 'var(--text-muted)',
+                  color: textValue.trim() ? 'var(--bg-base)' : 'var(--text-muted)',
                   fontSize: 12, fontWeight: 600,
                   fontFamily: 'Inter, sans-serif',
                   cursor: textValue.trim() ? 'pointer' : 'default',
@@ -452,12 +452,12 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
             animation: 'card-enter 0.35s ease 0.05s both',
           }}>
             <div style={{ fontSize: 20, marginBottom: 3 }}>
-              <Flame size={18} color={streak > 0 ? '#d4914a' : 'var(--text-muted)'} style={{ display: 'inline' }} />
+              <Flame size={18} color={streak > 0 ? 'var(--accent)' : 'var(--text-muted)'} style={{ display: 'inline' }} />
             </div>
             <div style={{
               fontSize: 18, fontWeight: 700,
               color: streak > 0 ? 'var(--accent)' : 'var(--text-muted)',
-              fontFamily: 'Lora, serif', lineHeight: 1,
+              fontFamily: 'var(--font-serif)', lineHeight: 1,
             }}>{streak}</div>
             <div style={{
               fontSize: 10, color: 'var(--text-muted)',
@@ -480,7 +480,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
             <div style={{
               fontSize: 18, fontWeight: 700,
               color: 'var(--text-secondary)',
-              fontFamily: 'Lora, serif', lineHeight: 1,
+              fontFamily: 'var(--font-serif)', lineHeight: 1,
             }}>{totalEntries}</div>
             <div style={{
               fontSize: 10, color: 'var(--text-muted)',
@@ -503,7 +503,7 @@ export default function DailyNoteView({ dailyNotes, notes, onSave, onOpenNote }:
             <div style={{
               fontSize: 18, fontWeight: 700,
               color: 'var(--text-secondary)',
-              fontFamily: 'Lora, serif', lineHeight: 1,
+              fontFamily: 'var(--font-serif)', lineHeight: 1,
             }}>{linkedNotes.length}</div>
             <div style={{
               fontSize: 10, color: 'var(--text-muted)',

@@ -15,12 +15,12 @@ interface Props {
 
 const TYPE_META: Record<NoteType, { icon: string; color: string; label: string }> = {
   note:     { icon: '📝', color: 'var(--text-secondary)', label: 'Заметка' },
-  quote:    { icon: '❝',  color: '#c4813c',               label: 'Цитата' },
-  insight:  { icon: '💡', color: '#6a9e8a',               label: 'Инсайт' },
-  question: { icon: '🔍', color: '#8a7a9a',               label: 'Вопрос' },
-  summary:  { icon: '📋', color: '#7a8a6a',               label: 'Резюме' },
-  idea:     { icon: '🌱', color: '#9a8a4a',               label: 'Идея' },
-  task:     { icon: '✓',  color: '#6a7a9a',               label: 'Задача' },
+  quote:    { icon: '❝',  color: 'var(--accent)',               label: 'Цитата' },
+  insight:  { icon: '💡', color: 'var(--text-secondary)',               label: 'Инсайт' },
+  question: { icon: '🔍', color: 'var(--text-secondary)',               label: 'Вопрос' },
+  summary:  { icon: '📋', color: 'var(--text-secondary)',               label: 'Резюме' },
+  idea:     { icon: '🌱', color: 'var(--accent)',               label: 'Идея' },
+  task:     { icon: '✓',  color: 'var(--text-secondary)',               label: 'Задача' },
 };
 
 type SortKey = 'updated' | 'created' | 'alpha';
@@ -125,7 +125,7 @@ function SwipeCard({ note, onOpen, onDelete, idx }: {
         }}
       >
         <Trash2 size={20} color="#fff" />
-        <span style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>Удалить</span>
+        <span style={{ color: 'var(--on-accent)', fontSize: 13, fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>Удалить</span>
       </button>
 
       {/* Card */}
@@ -179,7 +179,7 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center', marginTop: 2 }}>
-          {note.isFavorite && <Star size={13} color="#d4914a" fill="#d4914a" />}
+          {note.isFavorite && <Star size={13} color="var(--accent)" fill="var(--accent)" />}
           {note.isPinned   && <Pin  size={13} color="var(--accent)" fill="var(--accent)" />}
         </div>
       </div>
@@ -187,13 +187,13 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
       {/* Quote */}
       {note.quote && (
         <div style={{
-          borderLeft: `3px solid ${note.quoteColor || '#d4914a'}`,
+          borderLeft: `3px solid ${note.quoteColor || 'var(--accent)'}`,
           padding: '5px 11px', marginBottom: '7px',
           background: 'var(--bg-raised)', borderRadius: '0 8px 8px 0',
         }}>
           <p style={{
             margin: 0, fontSize: '12px', color: 'var(--text-secondary)',
-            fontStyle: 'italic', fontFamily: 'Lora, serif', lineHeight: 1.55,
+            fontStyle: 'italic', fontFamily: 'var(--font-serif)', lineHeight: 1.55,
             overflow: 'hidden', textOverflow: 'ellipsis',
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           }}>«{note.quote}»</p>
@@ -214,7 +214,7 @@ function NoteCard({ note, onOpen, idx, showDelete }: {
         <span style={{
           fontSize: 11, color: meta.color,
           fontFamily: 'Inter, sans-serif',
-          background: meta.color + '18',
+          background: `color-mix(in srgb, ${meta.color} 9%, transparent)`,
           borderRadius: 99, padding: '1px 7px',
         }}>{meta.label}</span>
       </div>
@@ -309,13 +309,13 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
               style={{
                 width: 36, height: 36, borderRadius: '11px',
                 background: showFavOnly ? 'rgba(196,129,60,0.15)' : 'var(--bg-raised)',
-                border: `1px solid ${showFavOnly ? '#c4813c' : 'var(--border)'}`,
-                color: showFavOnly ? '#c4813c' : 'var(--text-muted)',
+                border: `1px solid ${showFavOnly ? 'var(--accent)' : 'var(--border)'}`,
+                color: showFavOnly ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.18s',
               }}
             >
-              <Star size={16} fill={showFavOnly ? '#c4813c' : 'none'} />
+              <Star size={16} fill={showFavOnly ? 'var(--accent)' : 'none'} />
             </button>
             <button
               onClick={() => { vibe(6); setShowFilters(v => !v); }}
@@ -459,7 +459,7 @@ export default function NotesList({ notes, books, tags, onOpen, onDelete }: Prop
             animation: 'fadeUp 0.4s ease-out both',
           }}>
             <div style={{ fontSize: '40px', marginBottom: '16px' }}>📝</div>
-            <p style={{ color: 'var(--text-muted)', fontFamily: 'Lora, serif', fontSize: '15px' }}>
+            <p style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-serif)', fontSize: '15px' }}>
               {search ? 'Ничего не найдено' : 'Нет записей'}
             </p>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'Inter, sans-serif', marginTop: '6px' }}>

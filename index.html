@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="dark" style="background:#15120e;color:#f0e2c8;height:100%;">
+<html lang="ru" data-theme="light" style="height:100%;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Psyche" />
     <meta name="application-name" content="Psyche" />
-    <meta name="theme-color" content="#1e1810" />
-    <meta name="msapplication-TileColor" content="#1e1810" />
+    <meta name="theme-color" content="#F1EDE5" />
+    <meta name="msapplication-TileColor" content="#F1EDE5" />
     <meta name="msapplication-tap-highlight" content="no" />
 
     <!-- SEO -->
@@ -83,20 +83,33 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
+    <script>
+      // Тема до первой отрисовки, чтобы ночная бумага не мигала светлой
+      (function () {
+        try {
+          var t = localStorage.getItem('psyche_theme') || 'light';
+          if (t === 'auto') { var h = new Date().getHours(); t = (h < 7 || h >= 21) ? 'dark' : 'light'; }
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
     <style>
       /* Prevent flash of unstyled content — critical path styles */
       *, *::before, *::after { box-sizing: border-box; }
+      html { --c-desk: #DDD7CB; --c-bg: #F1EDE5; --c-card: #F9F6EF; --c-line: #D6CFC1; --c-ink: #1B1A17; color: var(--c-ink); }
+      html[data-theme="dark"] { --c-desk: #0A0908; --c-bg: #12110F; --c-card: #1D1B18; --c-line: #35312B; --c-ink: #E9E3D6; }
+      html[data-theme="sepia"] { --c-desk: #D5CAB3; --c-bg: #E8DFCC; --c-card: #F2EADA; --c-line: #CDBFA3; --c-ink: #2A2218; }
       html {
-        background: #15120e;
+        background: var(--c-bg);
         height: 100%;
         overflow: hidden;
       }
       body {
         margin: 0;
         padding: 0;
-        background: #0a0806;
+        background: var(--c-desk);
         height: 100%;
         overflow: hidden;
         display: flex;
@@ -105,7 +118,7 @@
         font-family: Inter, sans-serif;
       }
       #root {
-        background: #15120e;
+        background: var(--c-bg);
         width: 100%;
         max-width: 430px;
         height: 100dvh;
@@ -124,21 +137,21 @@
         justify-content: center;
         flex-direction: column;
         gap: 16px;
-        background: #15120e;
+        background: var(--c-bg);
         z-index: 99999;
         transition: opacity 0.4s;
       }
       #splash.hide { opacity: 0; pointer-events: none; }
       #splash-icon {
-        width: 72px; height: 72px; border-radius: 22px;
-        background: linear-gradient(135deg, #262219, #363025);
-        border: 1px solid #38332c;
+        width: 72px; height: 72px; border-radius: 36px;
+        background: var(--c-card);
+        border: 1px solid var(--c-ink);
         display: flex; align-items: center; justify-content: center;
-        font-size: 36px;
+        font-family: Georgia, serif; font-style: italic; font-size: 34px; color: var(--c-ink);
       }
       #splash-spin {
         width: 24px; height: 24px; border-radius: 50%;
-        border: 2px solid #38332c; border-top-color: #d4914a;
+        border: 1px solid var(--c-line); border-top-color: var(--c-ink);
         animation: spin 0.8s linear infinite;
       }
       @keyframes spin { to { transform: rotate(360deg); } }
@@ -147,7 +160,7 @@
   <body>
     <!-- Splash screen — видим мгновенно, до загрузки JS -->
     <div id="splash">
-      <div id="splash-icon">🪶</div>
+      <div id="splash-icon">P</div>
       <div id="splash-spin"></div>
     </div>
     <div id="root"></div>
