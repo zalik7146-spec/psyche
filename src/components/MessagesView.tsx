@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ArrowLeft, Search, Send, Trash2, Smile, Check, CheckCheck, Pencil, X, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Search, Send, Trash2, Smile, Check, CheckCheck, Pencil, X } from 'lucide-react'
 import { supabase } from '../supabase'
 
 interface Props {
@@ -55,10 +55,10 @@ const fmtDate = (d: string) => {
 const Avatar = ({ p, size=44 }: { p: Profile; size?: number }) => (
   <div style={{
     width:size, height:size, borderRadius:'50%', flexShrink:0,
-    background:'linear-gradient(135deg,var(--accent),#5a3e2a)',
+    background:'var(--bg-card)',
     display:'flex', alignItems:'center', justifyContent:'center',
-    color: 'var(--on-accent)', fontWeight: 600, fontSize:size*0.38,
-    overflow:'hidden', border:'2px solid var(--border)'
+    color: 'var(--text-primary)', fontFamily: 'var(--font-serif)', fontSize:size*0.4,
+    overflow:'hidden', border:'1px solid var(--text-primary)'
   }}>
     {p.avatar?.startsWith('http')
       ? <img src={p.avatar} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="" />
@@ -378,8 +378,11 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
     loadConvs()
   }
 
+  const iconBtn: React.CSSProperties = { width: 44, height: 44, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }
+  const typed: React.CSSProperties = { fontFamily: 'var(--font-typed)', textShadow: '0 0 0.7px var(--ink-bleed)' }
+
   return (
-    <div style={{
+    <div className="view-push" style={{
       position: 'fixed', inset: 0,
       background: 'var(--bg-base)',
       zIndex: 2000,
@@ -391,36 +394,28 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
         <>
           {/* Header */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '12px 16px',
-            paddingTop: 'calc(12px + env(safe-area-inset-top))',
-            background: 'var(--bg-card)',
-            borderBottom: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '0 8px', minHeight: 56,
+            paddingTop: 'env(safe-area-inset-top)',
             flexShrink: 0,
           }}>
-            <button onClick={onBack} style={{
-              background: 'var(--bg-raised)', border: 'none',
-              borderRadius: 2, padding: 10, cursor: 'pointer',
-              color: 'var(--text-primary)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <ArrowLeft size={20} />
+            <button aria-label="Назад" onClick={onBack} style={iconBtn}>
+              <ArrowLeft size={20} strokeWidth={1.5} />
             </button>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
-                Сообщения
-              </div>
-            </div>
+            <h1 style={{ flex: 1, margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 26, color: 'var(--text-primary)' }}>
+              Письма
+            </h1>
           </div>
 
           {/* Search */}
-          <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-raised)', borderRadius: 2, padding: '10px 14px', border: '1px solid var(--border)' }}>
-              <Search size={16} color="var(--text-muted)" />
+          <div style={{ padding: '0 20px 8px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, height: 44, borderBottom: '1px solid var(--text-primary)' }}>
+              <Search size={16} strokeWidth={1.5} color="var(--text-muted)" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Найти человека..."
+                aria-label="Найти человека"
+                placeholder="Кому написать"
                 style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: 15, fontFamily: 'Inter,sans-serif' }}
               />
             </div>
@@ -428,13 +423,13 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
 
           {/* Search results */}
           {found.length > 0 && (
-            <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+            <div style={{ borderBottom: '1px solid var(--border)', flexShrink: 0, padding: '0 4px' }}>
               {found.map(p => (
                 <div key={p.id} onClick={() => { setSearch(''); setFound([]); openChat(p) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'pointer', borderTop: '1px solid var(--border)' }}>
                   <Avatar p={p} size={40} />
                   <div>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>{p.display_name || p.username}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: 15 }}>{p.display_name || p.username}</div>
                     <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>@{p.username}</div>
                   </div>
                 </div>
@@ -445,12 +440,11 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
           {/* Conversations */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Загрузка...</div>
+              <div style={{ padding: '40px 20px', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Загружаю письма</div>
             ) : convs.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 60 }}>
-                <MessageCircle size={48} color="var(--text-muted)" style={{ marginBottom: 12, opacity: 0.4 }} />
-                <div style={{ color: 'var(--text-muted)', fontSize: 15 }}>Нет сообщений</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6 }}>Найдите человека выше</div>
+              <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--text-primary)' }}>Писем пока нет</span>
+                <span style={{ ...typed, fontSize: 14, color: 'var(--text-muted)' }}>Найдите человека через поиск выше и напишите первым.</span>
               </div>
             ) : (
               convs.map((c, i) => (
@@ -458,7 +452,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                   style={{
                     position: 'relative',
                     overflow: 'hidden',
-                    animation: `fadeSlideUp 0.3s ease ${i*0.05}s both`,
+                    animation: `calmFade var(--dur-screen) var(--ease-calm) ${Math.min(i*0.04, 0.24)}s both`,
                   }}
                   onTouchStart={e => onTouchStart(c.partner.id, e)}
                   onTouchMove={onTouchMove}
@@ -469,29 +463,29 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                     onClick={() => { if (swipedConv === c.partner.id) { setSwipedConv(null); return } openChat(c.partner) }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '14px 16px',
-                      background: 'var(--bg-card)',
+                      padding: '14px 20px',
+                      background: 'var(--bg-base)',
                       borderBottom: '1px solid var(--border)',
                       cursor: 'pointer',
                       transform: swipedConv === c.partner.id ? 'translateX(-88px)' : 'translateX(0)',
-                      transition: 'transform 0.28s cubic-bezier(0.22,1,0.36,1)',
+                      transition: 'transform var(--dur-screen) var(--ease-calm)',
                       willChange: 'transform',
                     }}
                   >
                     <Avatar p={c.partner} size={48} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 15 }}>
+                        <span style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: 15 }}>
                           {c.partner.display_name || c.partner.username}
                         </span>
                         <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{fmtTime(c.lastTime)}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                        <span style={{ color: c.unread > 0 ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: c.unread > 0 ? 500 : 400, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
                           {c.lastMsg}
                         </span>
                         {c.unread > 0 && (
-                          <span style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 2, fontSize: 11, fontWeight: 600, padding: '2px 7px', flexShrink: 0 }}>
+                          <span aria-label={`Непрочитанных: ${c.unread}`} style={{ background: 'var(--accent)', color: 'var(--on-accent)', borderRadius: 2, fontSize: 11, fontWeight: 500, padding: '1px 6px', flexShrink: 0 }}>
                             {c.unread}
                           </span>
                         )}
@@ -511,7 +505,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                     style={{
                       position: 'absolute', right: 0, top: 0, bottom: 0,
                       width: 88,
-                      background: 'linear-gradient(135deg,var(--red),#a93226)',
+                      background: 'var(--red)',
                       border: 'none', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column',
                       alignItems: 'center', justifyContent: 'center',
@@ -533,24 +527,19 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
       {view === 'chat' && partner && (
         <>
           {/* Chat Header */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '12px 16px',
-            paddingTop: 'calc(12px + env(safe-area-inset-top))',
-            background: 'var(--bg-card)',
+          <div className="view-push" style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '0 8px', minHeight: 56,
+            paddingTop: 'env(safe-area-inset-top)',
             borderBottom: '1px solid var(--border)',
             flexShrink: 0,
           }}>
-            <button onClick={backToList} style={{
-              background: 'var(--bg-raised)', border: 'none',
-              borderRadius: 2, padding: 10, cursor: 'pointer',
-              color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <ArrowLeft size={20} />
+            <button aria-label="К списку писем" onClick={backToList} style={iconBtn}>
+              <ArrowLeft size={20} strokeWidth={1.5} />
             </button>
-            <Avatar p={partner} size={38} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 16 }}>
+            <Avatar p={partner} size={36} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: 15 }}>
                 {partner.display_name || partner.username}
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>@{partner.username}</div>
@@ -559,13 +548,10 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               onClick={() => {
                 if (confirm('Удалить всю переписку?')) deleteConv(partner.id).then(backToList)
               }}
-              style={{
-                background: 'var(--bg-raised)', border: 'none',
-                borderRadius: 2, padding: 10, cursor: 'pointer',
-                color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
+              aria-label="Удалить переписку"
+              style={{ ...iconBtn, color: 'var(--text-muted)' }}
             >
-              <Trash2 size={18} />
+              <Trash2 size={18} strokeWidth={1.5} />
             </button>
           </div>
 
@@ -575,11 +561,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               <div key={g.date}>
                 {/* Date separator */}
                 <div style={{ textAlign: 'center', margin: '12px 0 8px', position: 'relative' }}>
-                  <span style={{
-                    background: 'var(--bg-raised)', color: 'var(--text-muted)',
-                    fontSize: 12, padding: '4px 12px', borderRadius: 2,
-                    border: '1px solid var(--border)',
-                  }}>{g.date}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{g.date}</span>
                 </div>
 
                 {g.msgs.map(m => {
@@ -590,7 +572,7 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                         display: 'flex',
                         justifyContent: mine ? 'flex-end' : 'flex-start',
                         marginBottom: 6,
-                        animation: 'msgPop 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+                        animation: 'calmFade var(--dur-quick) var(--ease-calm) both',
                       }}
                       onPointerDown={() => onPressStart(m)}
                       onPointerUp={onPressEnd}
@@ -610,10 +592,10 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                             onKeyDown={e => { if (e.key === 'Enter') saveEdit() }}
                             autoFocus
                             style={{
-                              background: 'var(--bg-raised)', border: '1px solid var(--accent)',
-                              borderRadius: 2, padding: '8px 12px',
+                              background: 'var(--bg-card)', border: '1px solid var(--text-primary)',
+                              borderRadius: 0, padding: '10px 12px',
                               color: 'var(--text-primary)', fontSize: 15,
-                              fontFamily: 'Inter,sans-serif', outline: 'none',
+                              ...typed, outline: 'none',
                             }}
                           />
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -629,24 +611,20 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                         <div style={{ position: 'relative' }}>
                           <div style={{
                             maxWidth: 280,
-                            padding: '10px 14px',
-                            borderRadius: mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                            background: mine
-                              ? 'linear-gradient(135deg,var(--accent),#8a5c30)'
-                              : 'var(--bg-raised)',
-                            color: mine ? '#fff' : 'var(--text-primary)',
+                            padding: '12px 14px',
+                            borderRadius: 0,
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            ...typed,
                             fontSize: 15, lineHeight: 1.55,
-                            boxShadow: mine
-                              ? '0 2px 12px rgba(180,130,80,0.3)'
-                              : '0 1px 6px rgba(0,0,0,0.15)',
-                            border: mine ? 'none' : '1px solid var(--border)',
+                            border: mine ? '1px solid var(--text-primary)' : '1px solid var(--border)',
                             wordBreak: 'break-word',
                             cursor: mine ? 'pointer' : 'default',
                           }}>
                             {m.content}
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                              {m.edited && <span style={{ fontSize: 10, opacity: 0.7 }}>ред.</span>}
-                              <span style={{ fontSize: 10, opacity: 0.7 }}>{fmtTime(m.created_at)}</span>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 6, fontFamily: 'var(--font-ui)', textShadow: 'none', color: 'var(--text-muted)' }}>
+                              {m.edited && <span style={{ fontSize: 10 }}>правка</span>}
+                              <span style={{ fontSize: 10 }}>{fmtTime(m.created_at)}</span>
                               {mine && (
                                 m.is_read
                                   ? <CheckCheck size={12} style={{ opacity: 0.9 }} />
@@ -670,8 +648,8 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
                                 borderRadius: 2,
                                 overflow: 'hidden',
                                 zIndex: 101,
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                                animation: 'menuPop 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+                                boxShadow: 'var(--shadow-lg)',
+                                animation: 'fadeIn var(--dur-quick) var(--ease-calm)',
                                 minWidth: 160,
                               }}>
                                 <button onClick={() => startEdit(m)} style={{
@@ -710,13 +688,12 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               background: 'var(--bg-card)',
               borderTop: '1px solid var(--border)',
               flexShrink: 0,
-              animation: 'sheetSlideUp 0.2s ease',
+              animation: 'calmFeed var(--dur-quick) var(--ease-calm) both',
             }}>
               {EMOJIS.map(e => (
                 <button key={e} onClick={() => setText(t => t+e)} style={{
-                  background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                  borderRadius: 2, padding: 8, fontSize: 20, cursor: 'pointer',
-                  transition: 'transform 0.15s',
+                  background: 'none', border: '1px solid var(--border)',
+                  borderRadius: 0, padding: 8, fontSize: 20, cursor: 'pointer',
                 }}>
                   {e}
                 </button>
@@ -735,18 +712,12 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 12px',
             paddingBottom: 'calc(10px + env(safe-area-inset-bottom))',
-            background: 'var(--bg-card)',
+            background: 'var(--bg-base)',
             borderTop: '1px solid var(--border)',
             flexShrink: 0,
           }}>
-            <button onClick={() => setShowEmoji(s => !s)} style={{
-              background: 'var(--bg-raised)', border: '1px solid var(--border)',
-              borderRadius: 2, padding: 10, cursor: 'pointer',
-              color: showEmoji ? 'var(--accent)' : 'var(--text-muted)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'color 0.2s',
-            }}>
-              <Smile size={20} />
+            <button aria-label="Эмодзи" aria-pressed={showEmoji} onClick={() => setShowEmoji(s => !s)} style={{ ...iconBtn, color: showEmoji ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+              <Smile size={20} strokeWidth={1.5} />
             </button>
 
             <input
@@ -754,16 +725,17 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-              placeholder="Сообщение..."
+              aria-label="Письмо"
+              placeholder="Письмо…"
               style={{
-                flex: 1,
-                background: 'var(--bg-raised)',
+                flex: 1, minWidth: 0, height: 44, boxSizing: 'border-box',
+                background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
-                borderRadius: 2,
-                padding: '10px 16px',
+                borderRadius: 0,
+                padding: '0 14px',
                 color: 'var(--text-primary)',
                 fontSize: 15,
-                fontFamily: 'Inter,sans-serif',
+                ...typed,
                 outline: 'none',
               }}
             />
@@ -771,21 +743,19 @@ export default function MessagesView({ userId, initialPartnerId, onBack }: Props
             <button
               onClick={send}
               disabled={!text.trim() || sending}
+              aria-label="Отправить"
               style={{
-                width: 44, height: 44, borderRadius: '50%',
-                background: text.trim()
-                  ? 'linear-gradient(135deg,var(--accent),#8a5c30)'
-                  : 'var(--bg-raised)',
-                border: '1px solid var(--border)',
+                width: 44, height: 44, borderRadius: 0,
+                background: text.trim() ? 'var(--accent)' : 'none',
+                border: text.trim() ? '1px solid var(--accent)' : '1px solid var(--border)',
                 cursor: text.trim() ? 'pointer' : 'default',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: text.trim() ? '#fff' : 'var(--text-muted)',
-                transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
-                transform: text.trim() ? 'scale(1.05)' : 'scale(1)',
+                color: text.trim() ? 'var(--on-accent)' : 'var(--text-muted)',
+                transition: 'background var(--dur-quick) var(--ease-calm), color var(--dur-quick) var(--ease-calm)',
                 flexShrink: 0,
               }}
             >
-              <Send size={18} />
+              <Send size={18} strokeWidth={1.5} />
             </button>
           </div>
         </>
