@@ -7,7 +7,7 @@
 -- 2. Выбери проект rputpotpsxivoulxbxoi
 -- 3. В левом меню нажми "SQL Editor"
 -- 4. Нажми "+ New query"
--- 5. Скопируй ВЕСЬ этот файл и вставь в редактор
+-- 5. Скопируй ВЕСЬ этот файл (supabase/setup.sql) и вставь в редактор
 -- 6. Нажми кнопку "Run" (или Ctrl+Enter)
 -- 7. Внизу увидишь "Success" — готово!
 -- ════════════════════════════════════════════════════════════════
@@ -252,6 +252,8 @@ drop policy if exists "Users can manage own comment likes"        on public.soci
 drop policy if exists "Follows viewable by everyone"              on public.social_follows;
 drop policy if exists "Users can manage own follows"              on public.social_follows;
 drop policy if exists "Users can manage own saves"                on public.social_saves;
+drop policy if exists "Users can view saves"                      on public.social_saves;
+drop policy if exists "Users can update own posts"                on public.social_posts;
 drop policy if exists "Users can view own notifications"          on public.notifications;
 drop policy if exists "Users can update own notifications"        on public.notifications;
 drop policy if exists "System can insert notifications"           on public.notifications;
@@ -418,16 +420,162 @@ create trigger on_post_change
   after insert or delete on public.social_posts
   for each row execute function update_posts_count();
 
--- ── ЧАСТЬ 6: Realtime ───────────────────────────────────────────
+-- ── ЧАСТЬ 6: Личные сообщения ───────────────────────────────────
 
--- Включаем Realtime для нужных таблиц
-alter publication supabase_realtime add table public.social_posts;
-alter publication supabase_realtime add table public.social_likes;
-alter publication supabase_realtime add table public.social_comments;
-alter publication supabase_realtime add table public.notifications;
+create table if not exists public.messages (
+  id           uuid default gen_random_uuid() primary key,
+  from_user_id uuid references auth.users(id) on delete cascade not null,
+  to_user_id   uuid references auth.users(id) on delete cascade not null,
+  content      text not null check (length(content) between 1 and 4000),
+  is_read      boolean default false not null,
+  edited       boolean default false not null,
+  created_at   timestamptz default now() not null
+);
+
+create index if not exists messages_from_to_idx on public.messages(from_user_id, to_user_id, created_at);
+create index if not exists messages_to_unread_idx on public.messages(to_user_id) where not is_read;
+
+alter table public.messages enable row level security;
+
+drop policy if exists "Participants can view messages"    on public.messages;
+drop policy if exists "Users can send messages as themselves" on public.messages;
+drop policy if exists "Participants can update messages"  on public.messages;
+drop policy if exists "Participants can delete messages"  on public.messages;
+
+create policy "Participants can view messages"
+  on public.messages for select
+  using (auth.uid() in (from_user_id, to_user_id));
+create policy "Users can send messages as themselves"
+  on public.messages for insert
+  with check (auth.uid() = from_user_id and from_user_id <> to_user_id);
+create policy "Participants can update messages"
+  on public.messages for update
+  using (auth.uid() in (from_user_id, to_user_id));
+create policy "Participants can delete messages"
+  on public.messages for delete
+  using (auth.uid() in (from_user_id, to_user_id));
+
+-- Получатель может только отметить сообщение прочитанным, а не переписать его.
+create or replace function public.guard_message_update()
+returns trigger as $$
+begin
+  if auth.uid() is distinct from old.from_user_id and (
+       new.content      is distinct from old.content
+    or new.from_user_id is distinct from old.from_user_id
+    or new.to_user_id   is distinct from old.to_user_id
+    or new.edited       is distinct from old.edited
+  ) then
+    raise exception 'Only the sender can edit a message';
+  end if;
+  if new.content is distinct from old.content then
+    new.edited := true;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists on_message_update on public.messages;
+create trigger on_message_update
+  before update on public.messages
+  for each row execute function public.guard_message_update();
+
+-- ── ЧАСТЬ 7: Профиль при регистрации ────────────────────────────
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+declare
+  base_username  text;
+  final_username text;
+  counter        int := 0;
+begin
+  -- Часть email до @, без спецсимволов, от 3 до 20 символов
+  base_username := regexp_replace(lower(split_part(new.email, '@', 1)), '[^a-z0-9_]', '', 'g');
+  if length(base_username) < 3 then
+    base_username := 'reader' || base_username;
+  end if;
+  base_username := left(base_username, 20);
+
+  final_username := base_username;
+  while exists (select 1 from public.social_profiles where username = final_username) loop
+    counter := counter + 1;
+    final_username := base_username || counter::text;
+  end loop;
+
+  insert into public.social_profiles (
+    id, username, display_name, avatar, bio, is_public,
+    followers_count, following_count, posts_count, created_at, updated_at
+  ) values (
+    new.id, final_username,
+    coalesce(new.raw_user_meta_data->>'display_name', final_username),
+    new.raw_user_meta_data->>'avatar',
+    null, true, 0, 0, 0, now(), now()
+  )
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Профили для пользователей, зарегистрированных до появления триггера
+insert into public.social_profiles (
+  id, username, display_name, is_public,
+  followers_count, following_count, posts_count, created_at, updated_at
+)
+select
+  u.id,
+  lower(regexp_replace(split_part(u.email, '@', 1), '[^a-z0-9_]', '', 'g')) ||
+    row_number() over (
+      partition by lower(regexp_replace(split_part(u.email, '@', 1), '[^a-z0-9_]', '', 'g'))
+      order by u.created_at
+    ) - 1,
+  split_part(u.email, '@', 1),
+  true, 0, 0, 0, now(), now()
+from auth.users u
+where not exists (select 1 from public.social_profiles p where p.id = u.id)
+on conflict (id) do nothing;
+
+-- ── ЧАСТЬ 8: Realtime ────────────────────────────────────────────────────
+
+-- Добавляем таблицы в публикацию, только если их там ещё нет (скрипт можно перезапускать)
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['social_posts', 'social_likes', 'social_comments', 'notifications', 'messages'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
 
 -- ════════════════════════════════════════════════════════════════
 -- ВСЁ ГОТОВО!
 -- Таблицы созданы, RLS настроен, триггеры активны, Realtime включён.
--- Можешь пользоваться приложением!
+-- Скрипт можно запускать повторно.
 -- ════════════════════════════════════════════════════════════════
+
+-- ── Защита функций (Supabase Security Advisor) ──────────────────
+-- Фиксируем search_path и запрещаем вызывать триггерные функции через /rest/v1/rpc/.
+do $$
+declare
+  f record;
+begin
+  for f in
+    select p.oid::regprocedure as sig, p.prorettype = 'trigger'::regtype as is_trigger
+    from pg_proc p
+    where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
+  loop
+    execute format('alter function %s set search_path = public, pg_temp', f.sig);
+    if f.is_trigger then
+      execute format('revoke execute on function %s from public, anon, authenticated', f.sig);
+    end if;
+  end loop;
+end $$;
