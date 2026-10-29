@@ -26,10 +26,28 @@ interface GNode {
 
 interface GLink { source: string; target: string; }
 
-const TYPE_COLORS: Record<string, string> = {
-  note: '#c8a882', quote: '#d4a84e', insight: '#72b472',
-  question: '#7a8ab4', summary: '#b47a7a', idea: '#a47ab4',
-  task: '#7ab4a4', book: '#d4914a', tag: '#8c7660',
+// Поле color хранит вид узла: книга, тема или тип записи
+const KIND = { book: 'book', tag: 'tag' } as const;
+type NodeStyle = 'filled' | 'outline' | 'dot' | 'bold' | 'dashed';
+const STYLE_OF = (kind: string): NodeStyle =>
+  kind === 'book' ? 'filled' : kind === 'tag' ? 'dashed' : kind === 'quote' ? 'dot' : kind === 'insight' ? 'bold' : 'outline';
+
+// Цвета берём из темы: canvas не понимает CSS-переменные
+const themeColors = () => {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
+  return {
+    ink: v('--text-primary', '#1B1A17'),
+    paper: v('--bg-card', '#F9F6EF'),
+    muted: v('--text-muted', '#6B655B'),
+    line: v('--border-mid', '#C4BBAA'),
+    label: v('--text-secondary', '#3E3B35'),
+  };
+};
+
+const TYPE_NAME: Record<string, string> = {
+  note: 'Заметка', quote: 'Цитата', insight: 'Инсайт', question: 'Вопрос',
+  summary: 'Конспект', idea: 'Идея', task: 'Задача',
 };
 
 function buildGraph(notes: Note[], books: Book[]): { nodes: GNode[]; links: GLink[] } {
@@ -41,7 +59,7 @@ function buildGraph(notes: Note[], books: Book[]): { nodes: GNode[]; links: GLin
     const angle = (i / Math.max(books.length, 1)) * Math.PI * 2;
     nodes.push({
       id: `book_${book.id}`, label: book.title.slice(0, 16),
-      type: 'book', color: TYPE_COLORS.book, r: 14,
+      type: 'book', color: KIND.book, r: 14,
       x: 200 + Math.cos(angle) * 120, y: 200 + Math.sin(angle) * 120,
       vx: 0, vy: 0, data: book,
     });
@@ -54,7 +72,7 @@ function buildGraph(notes: Note[], books: Book[]): { nodes: GNode[]; links: GLin
     if (count < 1) return;
     const id = `tag_${tag}`;
     nodes.push({
-      id, label: `#${tag}`, type: 'tag', color: TYPE_COLORS.tag,
+      id, label: `#${tag}`, type: 'tag', color: KIND.tag,
       r: 7 + Math.min(count * 2, 8),
       x: 200 + (Math.random() - 0.5) * 300,
       y: 200 + (Math.random() - 0.5) * 300,
@@ -68,7 +86,7 @@ function buildGraph(notes: Note[], books: Book[]): { nodes: GNode[]; links: GLin
     const id = `note_${note.id}`;
     nodes.push({
       id, label: (note.title || 'Без названия').slice(0, 18),
-      type: 'note', color: TYPE_COLORS[note.type] || TYPE_COLORS.note,
+      type: 'note', color: note.type || 'note',
       r: note.isFavorite ? 11 : 8,
       x: 200 + Math.cos(angle) * 180, y: 200 + Math.sin(angle) * 180,
       vx: 0, vy: 0, data: note,
@@ -128,9 +146,11 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
       canvas.height = H * devicePixelRatio;
       canvas.style.width  = `${W}px`;
       canvas.style.height = `${H}px`;
-      ctx.scale(devicePixelRatio, devicePixelRatio);
+      // setTransform, а не scale: при повороте экрана масштаб не накапливается
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
     };
     resize();
+    window.addEventListener('resize', resize);
 
     const tick = () => {
       const ns = nodesRef.current;
@@ -180,6 +200,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
       });
 
       // Draw
+      const c = themeColors();
       ctx.save();
       ctx.clearRect(0, 0, W, H);
       ctx.translate(offsetRef.current.x, offsetRef.current.y);
@@ -193,31 +214,37 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
         ctx.beginPath();
         ctx.moveTo(s.x, s.y);
         ctx.lineTo(t.x, t.y);
-        ctx.strokeStyle = 'rgba(80,65,45,0.5)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 0.8;
         ctx.stroke();
       });
 
       // Nodes
       ns.forEach(n => {
-        // Outer ring
+        const style = STYLE_OF(n.color);
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = `${n.color}22`;
-        ctx.fill();
-        ctx.strokeStyle = n.color;
-        ctx.lineWidth = n.type === 'book' ? 2.5 : 1.5;
-        ctx.stroke();
-        // Inner dot
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r * 0.4, 0, Math.PI * 2);
-        ctx.fillStyle = n.color;
-        ctx.fill();
-        // Label
-        ctx.fillStyle = 'rgba(200,168,130,0.85)';
-        ctx.font = `${n.type === 'book' ? 9.5 : 8.5}px Inter, sans-serif`;
+        ctx.setLineDash(style === 'dashed' ? [2.5, 2.5] : []);
+        if (style === 'filled') {
+          ctx.fillStyle = c.ink;
+          ctx.fill();
+        } else {
+          if (style !== 'dashed') { ctx.fillStyle = c.paper; ctx.fill(); }
+          ctx.strokeStyle = style === 'dashed' ? c.muted : c.ink;
+          ctx.lineWidth = style === 'bold' ? 2.4 : 1.2;
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        if (style === 'dot') {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r * 0.35, 0, Math.PI * 2);
+          ctx.fillStyle = c.ink;
+          ctx.fill();
+        }
+        ctx.fillStyle = n.type === 'tag' ? c.muted : c.label;
+        ctx.font = `${n.type === 'book' ? 10 : 9}px Inter, system-ui, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(n.label, n.x, n.y + n.r + 11);
+        ctx.fillText(n.label, n.x, n.y + n.r + 12);
       });
 
       ctx.restore();
@@ -225,7 +252,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
     };
 
     animRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animRef.current);
+    return () => { cancelAnimationFrame(animRef.current); window.removeEventListener('resize', resize); };
   }, []);
 
   // Canvas → world coords
@@ -321,25 +348,18 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '16px 16px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button
-        onClick={onBack}
-        style={{
-          background: 'var(--bg-raised)', border: '1px solid var(--border)',
-          borderRadius: 2, width: 34, height: 34, display: 'flex',
-          alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: 'var(--text-secondary)', flexShrink: 0,
-        }}
-      >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ padding: 'env(safe-area-inset-top) 8px 0', minHeight: 56, borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <button aria-label="Назад" onClick={onBack}
+          style={{ background: 'none', border: 'none', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)', flexShrink: 0 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </button>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
             Граф связей
           </h2>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0' }}>
             {nodes.length} узлов · {links.length} связей
           </p>
         </div>
@@ -347,16 +367,18 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
 
       {/* Legend */}
       <div style={{ display: 'flex', gap: 10, padding: '8px 16px', borderBottom: '1px solid var(--border)', overflowX: 'auto', flexShrink: 0 }}>
-        {[
-          { color: TYPE_COLORS.book, label: 'Книги' },
-          { color: TYPE_COLORS.note, label: 'Заметки' },
-          { color: TYPE_COLORS.insight, label: 'Инсайты' },
-          { color: TYPE_COLORS.quote, label: 'Цитаты' },
-          { color: TYPE_COLORS.tag, label: 'Теги' },
-        ].map(item => (
-          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>{item.label}</span>
+        {([
+          ['filled', 'Книги'], ['outline', 'Записи'], ['bold', 'Инсайты'], ['dot', 'Цитаты'], ['dashed', 'Темы'],
+        ] as [NodeStyle, string][]).map(([style, name]) => (
+          <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <span aria-hidden="true" style={{
+              width: 10, height: 10, borderRadius: '50%', boxSizing: 'border-box', position: 'relative',
+              background: style === 'filled' ? 'var(--text-primary)' : style === 'dashed' ? 'none' : 'var(--bg-card)',
+              border: style === 'filled' ? 'none' : `${style === 'bold' ? 2 : 1}px ${style === 'dashed' ? 'dashed' : 'solid'} ${style === 'dashed' ? 'var(--text-muted)' : 'var(--text-primary)'}`,
+            }}>
+              {style === 'dot' && <span style={{ position: 'absolute', inset: 2, borderRadius: '50%', background: 'var(--text-primary)' }} />}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{name}</span>
           </div>
         ))}
       </div>
@@ -365,13 +387,13 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
       {hint && (
         <div style={{
           margin: '8px 16px 0', padding: '8px 12px',
-          background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 2,
+          borderLeft: '1px solid var(--text-primary)',
           display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
-          animation: 'fadeIn 0.3s ease',
+          animation: 'fadeIn var(--dur-quick) var(--ease-calm)',
         }}>
-          <Info size={13} color="var(--accent)" style={{ flexShrink: 0 }} />
+          <Info size={13} strokeWidth={1.5} color="var(--text-muted)" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'Inter, sans-serif', lineHeight: 1.4, flex: 1 }}>
-            Тяни узлы · Щипок для зума · Нажми для открытия
+            Тяните узлы, сводите пальцы для зума, нажмите, чтобы открыть
           </span>
           <button onClick={() => setHint(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0 }}>
             <X size={13} />
@@ -383,8 +405,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
       <div ref={wrapRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', touchAction: 'none' }}>
         {isEmpty ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16, color: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}>
-            <div style={{ fontSize: 48 }}>🕸️</div>
-            <div style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Граф пуст</div>
+            <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)' }}>Граф пуст</div>
             <div style={{ fontSize: 13, textAlign: 'center', maxWidth: 240, lineHeight: 1.6 }}>
               Создай записи и книги — они появятся здесь как связанные узлы
             </div>
@@ -414,11 +435,10 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
               { icon: <Maximize2 size={16} />, fn: resetView },
             ].map((b, i) => (
               <button key={i} onClick={b.fn} style={{
-                width: 36, height: 36, borderRadius: 2,
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                width: 40, height: 40, borderRadius: 0,
+                background: 'var(--bg-card)', border: '1px solid var(--border-mid)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-secondary)', cursor: 'pointer',
-                boxShadow: 'var(--shadow)',
+                color: 'var(--text-primary)', cursor: 'pointer',
               }}>{b.icon}</button>
             ))}
           </div>
@@ -433,18 +453,21 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
           background: 'var(--bg-card)', border: '1px solid var(--border-mid)',
           borderRadius: 2, padding: '16px',
           boxShadow: 'var(--shadow-lg)', zIndex: 200,
-          animation: 'sheetSlideUp 0.25s cubic-bezier(0.34,1.2,0.64,1)',
+          animation: 'calmFeed var(--dur-screen) var(--ease-calm) both',
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <div style={{
               width: 40, height: 40, borderRadius: 2,
-              background: `${selected.color}22`, border: `1.5px solid ${selected.color}`,
+              background: STYLE_OF(selected.color) === 'filled' ? 'var(--text-primary)' : 'var(--bg-card)',
+              color: STYLE_OF(selected.color) === 'filled' ? 'var(--bg-card)' : 'var(--text-primary)',
+              border: '1px solid var(--text-primary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
+              fontFamily: 'var(--font-serif)',
             }}>
-              {selected.type === 'book' ? '📚' : selected.type === 'tag' ? '🏷️' : '📝'}
+              {((selected.type === 'book' ? (selected.data as Book).title : (selected.data as Note).title) || '·')[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 400, color: 'var(--text-primary)', marginBottom: 4 }}>
                 {selected.type === 'book'
                   ? (selected.data as Book).title
                   : (selected.data as Note).title || 'Без названия'}
@@ -452,7 +475,7 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
               <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'var(--text-muted)' }}>
                 {selected.type === 'book'
                   ? (selected.data as Book).author
-                  : `${(selected.data as Note).type} · ${new Date((selected.data as Note).createdAt).toLocaleDateString('ru-RU')}`}
+                  : `${TYPE_NAME[(selected.data as Note).type] || 'Заметка'} · ${new Date((selected.data as Note).createdAt).toLocaleDateString('ru-RU')}`}
               </div>
             </div>
             <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
@@ -464,11 +487,11 @@ export default function GraphView({ notes, books, onOpenNote, onBack }: Props) {
               onClick={() => { onOpenNote(selected.data as Note); setSelected(null); }}
               style={{
                 marginTop: 12, width: '100%', padding: '10px 16px',
-                background: 'linear-gradient(135deg, var(--accent), var(--accent-soft))',
-                border: 'none', borderRadius: 2,
-                color: '#fff', fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                background: 'var(--accent)',
+                border: 'none', borderRadius: 0,
+                color: 'var(--on-accent)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
               }}
-            >Открыть запись →</button>
+            >Открыть запись</button>
           )}
         </div>
       )}

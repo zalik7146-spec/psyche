@@ -11,7 +11,9 @@
 :root {
   --font-ui:          'Inter', system-ui, sans-serif;
   --font-serif:       'Newsreader', Georgia, serif;
-  --font-typed:       'Courier Prime', 'Courier New', monospace;
+  /* Courier Prime знает только латиницу: кириллица берётся из Courier New,
+     а где его нет (Android) — из PT Mono */
+  --font-typed:       'Courier Prime', 'Courier New', 'PT Mono', monospace;
   --ease-calm:        cubic-bezier(0.2, 0, 0, 1);
   --dur-screen:       300ms;
   --dur-quick:        200ms;
