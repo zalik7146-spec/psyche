@@ -1,4 +1,5 @@
-import { unzipSync, strFromU8 } from 'fflate';
+import { unzipSync, gzipSync, gunzipSync, strFromU8, strToU8 } from 'fflate';
+import { supabase } from './supabase';
 
 // ── Тексты своих книг: хранятся на устройстве в IndexedDB ────────────────
 // localStorage для книг мал (около 5 МБ на всё приложение), поэтому полные
@@ -41,6 +42,77 @@ export async function getBookText(bookId: string): Promise<StoredBookText | null
 
 export const deleteBookText = (bookId: string) =>
   withStore<undefined>('readwrite', s => s.delete(bookId)).catch(() => undefined);
+
+const localBookIds = () => withStore<IDBValidKey[]>('readonly', s => s.getAllKeys()).catch(() => [] as IDBValidKey[]);
+
+// ── Облако: тот же текст в Supabase Storage, чтобы книга была на всех устройствах ──
+// Приватное хранилище book-texts, путь <id пользователя>/<id книги>.txt.gz.
+// Облако — копия: читалка работает с локальным текстом и без сети.
+
+const BUCKET = 'book-texts';
+
+async function currentUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id ?? null;
+}
+
+const cloudPath = (userId: string, bookId: string) => `${userId}/${bookId}.txt.gz`;
+
+export async function uploadBookTextToCloud(bookId: string, text: string): Promise<boolean> {
+  const userId = await currentUserId();
+  if (!userId) return false;
+  const body = new Blob([gzipSync(strToU8(text), { level: 6 })], { type: 'application/gzip' });
+  const { error } = await supabase.storage.from(BUCKET).upload(cloudPath(userId, bookId), body, { upsert: true, contentType: 'application/gzip' });
+  return !error;
+}
+
+export async function downloadBookTextFromCloud(bookId: string): Promise<string | null> {
+  const userId = await currentUserId();
+  if (!userId) return null;
+  const { data, error } = await supabase.storage.from(BUCKET).download(cloudPath(userId, bookId));
+  if (error || !data) return null;
+  try { return strFromU8(gunzipSync(new Uint8Array(await data.arrayBuffer()))); } catch { return null; }
+}
+
+export async function deleteBookTextFromCloud(bookId: string): Promise<void> {
+  const userId = await currentUserId();
+  if (!userId) return;
+  await supabase.storage.from(BUCKET).remove([cloudPath(userId, bookId)]);
+}
+
+// Сохранить текст своей книги: на устройство сразу, в облако следом
+export async function storeBookText(bookId: string, data: StoredBookText): Promise<void> {
+  await saveBookText(bookId, data);
+  void uploadBookTextToCloud(bookId, data.text).catch(() => false);
+}
+
+// Текст книги: с устройства, а если его нет — из облака (и сохранить на устройство)
+export async function loadBookText(bookId: string): Promise<StoredBookText | null> {
+  const local = await getBookText(bookId);
+  if (local) return local;
+  const text = await downloadBookTextFromCloud(bookId).catch(() => null);
+  if (!text) return null;
+  const restored: StoredBookText = { text, fileName: '', addedAt: new Date().toISOString() };
+  await saveBookText(bookId, restored).catch(() => undefined);
+  return restored;
+}
+
+// Книги, загруженные до синхронизации или без сети, догружаем в облако после входа
+export async function syncLocalTextsToCloud(): Promise<number> {
+  const userId = await currentUserId();
+  if (!userId) return 0;
+  const { data, error } = await supabase.storage.from(BUCKET).list(userId, { limit: 1000 });
+  if (error) return 0;
+  const inCloud = new Set((data || []).map(f => f.name.replace(/\.txt\.gz$/, '')));
+  let uploaded = 0;
+  for (const key of await localBookIds()) {
+    const id = String(key);
+    if (inCloud.has(id)) continue;
+    const stored = await getBookText(id);
+    if (stored && await uploadBookTextToCloud(id, stored.text)) uploaded++;
+  }
+  return uploaded;
+}
 
 // ── Разбор файлов ─────────────────────────────────────────────────────────
 

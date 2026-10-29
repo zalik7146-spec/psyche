@@ -29,7 +29,7 @@ import AnkiView        from './components/AnkiView';
 import PublicShareView from './components/PublicShareView';
 import FeedView        from './components/FeedView';
 import JournalView     from './components/JournalView';
-import { deleteBookText } from './bookFiles';
+import { deleteBookText, deleteBookTextFromCloud, syncLocalTextsToCloud } from './bookFiles';
 import type { ComposeDraft } from './components/FeedView';
 import ProfileView     from './components/ProfileView';
 import OnboardingView  from './components/OnboardingView';
@@ -283,6 +283,7 @@ function AppInner() {
 
   const handleDeleteBook = (bookId: string) => {
     void deleteBookText(bookId);
+    void deleteBookTextFromCloud(bookId).catch(() => undefined);
     update(s => ({ ...s, books: s.books.filter(b => b.id !== bookId) }));
     cloudDeleteBook(bookId);
     setBookModal({ open: false });
@@ -564,6 +565,12 @@ function AppInner() {
       setActiveTab(tab);
     }
   };
+
+  // ── Тексты книг: догружаем в облако то, что было загружено без сети ───────
+  useEffect(() => {
+    if (!auth.user) return;
+    syncLocalTextsToCloud().catch(() => 0);
+  }, [auth.user?.id]); // eslint-disable-line
 
   // ── Onboarding check ──────────────────────────────────────────────────────
   useEffect(() => {

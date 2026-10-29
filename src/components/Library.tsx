@@ -4,7 +4,7 @@ import { Search, Plus, LayoutGrid, List, X } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { Book } from '../types'
 import BookModal from './BookModal'
-import { BOOK_FILE_ACCEPT, parseBookFile, saveBookText } from '../bookFiles'
+import { BOOK_FILE_ACCEPT, parseBookFile, storeBookText } from '../bookFiles'
 import { STOIC_LIBRARY, stoicTextFor, type StoicText } from '../stoicLibrary'
 
 interface Props {
@@ -89,7 +89,7 @@ export default function Library({ books, notes, onSave, onDelete, onOpenReader }
       const parsed = await parseBookFile(file)
       if (parsed.text.length < 30) throw new Error('EMPTY')
       const book = { id: uuidv4(), title: parsed.title || 'Без названия', author: parsed.author || '', status: 'reading', currentPage: 0, tags: [] } as unknown as Book
-      await saveBookText(book.id, { text: parsed.text, fileName: file.name, addedAt: new Date().toISOString() })
+      await storeBookText(book.id, { text: parsed.text, fileName: file.name, addedAt: new Date().toISOString() })
       onSave(book)
       vibe(12)
       onOpenReader(book)

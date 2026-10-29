@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowLeft, Bookmark, BookOpen } from 'lucide-react'
-import { BOOK_FILE_ACCEPT, getBookText, parseBookFile, saveBookText } from '../bookFiles'
+import { BOOK_FILE_ACCEPT, loadBookText, parseBookFile, storeBookText } from '../bookFiles'
 import { stoicTextFor } from '../stoicLibrary'
 
 interface ReaderBook {
@@ -172,7 +172,7 @@ export default function ReaderView({ book, onClose, onCreateNote, onProgress, on
     try { localStorage.setItem(`reader_preferences_${book.id}`, JSON.stringify({ theme, fontSize, lineHeight, fontIndex })) } catch { /* Preferences are optional. */ }
   }, [book.id, theme, fontSize, lineHeight, fontIndex])
 
-  // Откуда берём текст: сначала файл, сохранённый на этом устройстве,
+  // Откуда берём текст: сначала файл на этом устройстве или в облаке,
   // потом «Стоическая библиотека» (и старые книги из каталога с номером Gutenberg).
   useEffect(() => {
     const controller = new AbortController()
@@ -182,11 +182,11 @@ export default function ReaderView({ book, onClose, onCreateNote, onProgress, on
       setPages([])
       try {
         let text = ''
-        const stored = await getBookText(book.id)
+        const stored = await loadBookText(book.id)
         if (controller.signal.aborted) return
         if (stored) {
           text = stored.text
-          setLocalFileName(stored.fileName)
+          if (stored.fileName) setLocalFileName(stored.fileName)
         } else {
           const gutenbergId = book.id.match(/^gutenberg_(\d+)$/)?.[1]
             || book.textUrl?.match(/(?:cache\/epub|files)\/(\d+)/)?.[1]
@@ -293,7 +293,7 @@ export default function ReaderView({ book, onClose, onCreateNote, onProgress, on
         return
       }
       // Сохраняем текст на устройстве, чтобы книга открывалась и потом
-      try { await saveBookText(book.id, { text, fileName: file.name, addedAt: new Date().toISOString() }) } catch { /* читать можно и без сохранения */ }
+      try { await storeBookText(book.id, { text, fileName: file.name, addedAt: new Date().toISOString() }) } catch { /* читать можно и без сохранения */ }
       setLocalFileName(file.name)
       setPages(paginateText(text))
       setCurrentPage(0)
