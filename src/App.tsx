@@ -622,6 +622,7 @@ function AppInner() {
         if (username) localStorage.setItem(`psyche_username_${auth.user!.id}`, username);
         setShowOnboarding(false);
       }}
+      onAddBooks={books => books.forEach(b => handleSaveBook({ ...b, status: 'want', currentPage: 0, tags: [] }))}
     />
   );
 

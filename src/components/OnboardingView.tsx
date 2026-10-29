@@ -1,32 +1,47 @@
 import { useState } from 'react';
-import { ArrowRight, Check, User, BookOpen, Brain } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import type { User as AppUser } from '../types';
 import { upsertProfile } from '../socialStore';
+import { STOIC_LIBRARY } from '../stoicLibrary';
 
 const vibe = (ms = 8) => navigator.vibrate?.(ms);
 
 const INTERESTS = [
-  { id: 'psychology', label: '🧠 Психология', desc: 'Поведение, терапия, развитие' },
-  { id: 'philosophy', label: '📜 Философия', desc: 'Смыслы, этика, бытие' },
-  { id: 'science', label: '🔬 Наука', desc: 'Нейронауки, биология' },
-  { id: 'selfdev', label: '🌱 Саморазвитие', desc: 'Привычки, продуктивность' },
-  { id: 'fiction', label: '📖 Художественная', desc: 'Романы, рассказы' },
-  { id: 'biography', label: '👤 Биографии', desc: 'Жизнь великих людей' },
-  { id: 'therapy', label: '💙 Терапия', desc: 'КПТ, гештальт, психоанализ' },
-  { id: 'mindfulness', label: '🧘 Осознанность', desc: 'Медитация, присутствие' },
+  { id: 'stoicism', label: 'Стоицизм', desc: 'Сенека, Эпиктет, Марк Аврелий' },
+  { id: 'philosophy', label: 'Философия', desc: 'Смыслы, этика, бытие' },
+  { id: 'psychology', label: 'Психология', desc: 'Поведение, мышление, терапия' },
+  { id: 'fiction', label: 'Литература', desc: 'Романы, рассказы, поэзия' },
+  { id: 'history', label: 'История', desc: 'Люди и эпохи' },
+  { id: 'science', label: 'Наука', desc: 'Мозг, природа, космос' },
+  { id: 'mindfulness', label: 'Осознанность', desc: 'Внимание и присутствие' },
+  { id: 'biography', label: 'Биографии', desc: 'Жизни, которые учат' },
 ];
+
+// Три первые книги на выбор из Стоической библиотеки
+const FIRST_BOOKS = [2680, 45109, 64576].map(id => STOIC_LIBRARY.find(b => b.gutenbergId === id)!);
+
+const STEPS = ['Имя в Агоре', 'О себе', 'Что вам близко', 'Первая книга'];
 
 interface Props {
   user: AppUser;
   onComplete: (username: string) => void;
+  onAddBooks?: (books: { title: string; author: string }[]) => void;
 }
 
-export default function OnboardingView({ user, onComplete }: Props) {
+const label: CSSProperties = { fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' };
+const typed: CSSProperties = { fontFamily: 'var(--font-typed)', textShadow: '0 0 0.7px var(--ink-bleed)' };
+const line: CSSProperties = {
+  width: '100%', boxSizing: 'border-box', background: 'none', border: 'none', borderBottom: '1px solid var(--text-primary)',
+  padding: '10px 0', fontSize: 17, color: 'var(--text-primary)', outline: 'none', fontFamily: 'var(--font-ui)',
+};
+
+export default function OnboardingView({ user, onComplete, onAddBooks }: Props) {
   const [step, setStep] = useState(0);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState(user.name || '');
   const [bio, setBio] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
+  const [books, setBooks] = useState<number[]>([]);
   const [usernameError, setUsernameError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -40,12 +55,12 @@ export default function OnboardingView({ user, onComplete }: Props) {
   const handleUsernameChange = (v: string) => {
     const cleaned = v.toLowerCase().replace(/[^a-z0-9_]/g, '');
     setUsername(cleaned);
-    setUsernameError(validateUsername(cleaned));
+    setUsernameError(cleaned ? validateUsername(cleaned) : '');
   };
 
-  const toggleInterest = (id: string) => {
+  const toggle = <T,>(list: T[], set: (v: T[]) => void, v: T) => {
     vibe(6);
-    setInterests(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    set(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
   };
 
   const handleNext = () => {
@@ -57,231 +72,138 @@ export default function OnboardingView({ user, onComplete }: Props) {
     setStep(s => s + 1);
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (withBooks: boolean) => {
     vibe(12);
     setLoading(true);
     try {
       await upsertProfile(user.id, {
         username: username || `user_${user.id.slice(0, 8)}`,
         displayName: displayName || username,
-        bio: bio + (interests.length ? `\n\nИнтересы: ${interests.join(', ')}` : ''),
+        bio: bio.trim(),
         isPublic: true,
         interests,
       });
-    } catch { /* продолжаем */ }
+    } catch { /* продолжаем без профиля, его можно заполнить позже */ }
+    if (withBooks && books.length && onAddBooks) {
+      onAddBooks(FIRST_BOOKS.filter(b => books.includes(b.gutenbergId)).map(b => ({ title: b.title, author: b.author })));
+    }
     setLoading(false);
     onComplete(username);
   };
 
-  const steps = [
-    { title: 'Ваш никнейм', icon: <User size={28} /> },
-    { title: 'О себе', icon: <Brain size={28} /> },
-    { title: 'Интересы', icon: <BookOpen size={28} /> },
-  ];
+  const last = step === STEPS.length - 1;
+  const nextDisabled = step === 0 && (!!usernameError || !username);
+
+  const chip = (on: boolean): CSSProperties => ({
+    padding: '12px 14px', textAlign: 'left', cursor: 'pointer',
+    border: `1px solid ${on ? 'var(--accent)' : 'var(--border)'}`,
+    background: on ? 'var(--accent)' : 'var(--bg-card)',
+    transition: 'background var(--dur-quick) var(--ease-calm), border-color var(--dur-quick) var(--ease-calm)',
+  });
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'var(--bg-base)',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      padding: '0 24px',
+      position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--bg-base)', color: 'var(--text-primary)',
+      display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-ui)',
+      padding: 'calc(env(safe-area-inset-top, 0px) + 24px) 24px calc(env(safe-area-inset-bottom, 0px) + 24px)',
     }}>
-      {/* Progress */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 40 }}>
-        {steps.map((_, i) => (
-          <div key={i} style={{
-            height: 4, borderRadius: 2,
-            width: i === step ? 32 : 16,
-            background: i <= step ? 'var(--accent)' : 'var(--border)',
-            transition: 'all 0.3s ease',
-          }} />
+      {/* Шаги: тонкие линии */}
+      <div aria-label={`Шаг ${step + 1} из ${STEPS.length}`} style={{ display: 'flex', gap: 6 }}>
+        {STEPS.map((_, i) => (
+          <span key={i} style={{ flex: 1, height: 1, background: i <= step ? 'var(--text-primary)' : 'var(--border)', transition: 'background var(--dur-screen) var(--ease-calm)' }} />
         ))}
       </div>
 
-      {/* Icon */}
-      <div style={{
-        width: 72, height: 72, borderRadius: 2,
-        background: 'var(--bg-raised)',
-        border: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: 'var(--accent)', marginBottom: 24,
-        animation: 'scaleInBounce 0.4s ease both',
-      }}>
-        {steps[step].icon}
+      <div key={step} className="view-enter" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18, padding: '36px 0 24px' }}>
+        <span style={label}>Шаг {step + 1} из {STEPS.length}</span>
+        <h1 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 32, lineHeight: 1.15 }}>{STEPS[step]}</h1>
+
+        {step === 0 && (
+          <>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: 'var(--text-muted)' }}>
+              Под этим именем вас увидят в Агоре. Латиница, цифры и подчёркивание.
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${usernameError ? 'var(--red)' : 'var(--text-primary)'}` }}>
+              <span style={{ fontSize: 17, color: 'var(--text-muted)' }}>@</span>
+              <input value={username} onChange={e => handleUsernameChange(e.target.value)} placeholder="seneca_reader" autoFocus
+                aria-label="Имя пользователя" autoCapitalize="none" autoCorrect="off"
+                style={{ ...line, borderBottom: 'none', paddingLeft: 4 }} />
+            </label>
+            {usernameError && <p role="alert" style={{ margin: 0, fontSize: 13, color: 'var(--red)' }}>{usernameError}</p>}
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={label}>Имя или псевдоним</span>
+              <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Как к вам обращаться" style={line} />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={label}>О себе, если хочется</span>
+              <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Читаю стоиков по утрам."
+                style={{ ...line, ...typed, fontSize: 16, lineHeight: 1.55, resize: 'none' }} />
+            </label>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: 'var(--text-muted)' }}>Отметьте, о чём вам интересно читать и думать.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+              {INTERESTS.map(it => {
+                const on = interests.includes(it.id);
+                return (
+                  <button key={it.id} aria-pressed={on} onClick={() => toggle(interests, setInterests, it.id)} style={chip(on)}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: on ? 'var(--on-accent)' : 'var(--text-primary)' }}>{it.label}</span>
+                    <span style={{ display: 'block', fontSize: 12, marginTop: 2, color: on ? 'var(--on-accent)' : 'var(--text-muted)', opacity: on ? 0.8 : 1 }}>{it.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55, color: 'var(--text-muted)' }}>
+              Поставим на полку, чтобы было с чего начать. Тексты из Стоической библиотеки, на английском.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {FIRST_BOOKS.map(b => {
+                const on = books.includes(b.gutenbergId);
+                return (
+                  <button key={b.gutenbergId} aria-pressed={on} onClick={() => toggle(books, setBooks, b.gutenbergId)} style={chip(on)}>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-serif)', fontSize: 18, color: on ? 'var(--on-accent)' : 'var(--text-primary)' }}>{b.title}</span>
+                    <span style={{ display: 'block', fontSize: 12, marginTop: 3, color: on ? 'var(--on-accent)' : 'var(--text-muted)', opacity: on ? 0.8 : 1 }}>{b.author} · {b.note}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
-      <h2 style={{
-        fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 600,
-        color: 'var(--text-primary)', marginBottom: 8, textAlign: 'center',
-      }}>
-        {steps[step].title}
-      </h2>
-
-      {/* Step 0 — Username */}
-      {step === 0 && (
-        <div style={{ width: '100%', maxWidth: 360, marginTop: 24 }}>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 24, lineHeight: 1.6 }}>
-            Никнейм нужен для публичного профиля в сообществе. Только латиница и цифры.
-          </p>
-          <div style={{ position: 'relative' }}>
-            <span style={{
-              position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
-              color: 'var(--accent)', fontSize: 15, fontWeight: 600,
-            }}>@</span>
-            <input
-              value={username}
-              onChange={e => handleUsernameChange(e.target.value)}
-              placeholder="your_username"
-              autoFocus
-              style={{
-                width: '100%', padding: '14px 16px 14px 32px',
-                background: 'var(--bg-raised)', border: `1px solid ${usernameError ? 'var(--red)' : 'var(--border)'}`,
-                borderRadius: 2, color: 'var(--text-primary)', fontSize: 16,
-                fontFamily: 'Inter, sans-serif', outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-          </div>
-          {usernameError && (
-            <p style={{ fontSize: 12, color: 'var(--red)', marginTop: 6, textAlign: 'center' }}>{usernameError}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <button
+          onClick={last ? () => handleComplete(true) : handleNext}
+          disabled={nextDisabled || loading}
+          style={{
+            width: '100%', height: 52, border: 'none', cursor: nextDisabled || loading ? 'not-allowed' : 'pointer',
+            background: nextDisabled ? 'var(--bg-active)' : 'var(--accent)', color: nextDisabled ? 'var(--text-muted)' : 'var(--on-accent)',
+            fontSize: 15, fontWeight: 500, fontFamily: 'var(--font-ui)',
+          }}
+        >
+          {loading ? 'Сохраняю…' : last ? (books.length ? 'На полку и войти' : 'Войти в Агору') : 'Дальше'}
+        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          {step > 0 ? (
+            <button onClick={() => { vibe(6); setStep(s => s - 1); }} style={{ height: 44, background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)' }}>Назад</button>
+          ) : <span />}
+          {step >= 2 && (
+            <button onClick={() => (last ? handleComplete(false) : setStep(s => s + 1))} style={{ height: 44, background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--text-muted)' }}>Пропустить</button>
           )}
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8, textAlign: 'center' }}>
-            psyche.app/@{username || 'you'}
-          </p>
         </div>
-      )}
-
-      {/* Step 1 — About */}
-      {step === 1 && (
-        <div style={{ width: '100%', maxWidth: 360, marginTop: 24 }}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Имя или псевдоним
-            </label>
-            <input
-              value={displayName}
-              onChange={e => setDisplayName(e.target.value)}
-              placeholder="Как к вам обращаться?"
-              style={{
-                width: '100%', padding: '12px 16px',
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 2, color: 'var(--text-primary)', fontSize: 15,
-                fontFamily: 'Inter, sans-serif', outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              О себе (необязательно)
-            </label>
-            <textarea
-              value={bio}
-              onChange={e => setBio(e.target.value)}
-              placeholder="Психолог, читатель, исследователь..."
-              rows={3}
-              style={{
-                width: '100%', padding: '12px 16px',
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 2, color: 'var(--text-primary)', fontSize: 15,
-                fontFamily: 'Inter, sans-serif', outline: 'none', resize: 'none',
-                lineHeight: 1.6, boxSizing: 'border-box',
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Step 2 — Interests */}
-      {step === 2 && (
-        <div style={{ width: '100%', maxWidth: 360, marginTop: 16 }}>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 16, lineHeight: 1.6 }}>
-            Что вам интересно читать?
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {INTERESTS.map(int => {
-              const selected = interests.includes(int.id);
-              return (
-                <button
-                  key={int.id}
-                  onClick={() => toggleInterest(int.id)}
-                  style={{
-                    padding: '10px 12px', borderRadius: 2, border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
-                    background: selected ? 'var(--accent-muted)' : 'var(--bg-raised)',
-                    cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s ease',
-                    transform: selected ? 'scale(0.97)' : 'scale(1)',
-                  }}
-                >
-                  <div style={{ fontSize: 13, fontWeight: 600, color: selected ? 'var(--accent)' : 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}>
-                    {int.label}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {int.desc}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Buttons */}
-      <div style={{ position: 'fixed', bottom: 40, left: 24, right: 24, maxWidth: 360, margin: '0 auto' }}>
-        {step < 2 ? (
-          <button
-            onClick={handleNext}
-            disabled={step === 0 && (!!usernameError || !username)}
-            style={{
-              width: '100%', padding: '16px',
-              background: 'var(--accent)',
-              border: 'none', borderRadius: 2, color: 'var(--on-accent)',
-              fontSize: 16, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              opacity: (step === 0 && (!!usernameError || !username)) ? 0.5 : 1,
-              fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            Далее <ArrowRight size={18} />
-          </button>
-        ) : (
-          <button
-            onClick={handleComplete}
-            disabled={loading}
-            style={{
-              width: '100%', padding: '16px',
-              background: 'var(--accent)',
-              border: 'none', borderRadius: 2, color: 'var(--on-accent)',
-              fontSize: 16, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            {loading ? 'Сохранение...' : <>Начать <Check size={18} /></>}
-          </button>
-        )}
-        {step > 0 && (
-          <button
-            onClick={() => { vibe(6); setStep(s => s - 1); }}
-            style={{
-              width: '100%', padding: '12px', marginTop: 8,
-              background: 'none', border: 'none', color: 'var(--text-muted)',
-              fontSize: 14, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            Назад
-          </button>
-        )}
-        {step === 2 && (
-          <button
-            onClick={() => handleComplete()}
-            style={{
-              width: '100%', padding: '12px',
-              background: 'none', border: 'none', color: 'var(--text-muted)',
-              fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            }}
-          >
-            Пропустить
-          </button>
-        )}
       </div>
     </div>
   );

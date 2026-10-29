@@ -1,7 +1,7 @@
 {
-  "name": "Psyche — Дневник Разума",
+  "name": "Psyche — Агора для тех, кто читает и думает",
   "short_name": "Psyche",
-  "description": "Пространство для штудирования книг, мыслей и инсайтов психолога",
+  "description": "Листы с мыслями, обсуждения на полях, стоическая библиотека и дневник дня",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F1EDE5",
